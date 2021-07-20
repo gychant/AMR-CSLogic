@@ -11,7 +11,9 @@ port = 5000
 # text = "You enter a kitchen."
 # text = "You see a dishwasher and a fridge."
 # text = "Here 's a dining table ."
-text = "You see a red apple and a dirty plate on the table ."
+# text = "You see a red apple and a dirty plate on the table ."
+
+text = """You've entered a kitchen. You see a dishwasher and a fridge. Here's a dining table. You see a dirty plate and a red apple on the table."""
 
 # res = requests.get("http://{}:{}/amr_parsing".format(host, port), params={'text': text})
 res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
@@ -30,4 +32,13 @@ print(json.loads(res.text)["amr_parse"][0]["sem_cal"])
 
 print("\ngrounded_stmt:")
 print(json.loads(res.text)["amr_parse"][0]["grounded_stmt"])
+
+print("\namr_cal:")
+print(json.loads(res.text)["amr_parse"][0]["amr_cal_str"])
+
+print("\nsem_cal:")
+print(json.loads(res.text)["amr_parse"][0]["sem_cal_str"])
+
+print("\ngrounded_stmt:")
+print(json.loads(res.text)["amr_parse"][0]["grounded_stmt_str"])
 

@@ -50,10 +50,11 @@ def amr_parsing():
             "error": "Empty input text."
         }), status.HTTP_200_OK)
 
-    sentence_parses = parse_text(text)
+    parse = parse_text(text)
     results = {
         "text": text,
-        "amr_parse": sentence_parses
+        "coreference": parse["coreference"],
+        "amr_parse": parse["sentence_parses"]
     }
     app.logger.info("Finished parsing ...")
     return make_response(jsonify(results), status.HTTP_200_OK)
@@ -72,10 +73,11 @@ def verbnet_semantics():
             "error": "Empty input text."
         }), status.HTTP_200_OK)
 
-    sentence_parses = ground_text_to_verbnet(text)
+    parse = ground_text_to_verbnet(text)
     results = {
         "text": text,
-        "amr_parse": sentence_parses
+        "coreference": parse["coreference"],
+        "amr_parse": parse["sentence_parses"]
     }
     app.logger.info("Finished parsing ...")
     return make_response(jsonify(results), status.HTTP_200_OK)

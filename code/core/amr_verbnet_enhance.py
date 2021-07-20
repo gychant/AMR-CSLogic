@@ -50,7 +50,12 @@ def ground_text_to_verbnet(text):
         sent_res["amr"] = amr
         sent_res.update(g_res)
         sentence_parses.append(sent_res)
-    return sentence_parses
+
+    results = {
+        "coreference": parse["coreference"],
+        "sentence_parses": sentence_parses
+    }
+    return results
 
 
 def ground_amr(amr):
@@ -109,7 +114,6 @@ def ground_amr(amr):
     # print("amr_cal:", amr_cal)
     # print("\ngrounded_stmt:", grounded_stmt)
     # print("=================================")
-    print(type(sem_cal))
     print("sem_cal:", sem_cal)
     results = {
         "pb_vn_mappings": pb_vn_mappings,
