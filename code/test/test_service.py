@@ -5,7 +5,8 @@ import requests
 import json
 from pprint import pprint
 
-host = "10.208.109.152"
+# host = "10.208.109.152"
+host = "0.0.0.0"
 port = 5000
 
 # text = "You enter a kitchen."

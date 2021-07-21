@@ -13,10 +13,10 @@ $ bash scripts/install.sh
 
 To download corpora and related data, run
 ```
-$ bash scripts/download_verbnet.sh
+$ bash scripts/download_verbnet.sh ~/nltk_data/corpora/
 $ bash scripts/download_propbank.sh ~/nltk_data/corpora/
-$ bash scripts/download_semlink.sh
-$ bash scripts/download_stanford_nlp.sh
+$ bash scripts/download_semlink.sh ./data
+$ bash scripts/download_stanford_nlp.sh ./
 ```
 
 To start the service, run

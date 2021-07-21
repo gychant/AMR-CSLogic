@@ -7,7 +7,11 @@
 set -e
 save_dir=$1
 
-git clone https://github.com/cu-clear/semlink.git ${save_dir}
+mkdir -p ${save_dir}
+pushd .
+cd ${save_dir}
+git clone https://github.com/cu-clear/semlink.git
+popd
 
 echo "Saved to ${save_dir}/semlink"
 echo "DONE."
