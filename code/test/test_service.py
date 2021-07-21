@@ -21,25 +21,29 @@ res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={
 
 print("\nres.text")
 print(res.text)
+l = len(json.loads(res.text)["amr_parse"])
 
-print("\npb_vn_mappings:")
-pprint(json.loads(res.text)["amr_parse"][0]["pb_vn_mappings"])
+for i in range(l):
+    print("\namr:")
+    print(json.loads(res.text)["amr_parse"][i]["amr"])
+    print("\npb_vn_mappings:")
+    pprint(json.loads(res.text)["amr_parse"][i]["pb_vn_mappings"])
 
-print("\namr_cal:")
-print(json.loads(res.text)["amr_parse"][0]["amr_cal"])
+    print("\namr_cal:")
+    print(json.loads(res.text)["amr_parse"][i]["amr_cal"])
 
-print("\nsem_cal:")
-print(json.loads(res.text)["amr_parse"][0]["sem_cal"])
+    print("\nsem_cal:")
+    print(json.loads(res.text)["amr_parse"][i]["sem_cal"])
 
-print("\ngrounded_stmt:")
-print(json.loads(res.text)["amr_parse"][0]["grounded_stmt"])
+    print("\ngrounded_stmt:")
+    print(json.loads(res.text)["amr_parse"][i]["grounded_stmt"])
+    
+    print("\namr_cal:")
+    print(json.loads(res.text)["amr_parse"][i]["amr_cal_str"])
 
-print("\namr_cal:")
-print(json.loads(res.text)["amr_parse"][0]["amr_cal_str"])
+    print("\nsem_cal:")
+    print(json.loads(res.text)["amr_parse"][i]["sem_cal_str"])
 
-print("\nsem_cal:")
-print(json.loads(res.text)["amr_parse"][0]["sem_cal_str"])
-
-print("\ngrounded_stmt:")
-print(json.loads(res.text)["amr_parse"][0]["grounded_stmt_str"])
+    print("\ngrounded_stmt:")
+    print(json.loads(res.text)["amr_parse"][i]["grounded_stmt_str"])
 
