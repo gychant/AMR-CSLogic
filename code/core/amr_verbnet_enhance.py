@@ -18,6 +18,8 @@ from code.service.semlink import query_pb_vn_mapping
 from code.service.models import PredicateCalculus
 from code.service.amr import amr_client
 
+verbose = False
+
 
 def parse_text(text):
     sentences = sent_tokenize(text)
@@ -76,45 +78,35 @@ def ground_amr(amr):
     for inst in g.instances():
         # if it is a propbank frame
         if inst.target[-3] == "-":
-            print(inst.target)
             pb_id = inst.target[:-3] + "." + inst.target[-2:]
             if pb_id not in role_mappings:
                 role_map = query_propbank_roles(pb_id)
                 if role_map is None:
                     continue
                 role_mappings[pb_id] = role_map
-            # print("role_mappings:", role_mappings)
 
-            print("pb_id:", pb_id)
-            # print("pb_vn_mappings[pb_id]:", pb_vn_mappings[pb_id])
-            # input()
-            """
-            # =============TEMP
-            if pb_id == "enter.01":
-                pb_vn_mappings[pb_id] = "escape-51.1-1-2"
-            if pb_id == "see.01":
-                pb_vn_mappings[pb_id] = "see-30.1-1"
-            # =============TEMP
-            """
             mapping_res = query_pb_vn_mapping(pb_id)
             if mapping_res is not None and pb_id not in semantics:
                 verbnet_id = mapping_res["mapping"]
-                # print("verbnet_id:", verbnet_id)
                 pb_vn_mappings[pb_id] = mapping_res
                 semantics[pb_id] = query_semantics(verbnet_id)
 
     ori_amr_cal, arg_map = construct_calculus_from_amr(amr)
-    # print("ori_amr_cal:", ori_amr_cal)
-    # print("arg_map:", arg_map)
-    # input()
+
+    if verbose:
+        print("ori_amr_cal:", ori_amr_cal)
+        print("arg_map:", arg_map)
+        print("role_mappings:", role_mappings)
+
     amr_cal = process_and_operator(ori_amr_cal)
     sem_cal = construct_calculus_from_semantics(semantics)
     grounded_stmt = ground_semantics(arg_map, sem_cal, role_mappings)
-    # print("=================================")
-    # print("amr_cal:", amr_cal)
-    # print("\ngrounded_stmt:", grounded_stmt)
-    # print("=================================")
-    print("sem_cal:", sem_cal)
+
+    if verbose:
+        print("\namr_cal:", amr_cal)
+        print("\nsem_cal:", sem_cal)
+        print("\ngrounded_stmt:", grounded_stmt)
+
     results = {
         "pb_vn_mappings": pb_vn_mappings,
         "amr_cal": to_json(amr_cal),
@@ -153,14 +145,13 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
     :return:
     """
 
-    """
-    print("\narg_map:")
-    print(arg_map)
-    """
-    # print("\nsemantic_calc:")
-    # print(semantic_calc)
-    # print("\nrole_mappings:")
-    pprint(role_mappings)
+    if verbose:
+        print("\narg_map:")
+        print(arg_map)
+        print("\nsemantic_calc:")
+        print(semantic_calc)
+        print("\nrole_mappings:")
+        pprint(role_mappings)
 
     results = []
     for propbank_id in arg_map:
@@ -193,6 +184,10 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
             # print("\ncur_calculus:", cur_calculus)
             cur_calculus.extend(to_add_stmt)
             results.append(cur_calculus)
+
+    for pb_id in semantic_calc:
+        if pb_id not in results:
+            results.append(semantic_calc[pb_id])
     return results
 
 
@@ -237,7 +232,11 @@ def construct_calculus_from_amr(amr):
         src2tgt[inst.source] = inst.target
         amr_calc.append(PredicateCalculus(inst.target, [inst.source]))
     for edge in g.edges():
-        predicate = src2tgt[edge.source] + "." + edge.role[1:].lower()
+        if edge.role.lower().startswith(":arg") \
+                or edge.role.lower().startswith(":op"):
+            predicate = src2tgt[edge.source] + "." + edge.role[1:].lower()
+        else:
+            predicate = edge.role[1:].lower()
         amr_calc.append(PredicateCalculus(predicate, [edge.source, edge.target]))
         tgt = src2tgt[edge.source]
         if tgt != "and" and "-" in tgt and tgt.index("-") == len(tgt) - 3:
@@ -254,14 +253,15 @@ def construct_calculus_from_amr(amr):
 
 
 if __name__ == "__main__":
+    verbose = True
     # parse_text("You enter a kitchen.")
     # parse_text("The quick brown fox jumped over the lazy moon.")
     # parse_text("You see a dishwasher and a fridge.")
     # parse_text("Here 's a dining table .")
     # parse_text("You see a red apple and a dirty plate on the table .")
 
-    ground_text_to_verbnet("You enter a kitchen.")
+    # ground_text_to_verbnet("You enter a kitchen.")
     # ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # ground_text_to_verbnet("Here 's a dining table .")
-    # ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
+    ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
 
