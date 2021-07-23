@@ -18,7 +18,7 @@ propbank = LazyCorpusLoader(
 
 
 def query_propbank_roles(propbank_id):
-    print("query_propbank_roles for propbank_id {}:".format(propbank_id))
+    print("query_propbank_roles for propbank_id {}".format(propbank_id))
     try:
         role_set = propbank.roleset(propbank_id)
     except ValueError:

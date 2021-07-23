@@ -8,7 +8,7 @@ from pprint import pprint
 import penman
 
 from code.grpc_clients import AMRClientTransformer
-from code.core.coref_parse import full_parsing
+from code.core.stanford_nlp_parse import full_parsing
 from code.core.format_util import to_json
 
 from code.service.propbank import query_propbank_roles
@@ -23,12 +23,10 @@ verbose = False
 
 def parse_text(text):
     sentences = sent_tokenize(text)
-    print("parsing ...")
-    parse = full_parsing(text)
     print("\ntext:\n", text)
     print("\nsentences:\n==>", "\n\n==>".join(sentences))
-    print("\ncoreference:\n", parse["coreference"])
 
+    print("parsing ...")
     sentence_parses = []
     for idx, sent in enumerate(sentences):
         amr = amr_client.get_amr(sent)
@@ -39,7 +37,7 @@ def parse_text(text):
 def ground_text_to_verbnet(text):
     sentences = sent_tokenize(text)
     print("parsing ...")
-    parse = full_parsing(text)
+    parse = full_parsing(text, do_coreference=True)
     print("\ntext:\n", text)
     print("\nsentences:\n==>", "\n\n==>".join(sentences))
     print("\ncoreference:\n", parse["coreference"])
@@ -94,7 +92,7 @@ def ground_amr(amr):
     ori_amr_cal, arg_map = construct_calculus_from_amr(amr)
 
     if verbose:
-        print("ori_amr_cal:", ori_amr_cal)
+        print("\nori_amr_cal:", ori_amr_cal)
         print("arg_map:", arg_map)
         print("role_mappings:", role_mappings)
 
@@ -181,12 +179,23 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
                                             stmt_copy = copy.deepcopy(stmt)
                                             stmt_copy.arguments[arg_idx] = op_role_dict[op_role]
                                             to_add_stmt.append(stmt_copy)
-            # print("\ncur_calculus:", cur_calculus)
-            cur_calculus.extend(to_add_stmt)
-            results.append(cur_calculus)
+
+            final_calculus = []
+            for stmt in (cur_calculus + to_add_stmt):
+                # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
+                if stmt.predicate == "PATH":
+                    # LOCATION(start(E), Theme, ?Initial_Location)
+                    # and LOCATION(end(E), Theme, Destination)
+                    theme = stmt.arguments[1]
+                    dest = stmt.arguments[4]
+                    final_calculus.append(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"]))
+                    final_calculus.append(PredicateCalculus("LOCATION", ["end(E)", theme, dest]))
+                else:
+                    final_calculus.append(stmt)
+            results.append(final_calculus)
 
     for pb_id in semantic_calc:
-        if pb_id not in results:
+        if pb_id not in arg_map:
             results.append(semantic_calc[pb_id])
     return results
 
