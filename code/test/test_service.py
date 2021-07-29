@@ -19,31 +19,32 @@ text = "You've entered a kitchen. You see a dishwasher and a fridge. Here's a di
 # res = requests.get("http://{}:{}/amr_parsing".format(host, port), params={'text': text})
 res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
 
-print("\nres.text")
+print("\nres.text:")
 print(res.text)
-l = len(json.loads(res.text)["amr_parse"])
 
-for i in range(l):
-    print("\namr:")
-    print(json.loads(res.text)["amr_parse"][i]["amr"])
-    print("\npb_vn_mappings:")
-    pprint(json.loads(res.text)["amr_parse"][i]["pb_vn_mappings"])
+res = json.loads(res.text)
+if "amr_parse" in res:
+    for i in range(len(res["amr_parse"])):
+        print("\namr:")
+        print(res["amr_parse"][i]["amr"])
+        print("\npb_vn_mappings:")
+        pprint(res["amr_parse"][i]["pb_vn_mappings"])
 
-    print("\namr_cal:")
-    print(json.loads(res.text)["amr_parse"][i]["amr_cal"])
+        print("\namr_cal:")
+        print(res["amr_parse"][i]["amr_cal"])
 
-    print("\nsem_cal:")
-    print(json.loads(res.text)["amr_parse"][i]["sem_cal"])
+        print("\nsem_cal:")
+        print(res["amr_parse"][i]["sem_cal"])
 
-    print("\ngrounded_stmt:")
-    print(json.loads(res.text)["amr_parse"][i]["grounded_stmt"])
-    
-    print("\namr_cal:")
-    print(json.loads(res.text)["amr_parse"][i]["amr_cal_str"])
+        print("\ngrounded_stmt:")
+        print(res["amr_parse"][i]["grounded_stmt"])
 
-    print("\nsem_cal:")
-    print(json.loads(res.text)["amr_parse"][i]["sem_cal_str"])
+        print("\namr_cal:")
+        print(res["amr_parse"][i]["amr_cal_str"])
 
-    print("\ngrounded_stmt:")
-    print(json.loads(res.text)["amr_parse"][i]["grounded_stmt_str"])
+        print("\nsem_cal:")
+        print(res["amr_parse"][i]["sem_cal_str"])
+
+        print("\ngrounded_stmt:")
+        print(res["amr_parse"][i]["grounded_stmt_str"])
 

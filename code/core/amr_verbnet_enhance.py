@@ -75,7 +75,7 @@ def ground_amr(amr):
     pb_vn_mappings = dict()
     for inst in g.instances():
         # if it is a propbank frame
-        if inst.target[-3] == "-":
+        if len(inst.target) > 3 and inst.target[-3] == "-" and inst.target[-2:].isnumeric():
             pb_id = inst.target[:-3] + "." + inst.target[-2:]
             if pb_id not in role_mappings:
                 role_map = query_propbank_roles(pb_id)
@@ -86,8 +86,9 @@ def ground_amr(amr):
             mapping_res = query_pb_vn_mapping(pb_id)
             if mapping_res is not None and pb_id not in semantics:
                 verbnet_id = mapping_res["mapping"]
+                verbnet_version = mapping_res["source"]
                 pb_vn_mappings[pb_id] = mapping_res
-                semantics[pb_id] = query_semantics(verbnet_id)
+                semantics[pb_id] = query_semantics(verbnet_id, verbnet_version)
 
     ori_amr_cal, arg_map = construct_calculus_from_amr(amr)
 
@@ -169,6 +170,11 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
                         role_info = cur_role_mappings[role]
                         for vn_cls_info in role_info:
                             if stmt.arguments[arg_idx].lower() == vn_cls_info["vntheta"].lower():
+                                # print("role:", role)
+                                # print("arg_map:", arg_map)
+                                if role not in arg_map[propbank_id][src]:
+                                    continue
+                                    
                                 stmt.arguments[arg_idx] = arg_map[propbank_id][src][role]
                                 if "and" in arg_map and arg_map[propbank_id][src][role] in arg_map["and"]:
                                     op_role_dict = arg_map["and"][arg_map[propbank_id][src][role]]

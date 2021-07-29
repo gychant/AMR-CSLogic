@@ -112,7 +112,7 @@ def query_pb_vn_mapping(verb_roleset):
     vn_mappings = pb_vn_mappings[verb_roleset]
     for vn_version in vn2class_id_dict:
         class_id_dict = vn2class_id_dict[vn_version]
-        if vn_mappings["vn_class"] in class_id_dict:
+        if "vn_class" in vn_mappings and vn_mappings["vn_class"] in class_id_dict:
             res = {
                 "mapping": class_id_dict[vn_mappings["vn_class"]],
                 "source": vn_version
