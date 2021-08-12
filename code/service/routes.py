@@ -19,7 +19,7 @@ from code.service.amr import amr_client
 from code.core.amr_verbnet_enhance import parse_text, ground_text_to_verbnet
 
 # Import Flask application
-from . import app
+from code.service import app
 
 ######################################################################
 # GET INDEX

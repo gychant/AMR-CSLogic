@@ -14,3 +14,5 @@ numpy
 python-Levenshtein
 stanfordcorenlp
 flask
+matplotlib
+graphviz

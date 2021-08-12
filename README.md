@@ -11,6 +11,16 @@ To install dependencies, run
 $ bash scripts/install.sh
 ```
 
+If we want to visualize the enhanced AMR graph, we need to install the pygraphviz package, which requires 
+installing graphviz first:
+```
+$ conda create -n amr-verbnet python=3.7
+$ conda activate amr-verbnet
+$ conda install -c anaconda graphviz
+$ conda deactivate
+$ pip install --global-option=build_ext --global-option="-I/home/zliang/.conda/envs/amr-verbnet/include" --global-option="-L/home/zliang/.conda/envs/amr-verbnet/lib" --global-option="-R/home/zliang/.conda/envs/amr-verbnet/lib" pygraphviz
+```
+
 To download corpora and related data, run
 ```
 $ bash scripts/download_verbnet.sh ~/nltk_data/corpora/

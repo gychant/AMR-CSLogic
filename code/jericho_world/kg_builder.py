@@ -4,8 +4,15 @@ import json
 import requests
 from pprint import pprint
 from collections import Counter
+from nltk.tokenize import sent_tokenize, word_tokenize, RegexpTokenizer
+
+from code.core.amr_verbnet_enhance import generate_enhanced_amr, visualize_enhanced_amr
+
 import random
 random.seed(42)
+
+# Add path to the dot package binary to system path
+os.environ["PATH"] += os.pathsep + '/home/zliang/.conda/envs/amr-verbnet/bin'
 
 host = "0.0.0.0"
 port = 5000
@@ -17,6 +24,8 @@ print("Loading data ...")
 with open(os.path.join(DATA_DIR, "train.json")) as f:
     data = json.load(f)
 print("Loaded data ...")
+
+tokenizer = RegexpTokenizer(r'\w+')
 
 
 def kb_statistics():
@@ -62,6 +71,40 @@ def kb_statistics():
     print("DONE.")
 
 
+def print_sample(sample):
+    print("==========================================")
+    print("\nState:")
+    print(sample["state"])
+
+    print("\nNext State:")
+    print(sample["next_state"])
+
+    print("\nObservation:")
+    print(sample["state"]["obs"])
+
+    print("\nLocation Description:")
+    print(sample["state"]["loc_desc"])
+
+    print("\nSurrounding Objects:")
+    print(sample["state"]["surrounding_objs"])
+
+    print("\nSurrounding Attributes:")
+    print(sample["state"]["surrounding_attrs"])
+
+    print("\nInventory Description:")
+    print(sample["state"]["inv_desc"])
+
+    print("\nInventory Objects:")
+    print(sample["state"]["inv_objs"])
+
+    print("\nInventory Attributes:")
+    print(sample["state"]["inv_attrs"])
+
+    print("\nGraph:")
+    print(sample["state"]["graph"])
+    print("==========================================")
+
+
 def check_samples():
     # Select samples for initial testing
     all_indices = list(range(len(data)))
@@ -70,32 +113,11 @@ def check_samples():
 
     for idx in sample_indices:
         sample = data[idx]
-        print("==========================================")
 
-        print("\nState:")
-        print(sample["state"])
-
-        print("\nNext State:")
-        print(sample["next_state"])
-
-        print("\nObservation:")
-        print(sample["state"]["obs"])
-        print("\nLocation Description:")
-        print(sample["state"]["loc_desc"])
-        print("\nSurrounding Objects:")
-        print(sample["state"]["surrounding_objs"])
-        print("\nSurrounding Attributes:")
-        print(sample["state"]["surrounding_attrs"])
-        print("\nInventory Description:")
-        print(sample["state"]["inv_desc"])
-        print("\nInventory Objects:")
-        print(sample["state"]["inv_objs"])
-        print("\nInventory Attributes:")
-        print(sample["state"]["inv_attrs"])
-        print("\nGraph:")
-        print(sample["state"]["graph"])
-
-        text = sample["state"]["obs"]
+        # text = sample["state"]["obs"]
+        # text = "You see a dishwasher and a fridge."
+        # text = "You flip open the pizza box."
+        text = "The dresser is made out of maple carefully finished with Danish oil."
         res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
 
         print("\nres.text:")
@@ -109,6 +131,9 @@ def check_samples():
                 print("\npb_vn_mappings:")
                 pprint(res["amr_parse"][i]["pb_vn_mappings"])
 
+                print("\nrole_mappings:")
+                pprint(res["amr_parse"][i]["role_mappings"])
+
                 print("\namr_cal:")
                 print(res["amr_parse"][i]["amr_cal"])
 
@@ -118,18 +143,81 @@ def check_samples():
                 print("\ngrounded_stmt:")
                 print(res["amr_parse"][i]["grounded_stmt"])
 
-                print("\namr_cal:")
+                print("\namr_cal_str:")
                 print(res["amr_parse"][i]["amr_cal_str"])
 
-                print("\nsem_cal:")
+                print("\nsem_cal_str:")
                 print(res["amr_parse"][i]["sem_cal_str"])
 
-                print("\ngrounded_stmt:")
+                print("\ngrounded_stmt_str:")
                 print(res["amr_parse"][i]["grounded_stmt_str"])
-            input()
+
+                graph = generate_enhanced_amr(
+                    amr=res["amr_parse"][i]["amr"],
+                    grounded_stmt=res["amr_parse"][i]["grounded_stmt"],
+                    semantic_calculus=res["amr_parse"][i]["sem_cal"])
+
+                visualize_enhanced_amr(graph, out_dir="./test-output/")
+                print("visualize_enhanced_amr DONE.")
+                input()
+
+
+def to_pure_letter_string(text):
+    """
+    Remove all punctuations and then spaces in the text
+    :param text:
+    :return:
+    """
+    text = text.lower().replace("\n", " ")
+    tokens = tokenizer.tokenize(text)
+    text = "".join(tokens)
+    return text
+
+
+def check_extractable_kg_triples(verbose=False):
+    cnt_triples = 0
+    cnt_extractable = 0
+    for idx in range(len(data)):
+        sample = data[idx]
+
+        if "graph" not in sample["state"] or \
+                len(sample["state"]["graph"]) == 0:
+            continue
+
+        text = " ".join([sample["state"]["obs"],
+                         sample["state"]["loc_desc"],
+                         # " ".join(sample["state"]["surrounding_objs"].keys()),
+                         sample["state"]["inv_desc"]])
+
+        if verbose:
+            print_sample(sample)
+
+        concat_text = to_pure_letter_string(text)
+
+        for triple in sample["state"]["graph"]:
+            cnt_triples += 1
+
+            subj, pred, obj = triple
+            if to_pure_letter_string(subj) in concat_text \
+                    and to_pure_letter_string(obj) in concat_text:
+                cnt_extractable += 1
+            """
+            else:
+                print("\ntext:\n========================\n", text)
+                print("========================")
+                print("\n", sample["state"])
+                print("\n")
+                print(triple, "xxx")
+                print("\n", sample["state"]["graph"])
+                input()
+            """
+
+    ratio = cnt_extractable / cnt_triples
+    print("Ratio of extractable:", ratio)
 
 
 if __name__ == "__main__":
     check_samples()
     # kb_statistics()
+    # check_extractable_kg_triples()
 

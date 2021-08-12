@@ -130,3 +130,4 @@ dmypy.json
 
 data/
 stanford-corenlp-full-2018-10-05/
+test-output/

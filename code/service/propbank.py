@@ -30,13 +30,12 @@ def query_propbank_roles(propbank_id):
             arg_key = ":ARG{}".format(role.attrib['n'])
             if arg_key not in role_mappings:
                 role_mappings[arg_key] = []
-            role_mappings[":ARG{}".format(role.attrib['n'])].append({
+            role_mappings[arg_key].append({
                 "vncls": vn_role.attrib["vncls"],
                 "vntheta": vn_role.attrib["vntheta"],
                 "description": role.attrib['descr']
             })
-    # print("role_mappings:", role_mappings)
-    # input()
+    # print("query_propbank_roles role_mappings:", role_mappings)
     return role_mappings
 
 
