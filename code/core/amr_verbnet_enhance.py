@@ -17,12 +17,12 @@ import graphviz
 from code.grpc_clients import AMRClientTransformer
 from code.core.stanford_nlp_parse import full_parsing
 from code.utils.format_util import to_json
+from code.core.models import PredicateCalculus
 
 from code.service.propbank import query_propbank_roles
 from code.service.verbnet import query_semantics
 from code.service.semlink import query_pb_vn_mapping
 # from code.service.ontology import query_pb_vn_mapping
-from code.service.models import PredicateCalculus
 from code.service.amr import amr_client
 
 verbose = False
@@ -54,6 +54,7 @@ def ground_text_to_verbnet(text):
         sent_res = dict()
         amr = amr_client.get_amr(sent)
         g_res = ground_amr(amr, verbose=True)
+        sent_res["text"] = sent
         sent_res["amr"] = amr
         sent_res.update(g_res)
         sentence_parses.append(sent_res)

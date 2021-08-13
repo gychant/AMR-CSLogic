@@ -12,14 +12,14 @@ import os
 import sys
 import logging
 from flask import Flask, jsonify, request, url_for, make_response, abort
-from code.service import status    # HTTP Status Codes
 from werkzeug.exceptions import NotFound
+# Import Flask application
+from . import app
+# HTTP Status Codes
+from . import status
 
 from code.service.amr import amr_client
 from code.core.amr_verbnet_enhance import parse_text, ground_text_to_verbnet
-
-# Import Flask application
-from code.service import app
 
 ######################################################################
 # GET INDEX

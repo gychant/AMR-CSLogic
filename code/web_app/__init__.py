@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.config.from_object("config")
 
 # Import the routes After the Flask app is created
-# from code.service import routes, models, error_handlers
+from . import routes, models, error_handlers
 
 # Set up logging for production
 print("Setting up logging for {}...".format(__name__))

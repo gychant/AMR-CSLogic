@@ -31,7 +31,7 @@ $ bash scripts/download_stanford_nlp.sh ./
 
 To start the service, run
 ```
-$ export FLASK_APP=./code/service/__init__.py
+$ export FLASK_APP=./code/web_app/__init__.py
 $ python -m flask run --host=0.0.0.0
 ```
 The Flask logs indicate what URL the service is running on.

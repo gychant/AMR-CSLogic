@@ -105,6 +105,34 @@ def print_sample(sample):
     print("==========================================")
 
 
+def print_enhanced_amr(amr_object):
+    print("\namr:")
+    print(amr_object["amr"])
+    print("\npb_vn_mappings:")
+    pprint(amr_object["pb_vn_mappings"])
+
+    print("\nrole_mappings:")
+    pprint(amr_object["role_mappings"])
+
+    print("\namr_cal:")
+    print(amr_object["amr_cal"])
+
+    print("\nsem_cal:")
+    print(amr_object["sem_cal"])
+
+    print("\ngrounded_stmt:")
+    print(amr_object["grounded_stmt"])
+
+    print("\namr_cal_str:")
+    print(amr_object["amr_cal_str"])
+
+    print("\nsem_cal_str:")
+    print(amr_object["sem_cal_str"])
+
+    print("\ngrounded_stmt_str:")
+    print(amr_object["grounded_stmt_str"])
+
+
 def check_samples():
     # Select samples for initial testing
     all_indices = list(range(len(data)))
@@ -114,10 +142,11 @@ def check_samples():
     for idx in sample_indices:
         sample = data[idx]
 
+        text = get_observation_text_from_sample(sample)
         # text = sample["state"]["obs"]
         # text = "You see a dishwasher and a fridge."
         # text = "You flip open the pizza box."
-        text = "The dresser is made out of maple carefully finished with Danish oil."
+        # text = "The dresser is made out of maple carefully finished with Danish oil."
         res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
 
         print("\nres.text:")
@@ -126,31 +155,7 @@ def check_samples():
         res = json.loads(res.text)
         if "amr_parse" in res:
             for i in range(len(res["amr_parse"])):
-                print("\namr:")
-                print(res["amr_parse"][i]["amr"])
-                print("\npb_vn_mappings:")
-                pprint(res["amr_parse"][i]["pb_vn_mappings"])
-
-                print("\nrole_mappings:")
-                pprint(res["amr_parse"][i]["role_mappings"])
-
-                print("\namr_cal:")
-                print(res["amr_parse"][i]["amr_cal"])
-
-                print("\nsem_cal:")
-                print(res["amr_parse"][i]["sem_cal"])
-
-                print("\ngrounded_stmt:")
-                print(res["amr_parse"][i]["grounded_stmt"])
-
-                print("\namr_cal_str:")
-                print(res["amr_parse"][i]["amr_cal_str"])
-
-                print("\nsem_cal_str:")
-                print(res["amr_parse"][i]["sem_cal_str"])
-
-                print("\ngrounded_stmt_str:")
-                print(res["amr_parse"][i]["grounded_stmt_str"])
+                print_enhanced_amr(res["amr_parse"][i])
 
                 graph = generate_enhanced_amr(
                     amr=res["amr_parse"][i]["amr"],
@@ -174,9 +179,15 @@ def to_pure_letter_string(text):
     return text
 
 
-def check_extractable_kg_triples(verbose=False):
-    cnt_triples = 0
-    cnt_extractable = 0
+def get_observation_text_from_sample(sample):
+    text = " ".join([sample["state"]["obs"],
+                     sample["state"]["loc_desc"],
+                     # " ".join(sample["state"]["surrounding_objs"].keys()),
+                     sample["state"]["inv_desc"]])
+    return text
+
+
+def mine_path_patterns(verbose=False):
     for idx in range(len(data)):
         sample = data[idx]
 
@@ -184,14 +195,46 @@ def check_extractable_kg_triples(verbose=False):
                 len(sample["state"]["graph"]) == 0:
             continue
 
-        text = " ".join([sample["state"]["obs"],
-                         sample["state"]["loc_desc"],
-                         # " ".join(sample["state"]["surrounding_objs"].keys()),
-                         sample["state"]["inv_desc"]])
+        if verbose:
+            print_sample(sample)
+
+        text = get_observation_text_from_sample(sample)
+        sentences = sent_tokenize(text)
+        print("\nsentences:")
+        print(sentences)
+        input()
+
+        for sent in sentences:
+            print("sent:", sent)
+            concat_text = to_pure_letter_string(sent)
+            extractable_triples = []
+            for triple in sample["state"]["graph"]:
+                subj, pred, obj = triple
+                if to_pure_letter_string(subj) in concat_text \
+                        and to_pure_letter_string(obj) in concat_text:
+                    extractable_triples.append(triple)
+
+            if len(extractable_triples) > 0:
+                print(extractable_triples)
+            input()
+
+
+def check_extractable_kg_triples(verbose=False):
+    cnt_triples = 0
+    cnt_extractable = 0
+    cnt_extractable_by_sent = 0
+
+    for idx in range(len(data)):
+        sample = data[idx]
+
+        if "graph" not in sample["state"] or \
+                len(sample["state"]["graph"]) == 0:
+            continue
 
         if verbose:
             print_sample(sample)
 
+        text = get_observation_text_from_sample(sample)
         concat_text = to_pure_letter_string(text)
 
         for triple in sample["state"]["graph"]:
@@ -212,12 +255,26 @@ def check_extractable_kg_triples(verbose=False):
                 input()
             """
 
+        sentences = sent_tokenize(text)
+        extractable_triples = set()
+        for sent in sentences:
+            concat_text = to_pure_letter_string(sent)
+            for triple in sample["state"]["graph"]:
+                subj, pred, obj = triple
+                if to_pure_letter_string(subj) in concat_text \
+                        and to_pure_letter_string(obj) in concat_text:
+                    extractable_triples.add(tuple(triple))
+        cnt_extractable_by_sent += len(extractable_triples)
+
     ratio = cnt_extractable / cnt_triples
+    ratio_by_sent = cnt_extractable_by_sent / cnt_triples
     print("Ratio of extractable:", ratio)
+    print("Ratio of extractable by sentence:", ratio_by_sent)
 
 
 if __name__ == "__main__":
-    check_samples()
+    # check_samples()
     # kb_statistics()
-    # check_extractable_kg_triples()
+    check_extractable_kg_triples()
+    # mine_path_patterns()
 
