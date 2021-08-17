@@ -18,7 +18,6 @@ from code.grpc_clients import AMRClientTransformer
 from code.core.stanford_nlp_parse import full_parsing
 from code.utils.format_util import to_json
 from code.core.models import PredicateCalculus
-
 from code.service.propbank import query_propbank_roles
 from code.service.verbnet import query_semantics
 from code.service.semlink import query_pb_vn_mapping
