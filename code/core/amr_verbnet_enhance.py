@@ -469,7 +469,8 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
     return g
 
 
-def visualize_enhanced_amr(graph, out_dir, graph_name="enhanced_amr", format="png"):
+def visualize_enhanced_amr(graph, out_dir, amr_only=False,
+                           graph_name="enhanced_amr", format="png"):
     """
     Generate a figure that visualize the enhanced AMR graph with VerbNet semantics
     :param graph: a networkx graph instance
@@ -489,12 +490,16 @@ def visualize_enhanced_amr(graph, out_dir, graph_name="enhanced_amr", format="pn
     for node in graph.nodes.data():
         # print("node:", node)
         node_id, node_attrs = node
+        if amr_only and node_attrs["source"] != "amr":
+            continue
         dot.node(node_id, label=node_attrs["label"] if "label" in node_attrs else node_id,
                  color=color_map[node_attrs["source"]])
 
     for edge in graph.edges().data():
         # print("edge:", edge)
         edge_src, edge_tgt, edge_attrs = edge
+        if amr_only and edge_attrs["source"] != "amr":
+            continue
         dot.edge(edge_src, edge_tgt, label=edge_attrs["label"],
                  color=color_map[edge_attrs["source"]])
 

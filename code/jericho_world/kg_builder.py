@@ -29,18 +29,6 @@ os.environ["PATH"] += os.pathsep + '/home/zliang/.conda/envs/amr-verbnet/bin'
 host = "0.0.0.0"
 port = 5000
 
-DATA_DIR = "./data/JerichoWorld"
-
-print("Loading training data ...")
-with open(os.path.join(DATA_DIR, "train.json")) as f:
-    train_data = json.load(f)
-print("Loaded training data ...")
-
-print("Loading test data ...")
-with open(os.path.join(DATA_DIR, "test.json")) as f:
-    test_data = json.load(f)
-print("Loaded test data ...")
-
 tokenizer = RegexpTokenizer(r'\w+')
 stemmer = PorterStemmer()
 
@@ -163,7 +151,7 @@ def check_samples(data, sample_size=10):
         # text = sample["state"]["obs"]
         # text = "You see a dishwasher and a fridge."
         # text = "You flip open the pizza box."
-        # text = "The dresser is made out of maple carefully finished with Danish oil."
+        text = "The dresser is made out of maple carefully finished with Danish oil."
         # text = "You are carrying : a bronze - hilted dagger a clay ocarina armor and silks ( worn ) ."
         res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
 
@@ -180,7 +168,7 @@ def check_samples(data, sample_size=10):
                     grounded_stmt=res["amr_parse"][i]["grounded_stmt"],
                     semantic_calculus=res["amr_parse"][i]["sem_cal"])
 
-                visualize_enhanced_amr(graph, out_dir="./test-output/")
+                visualize_enhanced_amr(graph, amr_only=False, out_dir="./test-output/")
                 print("visualize_enhanced_amr DONE.")
                 input()
 
@@ -671,10 +659,17 @@ def mine_path_patterns(data, output_dir, sample_size=None, verbose=False):
                     # print("Valid triple:", triple)
                     # input()
                     extractable_triples.append(triple)
-                    pattern = extract_pattern(sent, triple, verbose)
+                    try:
+                        pattern = extract_pattern(sent, triple, verbose)
+                    except Exception as e:
+                        print("Exception:", e)
+                        continue
+
                     if pattern is None:
                         continue
 
+                    print("\npred:", pred)
+                    print("pattern:", pattern)
                     pattern_dict[pred][pattern] += 1
                     if verbose:
                         print("\nsent:", sent)
@@ -698,6 +693,74 @@ def mine_path_patterns(data, output_dir, sample_size=None, verbose=False):
     with open(out_path, "wb") as file_obj:
         pickle.dump(pattern_dict, file_obj)
     print("Written patterns to {}".format(out_path))
+
+
+def sample_generator(data, sample_size=None, verbose=False):
+    if sample_size is not None:
+        # Select samples for initial testing
+        all_indices = list(range(len(data)))
+        random.shuffle(all_indices)
+        sample_indices = all_indices[:sample_size]
+        index_gen = tqdm((n for n in sample_indices), total=sample_size)
+    else:
+        index_gen = trange(len(data))
+
+    for idx in index_gen:
+        sample = data[idx]
+
+        if verbose:
+            print_sample(sample)
+
+        text = get_observation_text_from_sample(sample)
+        sentences = sent_tokenize(text)
+        if verbose:
+            print("\nsentences:")
+            print(sentences)
+
+        processed_sentences = []
+        for sent in sentences:
+            sent = sent.replace("\n\n", ": ").replace("\n", " ")
+
+            for triple in sample["state"]["graph"]:
+                subj, pred, obj = triple
+                if len(subj.strip()) == 0 or len(pred.strip()) == 0 or len(obj.strip()) == 0:
+                    continue
+
+                if subj.strip().lower() == obj.strip().lower():
+                    continue
+
+                if is_extractable(sent, triple):
+                    if verbose:
+                        print("\nsent:", sent)
+                    processed_sentences.append(sent)
+                    break
+
+        yield processed_sentences
+
+
+def build_amr_parse_cache(data, output_path, verbose=False):
+    dir_name = os.path.dirname(output_path)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    f = open(output_path, "w")
+    for sample_idx, sentences in enumerate(tqdm(sample_generator(data, verbose=verbose))):
+        sentence_parses = []
+        for text in sentences:
+            amr = amr_client.get_amr(text)
+            sentence_parses.append({
+                "sent": text,
+                "amr": amr
+            })
+            print("\nsample_idx:", sample_idx)
+            print("text:", text)
+            print("amr:\n", amr)
+        f.write(str(sample_idx))
+        f.write("\t")
+        f.write(json.dumps(sentence_parses))
+        f.write("\n")
+    f.close()
+    print("AMR cache DONE.")
 
 
 def check_extractable_kg_triples(data, verbose=False):
@@ -758,12 +821,45 @@ def check_extractable_kg_triples(data, verbose=False):
 
 
 if __name__ == "__main__":
-    # check_samples(train_data)
-    # kb_statistics(train_data)
-    # check_extractable_kg_triples(train_data)
-    # mine_path_patterns(train_data, "./path_output/", sample_size=50, verbose=True)
-    # mine_path_patterns(train_data, "./path_output/", sample_size=None, verbose=False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', type=str, default="./data/JerichoWorld")
+    
+    parser.add_argument('--check_samples', action='store_true', help="check_samples")
+    parser.add_argument('--kb_statistics', action='store_true', help="kb_statistics")
+    parser.add_argument('--check_extractable_kg_triples', action='store_true', help="check_extractable_kg_triples")
+    parser.add_argument('--mine_path_patterns', action='store_true', help="mine_path_patterns")
+    parser.add_argument('--apply_path_patterns', action='store_true', help="apply_path_patterns")
+    parser.add_argument('--build_amr_parse_cache', action='store_true', help="build_amr_parse_cache")
+    args = parser.parse_args()
 
-    apply_path_patterns(test_data, pattern_file_path="./path_output/patterns_train.pkl",
-                        output_dir="./path_output/", sample_size=50, verbose=True)
+    DATA_DIR = args.data_dir
+
+    print("Loading training data ...")
+    with open(os.path.join(DATA_DIR, "train.json")) as f:
+        train_data = json.load(f)
+    print("Loaded training data ...")
+    print("Size:", len(train_data))
+
+    print("Loading test data ...")
+    with open(os.path.join(DATA_DIR, "test.json")) as f:
+        test_data = json.load(f)
+    print("Loaded test data ...")
+    print("Size:", len(test_data))
+
+    if args.check_samples:
+        check_samples(train_data)
+    elif args.kb_statistics:
+        kb_statistics(train_data)
+    elif args.check_extractable_kg_triples(train_data):
+        check_extractable_kg_triples(train_data)
+    elif args.mine_path_patterns:
+        # mine_path_patterns(train_data, "./path_output/", sample_size=200, verbose=False)
+        mine_path_patterns(train_data, "./path_output/", sample_size=None, verbose=False)
+    elif args.apply_path_patterns:
+        apply_path_patterns(test_data, pattern_file_path="./path_output/patterns_train.pkl",
+                            output_dir="./path_output/", sample_size=500, verbose=True)
+    elif args.build_amr_parse_cache:
+        build_amr_parse_cache(train_data, "./data/JerichoWorld/train_amr.json")
+        build_amr_parse_cache(test_data, "./data/JerichoWorld/test_amr.json")
+    print("DONE.")
 
