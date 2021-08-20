@@ -4,6 +4,7 @@ import json
 import requests
 import pickle
 import penman
+import argparse
 from tqdm import tqdm, trange
 
 import networkx as nx
@@ -738,13 +739,16 @@ def sample_generator(data, sample_size=None, verbose=False):
         yield processed_sentences
 
 
-def build_amr_parse_cache(data, output_path, verbose=False):
+def build_amr_parse_cache(data, output_path, start_idx=0, verbose=False):
     dir_name = os.path.dirname(output_path)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    f = open(output_path, "w")
+    f = open(output_path, "a")
     for sample_idx, sentences in enumerate(tqdm(sample_generator(data, verbose=verbose))):
+        if sample_idx < start_idx:
+            continue
+
         sentence_parses = []
         for text in sentences:
             amr = amr_client.get_amr(text)
@@ -823,13 +827,14 @@ def check_extractable_kg_triples(data, verbose=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default="./data/JerichoWorld")
-    
+
     parser.add_argument('--check_samples', action='store_true', help="check_samples")
     parser.add_argument('--kb_statistics', action='store_true', help="kb_statistics")
     parser.add_argument('--check_extractable_kg_triples', action='store_true', help="check_extractable_kg_triples")
     parser.add_argument('--mine_path_patterns', action='store_true', help="mine_path_patterns")
     parser.add_argument('--apply_path_patterns', action='store_true', help="apply_path_patterns")
     parser.add_argument('--build_amr_parse_cache', action='store_true', help="build_amr_parse_cache")
+    parser.add_argument('--sample_start_idx', type=int, default=0, help="sample_start_idx")
     args = parser.parse_args()
 
     DATA_DIR = args.data_dir
@@ -850,7 +855,7 @@ if __name__ == "__main__":
         check_samples(train_data)
     elif args.kb_statistics:
         kb_statistics(train_data)
-    elif args.check_extractable_kg_triples(train_data):
+    elif args.check_extractable_kg_triples:
         check_extractable_kg_triples(train_data)
     elif args.mine_path_patterns:
         # mine_path_patterns(train_data, "./path_output/", sample_size=200, verbose=False)
@@ -859,7 +864,7 @@ if __name__ == "__main__":
         apply_path_patterns(test_data, pattern_file_path="./path_output/patterns_train.pkl",
                             output_dir="./path_output/", sample_size=500, verbose=True)
     elif args.build_amr_parse_cache:
-        build_amr_parse_cache(train_data, "./data/JerichoWorld/train_amr.json")
-        build_amr_parse_cache(test_data, "./data/JerichoWorld/test_amr.json")
+        build_amr_parse_cache(train_data, "./data/JerichoWorld/train_amr.json", start_idx=args.sample_start_idx)
+        build_amr_parse_cache(test_data, "./data/JerichoWorld/test_amr.json", start_idx=args.sample_start_idx)
     print("DONE.")
 

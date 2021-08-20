@@ -1,4 +1,4 @@
-"""AMR parsing wrapper"""
+"""A wrapper using the GRPC AMR parsing service"""
 from code.grpc_clients import AMRClientTransformer
 
 amr_host = "mnlp-demo.sl.cloud9.ibm.com"

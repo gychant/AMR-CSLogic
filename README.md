@@ -41,5 +41,10 @@ To test the service, try a test example:
 $ python code/test/test_service.py
 ```
 
+To build AMR parse cache
+```
+python code/jericho_world/kg_builder.py --build_amr_parse_cache --split_type train
+```
+
 
 
