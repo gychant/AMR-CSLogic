@@ -14,15 +14,15 @@ import penman
 import networkx as nx
 import graphviz
 
-from code.grpc_clients import AMRClientTransformer
-from code.core.stanford_nlp_parse import full_parsing
-from code.utils.format_util import to_json
-from code.core.models import PredicateCalculus
-from code.service.propbank import query_propbank_roles
-from code.service.verbnet import query_semantics
-from code.service.semlink import query_pb_vn_mapping
-# from code.service.ontology import query_pb_vn_mapping
-from code.service.amr import amr_client
+from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
+from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
+from amr_verbnet_semantics.utils.format_util import to_json
+from amr_verbnet_semantics.core.models import PredicateCalculus
+from amr_verbnet_semantics.service.propbank import query_propbank_roles
+from amr_verbnet_semantics.service.verbnet import query_semantics
+from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
+# from amr_verbnet_semantics.service.ontology import query_pb_vn_mapping
+from amr_verbnet_semantics.service.amr import amr_client
 
 verbose = False
 

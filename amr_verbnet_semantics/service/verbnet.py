@@ -1,9 +1,8 @@
 """PropBank query wrapper"""
 from nltk.corpus.util import LazyCorpusLoader
 from nltk.corpus.reader import VerbnetCorpusReader
-from code.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
-
-from code.service.propbank import query_propbank_roles
+from amr_verbnet_semantics.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
+from amr_verbnet_semantics.service.propbank import query_propbank_roles
 
 vn_dict = {
     "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),

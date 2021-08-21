@@ -1,5 +1,5 @@
 
-from code.grpc_clients import AMRClientTransformer
+from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
 
 amr_host = "mnlp-demo.sl.cloud9.ibm.com"
 amr_port = 59990

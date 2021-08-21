@@ -13,7 +13,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-import code.grpc_defs.ACEDoc_pb2 as ACEDoc__pb2
+from . import ACEDoc_pb2 as ACEDoc__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(

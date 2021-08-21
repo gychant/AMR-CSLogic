@@ -3,9 +3,9 @@ GRPC clients
 """
 import grpc
 
-from code.grpc_defs import ace_pb2_grpc, ace_pb2
-from code.grpc_defs.enhanced_amr_pb2 import Sentence
-from code.grpc_defs.enhanced_amr_pb2_grpc import AMR_EnhancerStub
+from ..grpc_defs import ace_pb2_grpc, ace_pb2
+from ..grpc_defs.enhanced_amr_pb2 import Sentence
+from ..grpc_defs.enhanced_amr_pb2_grpc import AMR_EnhancerStub
 
 ## Note: the following clients adapted from NSQA pipeline
 
@@ -52,6 +52,6 @@ class EnhancedAMRClient(object):
         """
         Client function to call the rpc for get_enhancedamr
         """
-        sentence = Sentence(text=message, has_amr = has_amr, org_amr = org_amr)
+        sentence = Sentence(text=message, has_amr=has_amr, org_amr=org_amr)
         return self.stub.get_enhanced_amr(sentence)
 

@@ -6,10 +6,10 @@ grpcio-tools==1.37.1
 penman==1.2.0
 fuzzywuzzy==0.17.0
 networkx==2.4
-spacy==2.3
+spacy<=2.0.16
 gensim==3.8.1
 protobuf==3.17.3
-cython
+# cython
 numpy
 python-Levenshtein
 stanfordcorenlp

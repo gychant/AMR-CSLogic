@@ -1,4 +1,4 @@
-from code.utils.sparql_util import request_wrapper
+from amr_verbnet_semantics.utils.sparql_util import request_wrapper
 
 url_query = "http://goedel.sl.cloud9.ibm.com:9999/blazegraph/namespace/VerbnetAndGroupings/#query"
 
