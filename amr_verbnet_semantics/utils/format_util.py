@@ -21,3 +21,12 @@ def to_json(obj):
     else:
         return obj
 
+
+class DictObject(object):
+    def __init__(self, in_dict):
+        for key, val in in_dict.items():
+            if isinstance(val, (list, tuple)):
+                setattr(self, key, [DictObject(x) if isinstance(x, dict) else x for x in val])
+            else:
+                setattr(self, key, DictObject(val) if isinstance(val, dict) else val)
+

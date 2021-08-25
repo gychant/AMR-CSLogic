@@ -22,6 +22,7 @@ from nltk.stem.porter import PorterStemmer
 from amr_verbnet_semantics.service.local_amr import amr_client
 from amr_verbnet_semantics.core.amr_verbnet_enhance import generate_enhanced_amr, visualize_enhanced_amr
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
+from amr_verbnet_semantics.utils.eval_util import Metric
 
 import random
 random.seed(42)
@@ -77,6 +78,15 @@ def kb_statistics(data):
         print("\npred:", pred)
         print("examples:", examples[:5])
     print("DONE.")
+
+
+def game_name_statistics(data):
+    cnt_game = Counter()
+    for sample in data:
+        cnt_game[sample["rom"]] += 1
+
+    print("\ngame name counter:")
+    pprint(cnt_game)
 
 
 def print_sample(sample):
@@ -263,21 +273,20 @@ def build_graph_from_amr(amr, verbose=False):
     node_dict = dict()
 
     # read AMR annotation
-    nodes, edges, token2node_id, node_idx2node_id, node_id2node_idx = \
-        read_amr_annotation(amr)
+    amr_obj = read_amr_annotation(amr)
     if verbose:
-        print("\nnodes:", nodes)
-        print("\nedges:", edges)
-        print("\ntoken2node_id:", token2node_id)
-        print("\nnode_idx2node_id:", node_idx2node_id)
-        print("\nnode_id2node_idx:", node_id2node_idx)
+        print("\nnodes:", amr_obj["nodes"])
+        print("\nedges:", amr_obj["edges"])
+        print("\ntoken2node_id:", amr_obj["token2node_id"])
+        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
+        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
 
     # construct graph from AMRs
-    for node in nodes:
+    for node in amr_obj["nodes"]:
         if verbose:
             print("node:", node)
 
-        node_id = node_idx2node_id[node["node_idx"]]
+        node_id = amr_obj["node_idx2node_id"][node["node_idx"]]
         g_directed.add_node(node_id, label=node["node_label"], source="amr")
         g_undirected.add_node(node_id, label=node["node_label"], source="amr")
         node_dict[node_id] = node["node_label"]
@@ -292,21 +301,21 @@ def build_graph_from_amr(amr, verbose=False):
                 attr_constant = attr.target
 
             # use the parent node of attributes for pattern mining
-            token2node_id[attr_constant.lower()] = attr.source
+            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
 
-    for edge in edges:
+    for edge in amr_obj["edges"]:
         if verbose:
             print("edge:", edge)
 
-        src_node_id = node_idx2node_id[edge["src_node_idx"]]
-        tgt_node_id = node_idx2node_id[edge["tgt_node_idx"]]
+        src_node_id = amr_obj["node_idx2node_id"][edge["src_node_idx"]]
+        tgt_node_id = amr_obj["node_idx2node_id"][edge["tgt_node_idx"]]
         g_directed.add_edge(src_node_id, tgt_node_id, label=":" + edge["edge_label"], source="amr")
         g_undirected.add_edge(src_node_id, tgt_node_id, label=":" + edge["edge_label"], source="amr")
 
     if verbose:
         print("\nnode_dict:", node_dict)
-        print("\ntoken2node_id post:", token2node_id)
-    return g_directed, g_undirected, token2node_id
+        print("\ntoken2node_id post:", amr_obj["token2node_id"])
+    return g_directed, g_undirected, amr_obj
 
 
 def build_graph_from_amr_penman(amr, verbose=False):
@@ -324,14 +333,13 @@ def build_graph_from_amr_penman(amr, verbose=False):
     node_dict = dict()
 
     # read AMR annotation
-    nodes, edges, token2node_id, node_idx2node_id, node_id2node_idx = \
-        read_amr_annotation(amr)
+    amr_obj = read_amr_annotation(amr)
     if verbose:
-        print("\nnodes:", nodes)
-        print("\nedges:", edges)
-        print("\ntoken2node_id:", token2node_id)
-        print("\nnode_idx2node_id:", node_idx2node_id)
-        print("\nnode_id2node_idx:", node_id2node_idx)
+        print("\nnodes:", amr_obj["nodes"])
+        print("\nedges:", amr_obj["edges"])
+        print("\ntoken2node_id:", amr_obj["token2node_id"])
+        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
+        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
 
     # construct graph from AMRs
     for inst in amr_graph.instances():
@@ -352,7 +360,7 @@ def build_graph_from_amr_penman(amr, verbose=False):
                 attr_constant = attr.target
 
             # use the parent node of attributes for pattern mining
-            token2node_id[attr_constant.lower()] = attr.source
+            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
 
     for edge in amr_graph.edges():
         if verbose:
@@ -363,8 +371,8 @@ def build_graph_from_amr_penman(amr, verbose=False):
 
     if verbose:
         print("\nnode_dict:", node_dict)
-        print("\ntoken2node_id post:", token2node_id)
-    return g_directed, g_undirected, token2node_id
+        print("\ntoken2node_id post:", amr_obj["token2node_id"])
+    return g_directed, g_undirected, amr_obj
 
 
 def query_paths(graph, cutoff):
@@ -375,9 +383,9 @@ def query_paths(graph, cutoff):
     :return: A dictionary with path as key and set of node pair tuple as values
     """
     paths = defaultdict(set)
-    print("\nnodes:")
-    print(graph.nodes())
-    print("cutoff:", cutoff)
+    # print("\nnodes:")
+    # print(graph.nodes())
+    # print("cutoff:", cutoff)
 
     nodes = graph.nodes()
     for node_pair in list(combinations(nodes, 2)):
@@ -413,7 +421,14 @@ def find_text_span(sent_tokens, target_token_set):
     :param target_token_set: the token set to match
     :return: the found text span
     """
-    for perm_tokens in permutations(target_token_set):
+    # print("\nsent_tokens:", sent_tokens)
+    # print("\ntarget_token_set:", target_token_set)
+    if len(target_token_set) > 6:
+        # a large token set would take a lot of time due to permutation
+        return None
+
+    for perm_idx, perm_tokens in enumerate(permutations(target_token_set)):
+        # print("perm_idx:", perm_idx)
         span_tokens = []
         for idx, tok in enumerate(sent_tokens):
             cur_idx = len(span_tokens)
@@ -426,64 +441,96 @@ def find_text_span(sent_tokens, target_token_set):
     return None
 
 
-def induce_kg_triples(text, pattern_dict, verbose=True):
+def get_descendant_leaf_nodes(graph, ancestor_node):
+    leaf_nodes = [node for node in nx.descendants(graph, ancestor_node)
+                  if graph.in_degree(node) != 0 and graph.out_degree(node) == 0]
+    return leaf_nodes
+
+
+def get_node_label(graph, node):
+    node_dict = graph.nodes(data=True)
+    if node in node_dict:
+        label = node_dict[node]["label"]
+        if label.startswith("\"") and label.endswith("\""):
+            label = label[1:-1]
+        return label
+    return None
+
+
+def get_token_by_node(node, amr_obj):
+    return amr_obj["node_id2token"][node]
+
+
+def induce_kg_triples(amr, pattern_dict, top_k_patterns, verbose=False):
     """
     Induce triples from text using given patterns
-    :param text: the text input
+    :param text: the AMR parse
     :param pattern_dict: a dictionary storing path patterns for
         all prefined relations
+    :param verbose:
     :return:
     """
     triples = set()
-    amr = amr_client.get_amr(text)
-
-    if verbose:
-        print("\ntext:", text)
-        print("\namr:")
-        print(amr)
-
     amr_tokens = read_tokenization(amr)
-    g_directed, g_undirected, token2node_id = build_graph_from_amr(amr, verbose)
+    g_directed, g_undirected, amr_obj = build_graph_from_amr(amr, verbose)
 
     for rel in pattern_dict:
-        patterns = pattern_dict[rel]
-        for pattern in patterns:
+        # print("\nrel:", rel)
+        # print("pattern_dict[rel]:")
+        # print(pattern_dict[rel].items())
+        # print("\ntop k:")
+        # print(pattern_dict[rel].most_common(top_k_patterns))
+        # input()
+        patterns = pattern_dict[rel].most_common(top_k_patterns)
+        for pattern, freq in patterns:
+            # print("pattern:", pattern)
             # pattern = tuple([':ARG0', 'carry-01', ':ARG1', 'and', ':op2'])
             # paths = query_paths(g_undirected, cutoff=len(pattern))
             cutoff = int((len(pattern) - 1) / 2 + 1)
             path2node_pairs = query_paths(g_undirected, cutoff)
 
             for path in path2node_pairs:
-                print("\npath:", path)
-                print("pattern:", pattern)
-                input()
                 if path != pattern:
                     continue
+                if len(path) <= 1:
+                    continue
 
+                # print("\npath:", path)
                 for node_pair in path2node_pairs[path]:
+                    # print("node_pair:", node_pair)
                     subj_node, obj_node = node_pair
-                    print("\nnode_pair:", node_pair)
-                    subj_desc = nx.descendants(g_directed, subj_node)
-                    obj_desc = nx.descendants(g_directed, obj_node)
-                    print("subj_desc:", subj_desc)
-                    print("obj_desc:", obj_desc)
+
+                    subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
+                    obj_desc = get_descendant_leaf_nodes(g_directed, obj_node)
+
                     if len(subj_desc) == 0:
-                        subj = g_directed.nodes(data=True)[subj_node]["label"]
+                        subj = get_token_by_node(subj_node, amr_obj)
                     else:
-                        subj_tokens = set([g_directed.nodes(data=True)[n]["label"]
+                        subj_tokens = set([get_token_by_node(n, amr_obj)
                                            for n in subj_desc])
                         subj = find_text_span(amr_tokens, subj_tokens)
 
                     if len(obj_desc) == 0:
-                        obj = g_directed.nodes(data=True)[obj_node]["label"]
+                        obj = get_token_by_node(obj_node, amr_obj)
                     else:
-                        obj_tokens = set([g_directed.nodes(data=True)[n]["label"]
+                        obj_tokens = set([get_token_by_node(n, amr_obj)
                                           for n in obj_desc])
                         obj = find_text_span(amr_tokens, obj_tokens)
-                    print("subj:", subj)
-                    print("obj:", obj)
-                    input()
-                    triples.add((subj, rel, obj))
+
+                    if verbose:
+                        print("\npath:", path)
+                        print("\nnode_pair:", node_pair)
+                        print("subj_desc:", subj_desc)
+                        print("obj_desc:", obj_desc)
+                        print("subj:", subj)
+                        print("obj:", obj)
+                        print("\namr:")
+                        print(amr)
+                        input()
+
+                    if subj is not None and obj is not None:
+                        print("\ntriple:", (subj, rel, obj))
+                        triples.add((subj, rel, obj))
     return triples
 
 
@@ -501,18 +548,18 @@ def extract_pattern(amr, triple, verbose=False):
         print("\namr:")
         print(amr)
 
-    g_directed, g_undirected, token2node_id = build_graph_from_amr(amr, verbose)
+    g_directed, g_undirected, amr_obj = build_graph_from_amr(amr, verbose)
 
     subj, pred, obj = triple
     subj_tokens = subj.lower().split()
     obj_tokens = obj.lower().split()
     if verbose:
-        print("\ntoken2node_id:", token2node_id)
+        print("\ntoken2node_id:", amr_obj["token2node_id"])
         print("\nsubj_tokens:", subj_tokens)
         print("\nobj_tokens:", obj_tokens)
 
-    subj_leaf_nodes = map_tokens_to_nodes(subj_tokens, token2node_id)
-    obj_leaf_nodes = map_tokens_to_nodes(obj_tokens, token2node_id)
+    subj_leaf_nodes = map_tokens_to_nodes(subj_tokens, amr_obj["token2node_id"])
+    obj_leaf_nodes = map_tokens_to_nodes(obj_tokens, amr_obj["token2node_id"])
     if verbose:
         print("\nsubj_leaf_nodes:", subj_leaf_nodes)
         print("\nobj_leaf_nodes:", obj_leaf_nodes)
@@ -559,8 +606,8 @@ def convert_to_labeled_path(graph, path):
             edge_label = graph.get_edge_data(path[src_idx], path[tgt_idx])["label"]
             labeled_path.append(edge_label)
             if tgt_idx < len(path) - 1:
-                print("path[tgt_idx]:", path[tgt_idx])
-                print("node data:", graph.nodes(data=True)[path[tgt_idx]])
+                # print("path[tgt_idx]:", path[tgt_idx])
+                # print("node data:", graph.nodes(data=True)[path[tgt_idx]])
                 labeled_path.append(graph.nodes(data=True)[path[tgt_idx]]["label"])
     # print("labeled_path:", labeled_path)
     return labeled_path
@@ -606,14 +653,14 @@ def is_extractable(text, triple):
 
 
 def apply_path_patterns(data, pattern_file_path, output_dir,
-                        amr_cache_path=None, sample_size=None, verbose=False):
+                        top_k_patterns=5, amr_cache_path=None,
+                        start_idx=None, verbose=False):
     """
     Apply path patterns to induce KG triples from text.
     :param data: a list of raw samples
     :param pattern_file_path: the path to the pattern file
     :param output_dir: the output directory for saving induced triples
     :param amr_cache_path: the path to the AMR parse for the datas
-    :param sample_size: the size of samples for sanity check
     :param verbose:
     :return:
     """
@@ -629,10 +676,14 @@ def apply_path_patterns(data, pattern_file_path, output_dir,
     if amr_cache_path is not None:
         amr_cache = load_amr_cache(amr_cache_path)
 
-    f_out = open(os.path.join(output_dir, "extracted_triples.jsonl"), "w")
+    f_out = open(os.path.join(output_dir, "extracted_triples.jsonl"), "a")
     try:
-        for sample_idx, sentences in enumerate(tqdm(
-                sample_generator(data, extractable_only=False, verbose=verbose))):
+        for sample_idx, sentences in enumerate(sample_generator(
+                data, extractable_only=False, verbose=verbose)):
+            if sample_idx < start_idx:
+                continue
+
+            print("sample_idx:", sample_idx)
             sample = data[sample_idx]
             if verbose:
                 print_sample(sample)
@@ -643,7 +694,7 @@ def apply_path_patterns(data, pattern_file_path, output_dir,
                 print("\nsentences:")
                 print(sentences)
 
-            for sent in sentences:
+            for sent_idx, sent in enumerate(sentences):
                 if verbose:
                     print("\nsent:", sent)
 
@@ -653,12 +704,15 @@ def apply_path_patterns(data, pattern_file_path, output_dir,
                 else:
                     amr = amr_client.get_amr(sent)
 
-                triples = induce_kg_triples(amr, pattern_dict)
+                triples = induce_kg_triples(amr, pattern_dict, top_k_patterns, verbose)
+                # print("triples:", triples)
                 all_triples.update(triples)
 
+            # print("all_triples:", list(all_triples))
+            # input()
             result = {
-                "idx": idx,
-                "pred": all_triples,
+                "idx": sample_idx,
+                "pred": list(all_triples),
                 "true": sample["state"]["graph"]
             }
             f_out.write(json.dumps(result))
@@ -684,6 +738,81 @@ def load_amr_cache(path):
             sentences = json.loads(amr_str)
             amr_cache[int(sample_idx)] = sentences
     return amr_cache
+
+
+def compute_metrics(samples, triple_file_path):
+    game2metric = dict()
+    game2metric["overall"] = Metric()
+    overall_metric = game2metric["overall"]
+
+    sample_idx = 0
+    with open(triple_file_path) as f:
+        for line in f:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+
+            game_name = samples[sample_idx]["rom"]
+            sample_idx += 1
+
+            if game_name not in game2metric:
+                game2metric[game_name] = Metric()
+            metric = game2metric[game_name]
+
+            data = json.loads(line)
+
+            metric.cnt_samples += 1
+            overall_metric.cnt_samples += 1
+
+            if len(data["true"]) == 0:
+                metric.cnt_samples_wo_true_triples += 1
+                overall_metric.cnt_samples_wo_true_triples += 1
+                continue
+
+            if len(data["pred"]) == 0:
+                metric.cnt_samples_wo_pred_triples += 1
+                overall_metric.cnt_samples_wo_pred_triples += 1
+                continue
+
+            pred_triples = set()
+            for subj, rel, obj in data["pred"]:
+                pred_triples.add((subj.lower(), rel.lower(), obj.lower()))
+
+            true_triples = set()
+            for subj, rel, obj in data["true"]:
+                true_triples.add((subj.lower(), rel.lower(), obj.lower()))
+
+            true_pred_triples = pred_triples.intersection(true_triples)
+            # compute precision
+            prec = len(true_pred_triples) / len(pred_triples)
+            metric.sum_prec += prec
+            overall_metric.sum_prec += prec
+
+            # compute recall
+            recall = len(true_pred_triples) / len(true_triples)
+            metric.sum_recall += recall
+            overall_metric.sum_recall += recall
+
+            # compute f1
+            if prec + recall > 0:
+                f1 = 2 * prec * recall / (prec + recall)
+            else:
+                f1 = 0
+            metric.sum_f1 += f1
+            overall_metric.sum_f1 += f1
+
+    for game in game2metric:
+        metric = game2metric[game]
+        avg_prec = metric.sum_prec / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
+        avg_recall = metric.sum_recall / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
+        avg_f1 = metric.sum_f1 / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
+        print("\ngame:", game)
+        print("\ncnt_samples:", metric.cnt_samples)
+        print("cnt_samples_wo_true_triples:", metric.cnt_samples_wo_true_triples)
+        print("\navg_prec:", avg_prec)
+        print("avg_recall:", avg_recall)
+        print("avg_f1:", avg_f1)
+        print()
 
 
 def mine_path_patterns(data, output_dir, amr_cache_path=None,
@@ -746,7 +875,7 @@ def mine_path_patterns(data, output_dir, amr_cache_path=None,
                         pattern = extract_pattern(amr, triple, verbose)
                     except Exception as e:
                         print("Exception:", e)
-                        pattern = extract_pattern(amr, triple, verbose=True)
+                        # pattern = extract_pattern(amr, triple, verbose=True)
                         raise e
                         continue
 
@@ -812,6 +941,7 @@ def sample_generator(data, extractable_only=True, sample_size=None, verbose=Fals
 
         if not extractable_only:
             yield sentences
+            continue
 
         processed_sentences = []
         for sent in sentences:
@@ -946,11 +1076,15 @@ if __name__ == "__main__":
 
     parser.add_argument('--check_samples', action='store_true', help="check_samples")
     parser.add_argument('--kb_statistics', action='store_true', help="kb_statistics")
+    parser.add_argument('--game_name_statistics', action='store_true', help="game_name_statistics")
     parser.add_argument('--check_extractable_kg_triples', action='store_true', help="check_extractable_kg_triples")
     parser.add_argument('--mine_path_patterns', action='store_true', help="mine_path_patterns")
     parser.add_argument('--apply_path_patterns', action='store_true', help="apply_path_patterns")
+    parser.add_argument('--top_k_patterns', type=int, default=20, help="top_k_patterns")
     parser.add_argument('--build_amr_parse_cache', action='store_true', help="build_amr_parse_cache")
+    parser.add_argument('--compute_metrics', action='store_true', help="compute_metrics")
     parser.add_argument('--amr_cache_path', type=str, default=None, help="amr_cache_path")
+    parser.add_argument('--triple_file_path', type=str, default=None, help="triple_file_path")
     parser.add_argument('--sample_start_idx', type=int, default=0, help="sample_start_idx")
     parser.add_argument('--split_type', type=str, choices=["train", "test"],
                         default="train", help="sample_start_idx")
@@ -974,6 +1108,8 @@ if __name__ == "__main__":
         check_samples(train_data)
     elif args.kb_statistics:
         kb_statistics(train_data)
+    elif args.game_name_statistics:
+        game_name_statistics(test_data)
     elif args.check_extractable_kg_triples:
         check_extractable_kg_triples(train_data)
     elif args.mine_path_patterns:
@@ -981,7 +1117,9 @@ if __name__ == "__main__":
                            sample_size=None, verbose=False)
     elif args.apply_path_patterns:
         apply_path_patterns(test_data, pattern_file_path="./path_output/patterns_train.pkl",
-                            output_dir="./path_output/", sample_size=500, verbose=True)
+                            output_dir="./path_output/", top_k_patterns=args.top_k_patterns,
+                            amr_cache_path=args.amr_cache_path, start_idx=args.sample_start_idx,
+                            verbose=False)
     elif args.build_amr_parse_cache:
         if args.split_type == "train":
             build_amr_parse_cache(train_data, "./data/JerichoWorld/train_amr.json",
@@ -991,5 +1129,7 @@ if __name__ == "__main__":
             build_amr_parse_cache(test_data, "./data/JerichoWorld/test_amr.json",
                                   extractable_only=False,
                                   start_idx=args.sample_start_idx)
+    elif args.compute_metrics:
+        compute_metrics(test_data, args.triple_file_path)
     print("DONE.")
 

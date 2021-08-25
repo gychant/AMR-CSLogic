@@ -11,7 +11,9 @@ def double_quote(json_str):
 
 def read_amr_annotation(amr):
     token2node_idx = dict()
+    node_idx2token = dict()
     token2node_id = dict()
+    node_id2token = dict()
     nodes = []
     edges = []
 
@@ -24,13 +26,19 @@ def read_amr_annotation(amr):
         elif line.startswith("# ::node"):
             node_info = line[len("# ::node"):].strip()
             columns = node_info.split()
-            if len(columns) < 3:
+            if len(columns) < 2:
                 continue
 
-            node_idx, node_label, token_range = columns
-            start_tok_idx, end_tok_idx = token_range.split("-")
-            token = " ".join(tokens[int(start_tok_idx):int(end_tok_idx)]).lower()
+            if len(columns) == 2:
+                node_idx, node_label = columns
+                token = node_label
+            else:
+                node_idx, node_label, token_range = columns
+                start_tok_idx, end_tok_idx = token_range.split("-")
+                token = " ".join(tokens[int(start_tok_idx):int(end_tok_idx)]).lower()
+
             token2node_idx[token] = node_idx
+            node_idx2token[node_idx] = token
             nodes.append({
                 "node_idx": node_idx,
                 "node_label": node_label,
@@ -69,5 +77,25 @@ def read_amr_annotation(amr):
 
     for token in token2node_idx:
         token2node_id[token] = node_idx2node_id[token2node_idx[token]]
-    return nodes, edges, token2node_id, node_idx2node_id, node_id2node_idx
+
+    try:
+        for node_id in node_id2node_idx:
+            node_id2token[node_id] = node_idx2token[node_id2node_idx[node_id]]
+    except Exception as e:
+        print(amr)
+        print(e)
+        input()
+
+    amr_data = {
+        "nodes": nodes,
+        "edges": edges,
+        "token2node_idx": token2node_idx,
+        "node_idx2token": node_idx2token,
+        "token2node_id": token2node_id,
+        "node_id2token": node_id2token,
+        "node_idx2node_id": node_idx2node_id,
+        "node_id2node_idx": node_id2node_idx
+    }
+
+    return amr_data
 

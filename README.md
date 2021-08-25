@@ -74,3 +74,10 @@ $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --amr_cache_path ./data/JerichoWorld/test_amr.json 
 ```
 
+To compute the precision and recall of extracted triples with the ground truth,
+```
+$ python amr_verbnet_semantics/jericho_world/kg_builder.py \
+    --compute_metrics \
+    --triple_file_path ./path_output/extracted_triples.jsonl
+```
+
