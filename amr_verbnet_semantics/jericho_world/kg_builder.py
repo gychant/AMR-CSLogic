@@ -1,4 +1,5 @@
 """Build knowledge graphs of the game using AMR-VerbNet semantics"""
+import copy
 import os
 import json
 import requests
@@ -160,11 +161,12 @@ def check_samples(data, sample_size=10):
     for idx in sample_indices:
         sample = data[idx]
 
-        text = get_observation_text_from_sample(sample)
+        # text = get_observation_text_from_sample(sample)
         # text = sample["state"]["obs"]
         # text = "You see a dishwasher and a fridge."
         # text = "You flip open the pizza box."
         text = "The dresser is made out of maple carefully finished with Danish oil."
+        # text = "In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S."
         # text = "You are carrying : a bronze - hilted dagger a clay ocarina armor and silks ( worn ) ."
         res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
 
@@ -175,15 +177,62 @@ def check_samples(data, sample_size=10):
         if "amr_parse" in res:
             for i in range(len(res["amr_parse"])):
                 print_enhanced_amr(res["amr_parse"][i])
-
-                graph = generate_enhanced_amr(
-                    amr=res["amr_parse"][i]["amr"],
+                list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
                     grounded_stmt=res["amr_parse"][i]["grounded_stmt"],
-                    semantic_calculus=res["amr_parse"][i]["sem_cal"])
+                    semantic_calc=res["amr_parse"][i]["sem_cal"])
 
-                visualize_enhanced_amr(graph, amr_only=False, out_dir="./test-output/")
+                graph_idx = 0
+                for grounded_stmt, semantic_calc in zip(
+                        list_grounded_stmt, list_semantic_calc):
+                    graph = generate_enhanced_amr(
+                        amr=res["amr_parse"][i]["amr"],
+                        grounded_stmt=grounded_stmt,
+                        semantic_calculus=semantic_calc)
+
+                    visualize_enhanced_amr(graph, amr_only=False,
+                                           graph_name="enhanced_amr_{}".format(graph_idx),
+                                           out_dir="./test-output/")
+                    graph_idx += 1
                 print("visualize_enhanced_amr DONE.")
                 input()
+
+
+def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
+    """
+    Generate unique groundings from multiple mappings in grounded statements
+    and the corresponding semantic calculus.
+    :param grounded_stmt:
+    :param semantic_calculus:
+    :return:
+    """
+    if verbose:
+        print("\ngrounded_stmt:")
+        print(grounded_stmt)
+        print("\nsemantic_calculus:")
+        print(semantic_calc)
+
+    stmt_pools = [dict()]
+    calc_pools = [dict()]
+    for pb_id in grounded_stmt:
+        new_stmt_pools = []
+        new_calc_pools = []
+        for vn_class in grounded_stmt[pb_id]:
+            for unique_stmts in stmt_pools:
+                unique_stmts[pb_id] = copy.deepcopy(grounded_stmt[pb_id][vn_class])
+                new_stmt_pools.append(copy.deepcopy(unique_stmts))
+
+            for unique_calcs in calc_pools:
+                unique_calcs[pb_id] = copy.deepcopy(semantic_calc[pb_id][vn_class])
+                new_calc_pools.append(copy.deepcopy(unique_calcs))
+        stmt_pools = new_stmt_pools
+        calc_pools = new_calc_pools
+
+    if verbose:
+        print("\nstmt_pools:")
+        print(str(stmt_pools))
+        print("\ncalc_pools:")
+        print(str(calc_pools))
+    return stmt_pools, calc_pools
 
 
 def to_pure_letter_string(text):
@@ -669,6 +718,12 @@ def apply_path_patterns(data, pattern_file_path, output_dir,
         pattern_dict = pickle.load(file_obj)
     print("Loaded patterns from {}".format(pattern_file_path))
 
+    for rel in pattern_dict:
+        patterns = pattern_dict[rel]
+        print("\nrel:", rel)
+        print(patterns.most_common(10))
+    input()
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -776,12 +831,21 @@ def compute_metrics(samples, triple_file_path):
 
             pred_triples = set()
             for subj, rel, obj in data["pred"]:
-                pred_triples.add((subj.lower(), rel.lower(), obj.lower()))
+                triple = (subj.lower(), rel.lower(), obj.lower())
+                pred_triples.add(triple)
+                metric.pred_triples_by_rel[rel].add(triple)
+                overall_metric.pred_triples_by_rel[rel].add(triple)
 
             true_triples = set()
             for subj, rel, obj in data["true"]:
-                true_triples.add((subj.lower(), rel.lower(), obj.lower()))
+                triple = (subj.lower(), rel.lower(), obj.lower())
+                true_triples.add(triple)
+                metric.rel_counter[rel.lower()] += 1
+                overall_metric.rel_counter[rel.lower()] += 1
+                metric.true_triples_by_rel[rel].add(triple)
+                overall_metric.true_triples_by_rel[rel].add(triple)
 
+            # compute sample-wise scores
             true_pred_triples = pred_triples.intersection(true_triples)
             # compute precision
             prec = len(true_pred_triples) / len(pred_triples)
@@ -801,6 +865,9 @@ def compute_metrics(samples, triple_file_path):
             metric.sum_f1 += f1
             overall_metric.sum_f1 += f1
 
+    print("\nglobal rel_counter:")
+    print(overall_metric.rel_counter)
+
     for game in game2metric:
         metric = game2metric[game]
         avg_prec = metric.sum_prec / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
@@ -809,9 +876,13 @@ def compute_metrics(samples, triple_file_path):
         print("\ngame:", game)
         print("\ncnt_samples:", metric.cnt_samples)
         print("cnt_samples_wo_true_triples:", metric.cnt_samples_wo_true_triples)
-        print("\navg_prec:", avg_prec)
-        print("avg_recall:", avg_recall)
-        print("avg_f1:", avg_f1)
+        print("\nrel_counter:")
+        print(metric.rel_counter)
+        print("\nrel2metric:")
+        pprint(metric.compute_relationwise_metric())
+        print("\navg_prec:", "{:.3f}".format(avg_prec * 100))
+        print("avg_recall:", "{:.3f}".format(avg_recall * 100))
+        print("avg_f1:", "{:.3f}".format(avg_f1 * 100))
         print()
 
 
@@ -906,7 +977,7 @@ def mine_path_patterns(data, output_dir, amr_cache_path=None,
     out_path = os.path.join(output_dir, "patterns_train.pkl")
     with open(out_path, "wb") as file_obj:
         pickle.dump(pattern_dict, file_obj)
-    print("Written patterns to {}".format(out_path))
+    print("\nWritten patterns to {}".format(out_path))
 
 
 def sample_generator(data, extractable_only=True, sample_size=None, verbose=False):

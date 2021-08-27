@@ -144,16 +144,19 @@ def ground_amr(amr, verbose=False):
 
             mapping_res = query_pb_vn_mapping(pb_id)
             if mapping_res is not None and pb_id not in semantics:
-                verbnet_id = mapping_res["mapping"]
-                verbnet_version = mapping_res["source"]
+                # deal with multiple mappings
                 pb_vn_mappings[pb_id] = mapping_res
-                print("\nrole_mappings:", role_mappings)
-                amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
-                semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
-                matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
-                # print("\nmatched_role_set:", matched_role_set)
-                # print("\nmatched_semantics:", matched_semantics)
-                semantics[pb_id] = matched_semantics
+                for mapping in mapping_res:
+                    verbnet_id = mapping["mapping"]
+                    verbnet_version = mapping["source"]
+                    amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
+                    semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
+                    matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
+                    # print("\nmatched_role_set:", matched_role_set)
+                    # print("\nmatched_semantics:", matched_semantics)
+                    if pb_id not in semantics:
+                        semantics[pb_id] = dict()
+                    semantics[pb_id][verbnet_id] = matched_semantics
 
     if verbose:
         print("role_mappings:", role_mappings)
@@ -187,13 +190,18 @@ def construct_calculus_from_semantics(semantics):
     """
     results = dict()
     for propbank_id in semantics:
-        for event in semantics[propbank_id]:
-            if propbank_id not in results:
-                results[propbank_id] = []
-            results[propbank_id].append(PredicateCalculus(
-                predicate=event["predicate_value"].upper(),
-                arguments=[arg["value"] for arg in event["arguments"]],
-                is_negative=event["is_negative"]))
+        if propbank_id not in results:
+            results[propbank_id] = dict()
+
+        for vn_class in semantics[propbank_id]:
+            list_calculus = []
+            results[propbank_id][vn_class] = list_calculus
+
+            for event in semantics[propbank_id][vn_class]:
+                list_calculus.append(PredicateCalculus(
+                    predicate=event["predicate_value"].upper(),
+                    arguments=[arg["value"] for arg in event["arguments"]],
+                    is_negative=event["is_negative"]))
     # print(results)
     # input()
     return results
@@ -206,7 +214,6 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
     :param role_mappings:
     :return:
     """
-
     if verbose:
         print("\narg_map:")
         print(arg_map)
@@ -223,52 +230,62 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
             continue
 
         if propbank_id not in results:
-            results[propbank_id] = []
+            results[propbank_id] = dict()
 
         cur_role_mappings = role_mappings[propbank_id]
-        for src in arg_map[propbank_id]:
-            cur_calculus = copy.deepcopy(semantic_calc[propbank_id])
-            to_add_stmt = []
-            for stmt_idx in range(len(cur_calculus)):
-                stmt = cur_calculus[stmt_idx]
-                for arg_idx in range(len(stmt.arguments)):
-                    for role in cur_role_mappings:
-                        role_info = cur_role_mappings[role]
-                        for vn_cls_info in role_info:
-                            if stmt.arguments[arg_idx].lower() == vn_cls_info["vntheta"].lower():
-                                # print("role:", role)
-                                # print("arg_map:", arg_map)
-                                if role not in arg_map[propbank_id][src]:
-                                    continue
+        for vn_class in semantic_calc[propbank_id]:
+            semantic = semantic_calc[propbank_id][vn_class]
+            for src in arg_map[propbank_id]:
+                cur_calculus = copy.deepcopy(semantic)
+                to_add_stmt = []
+                for stmt_idx in range(len(cur_calculus)):
+                    stmt = cur_calculus[stmt_idx]
+                    for arg_idx in range(len(stmt.arguments)):
+                        for role in cur_role_mappings:
+                            role_info = cur_role_mappings[role]
+                            for vn_cls_info in role_info:
+                                if stmt.arguments[arg_idx].lower() == vn_cls_info["vntheta"].lower():
+                                    # print("role:", role)
+                                    # print("arg_map:", arg_map)
+                                    if role not in arg_map[propbank_id][src]:
+                                        continue
 
-                                stmt.arguments[arg_idx] = arg_map[propbank_id][src][role]
-                                if "and" in arg_map and arg_map[propbank_id][src][role] in arg_map["and"]:
-                                    op_role_dict = arg_map["and"][arg_map[propbank_id][src][role]]
-                                    for idx, op_role in enumerate(op_role_dict):
-                                        if idx == 0:
-                                            stmt.arguments[arg_idx] = op_role_dict[op_role]
-                                        else:
-                                            stmt_copy = copy.deepcopy(stmt)
-                                            stmt_copy.arguments[arg_idx] = op_role_dict[op_role]
-                                            to_add_stmt.append(stmt_copy)
+                                    stmt.arguments[arg_idx] = arg_map[propbank_id][src][role]
+                                    if "and" in arg_map and arg_map[propbank_id][src][role] in arg_map["and"]:
+                                        op_role_dict = arg_map["and"][arg_map[propbank_id][src][role]]
+                                        for idx, op_role in enumerate(op_role_dict):
+                                            if idx == 0:
+                                                stmt.arguments[arg_idx] = op_role_dict[op_role]
+                                            else:
+                                                stmt_copy = copy.deepcopy(stmt)
+                                                stmt_copy.arguments[arg_idx] = op_role_dict[op_role]
+                                                to_add_stmt.append(stmt_copy)
 
-            final_calculus = []
-            for stmt in (cur_calculus + to_add_stmt):
-                # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
-                if stmt.predicate == "PATH":
-                    # LOCATION(start(E), Theme, ?Initial_Location)
-                    # and LOCATION(end(E), Theme, Destination)
-                    theme = stmt.arguments[1]
-                    dest = stmt.arguments[4]
-                    final_calculus.append(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"]))
-                    final_calculus.append(PredicateCalculus("LOCATION", ["end(E)", theme, dest]))
-                else:
-                    final_calculus.append(stmt)
-            results[propbank_id].append(final_calculus)
+                final_calculus = []
+                for stmt in (cur_calculus + to_add_stmt):
+                    # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
+                    if stmt.predicate == "PATH":
+                        # LOCATION(start(E), Theme, ?Initial_Location)
+                        # and LOCATION(end(E), Theme, Destination)
+                        theme = stmt.arguments[1]
+                        dest = stmt.arguments[4]
+                        final_calculus.append(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"]))
+                        final_calculus.append(PredicateCalculus("LOCATION", ["end(E)", theme, dest]))
+                    else:
+                        final_calculus.append(stmt)
+
+                if vn_class not in results[propbank_id]:
+                    results[propbank_id][vn_class] = []
+                results[propbank_id][vn_class].append(final_calculus)
 
     for pb_id in semantic_calc:
         if pb_id not in arg_map:
-            results[propbank_id].append(semantic_calc[pb_id])
+            for vn_class in semantic_calc[pb_id]:
+                if pb_id not in results:
+                    results[pb_id] = dict()
+                if vn_class not in results[pb_id]:
+                    results[pb_id][vn_class] = []
+                results[pb_id][vn_class].append(semantic_calc[pb_id][vn_class])
     return results
 
 
@@ -503,8 +520,9 @@ def visualize_enhanced_amr(graph, out_dir, amr_only=False,
         dot.edge(edge_src, edge_tgt, label=edge_attrs["label"],
                  color=color_map[edge_attrs["source"]])
 
-    dot.render(os.path.join(out_dir, graph_name))
-    print("Written graph to file {}".format(out_dir))
+    out_path = os.path.join(out_dir, graph_name)
+    dot.render(out_path)
+    print("\nWritten graph to file {}".format(out_path))
 
 
 if __name__ == "__main__":
@@ -520,4 +538,5 @@ if __name__ == "__main__":
     # ground_text_to_verbnet("Here 's a dining table .")
     # ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.")
+    # ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.")
 
