@@ -21,7 +21,7 @@ echo "Saved to ${save_dir}/verbnet3.3"
 
 # VerbNet 3.4
 git clone https://github.com/cu-clear/verbnet.git ./verbnet_clone
-cp -R ./verbnet_clone/verbnet3.4/ ${save_dir}
+cp -R ./verbnet_clone/verbnet3.4 ${save_dir}
 rm -rf ./verbnet_clone
 echo "Saved to ${save_dir}/verbnet3.4"
 

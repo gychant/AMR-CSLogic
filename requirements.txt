@@ -16,3 +16,4 @@ stanfordcorenlp
 flask
 matplotlib
 graphviz
+ipykernel

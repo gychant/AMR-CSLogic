@@ -1,6 +1,6 @@
 # amr-verbnet-semantics
 
-To create project specific virtual environment, 
+To create a project specific virtual environment, 
 ```
 $ . set_environment.sh
 ```
@@ -44,6 +44,17 @@ The Flask logs indicate what URL the service is running on.
 To test the service, try a test example:
 ```
 $ python amr_verbnet_semantics/test/test_service.py
+```
+
+If you want to use jupyter notebook for development, use the following commands to install the virtual environment into the jupyter notebook,
+```
+$ pip install ipykernel
+$ python -m ipykernel install --user --name=venv
+$ jupyter notebook
+```
+Then the notebook will be running at port 8888 by default. To open the remote notebook in your local browser, port forwarding can be used as follows
+```
+$ ssh -NL 8888:localhost:8888 {USER_NAME}@{SERVER_URL}
 ```
 
 To build AMR parse cache for the training samples,
