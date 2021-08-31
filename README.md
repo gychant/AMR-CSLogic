@@ -92,3 +92,17 @@ $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --triple_file_path ./path_output/extracted_triples.jsonl
 ```
 
+
+### Using AMR parser directly
+To use AMR parser directly instead of a gRPC endpoint, You have to download the model file from the following path on CCC. Then you have to unzip the file in third_party directory.
+```
+/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip
+```
+
+Secondly you have to execute the following command. 
+```
+cd third_party
+wget https://dl.fbaipublicfiles.com/fairseq/models/roberta.large.tar.gz
+tar -zxvf roberta.large.tar.gz
+rm roberta.large.tar.gz
+```
