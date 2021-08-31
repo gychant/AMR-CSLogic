@@ -25,3 +25,11 @@ def query_semantics(verbnet_id, verbnet_version):
         semantics[tuple(roles)] = frame["semantics"]
     return semantics
 
+
+if __name__ == '__main__':
+    verbnet_id = "escape-51.1-1-1"
+    verbnet_version = "verbnet3.4"
+    print("\nQuerying verbnet class {} in version {} ...".format(verbnet_id, verbnet_version))
+    print("\nresult:")
+    print(query_semantics(verbnet_id, verbnet_version))
+

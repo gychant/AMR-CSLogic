@@ -21,7 +21,8 @@ from nltk.stem.porter import PorterStemmer
 
 # from amr_verbnet_semantics.service.amr import amr_client
 from amr_verbnet_semantics.service.local_amr import amr_client
-from amr_verbnet_semantics.core.amr_verbnet_enhance import generate_enhanced_amr, visualize_enhanced_amr
+from amr_verbnet_semantics.core.amr_verbnet_enhance import \
+    generate_enhanced_amr, visualize_enhanced_amr, induce_unique_groundings
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 from amr_verbnet_semantics.utils.eval_util import Metric
 
@@ -195,44 +196,6 @@ def check_samples(data, sample_size=10):
                     graph_idx += 1
                 print("visualize_enhanced_amr DONE.")
                 input()
-
-
-def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
-    """
-    Generate unique groundings from multiple mappings in grounded statements
-    and the corresponding semantic calculus.
-    :param grounded_stmt:
-    :param semantic_calculus:
-    :return:
-    """
-    if verbose:
-        print("\ngrounded_stmt:")
-        print(grounded_stmt)
-        print("\nsemantic_calculus:")
-        print(semantic_calc)
-
-    stmt_pools = [dict()]
-    calc_pools = [dict()]
-    for pb_id in grounded_stmt:
-        new_stmt_pools = []
-        new_calc_pools = []
-        for vn_class in grounded_stmt[pb_id]:
-            for unique_stmts in stmt_pools:
-                unique_stmts[pb_id] = copy.deepcopy(grounded_stmt[pb_id][vn_class])
-                new_stmt_pools.append(copy.deepcopy(unique_stmts))
-
-            for unique_calcs in calc_pools:
-                unique_calcs[pb_id] = copy.deepcopy(semantic_calc[pb_id][vn_class])
-                new_calc_pools.append(copy.deepcopy(unique_calcs))
-        stmt_pools = new_stmt_pools
-        calc_pools = new_calc_pools
-
-    if verbose:
-        print("\nstmt_pools:")
-        print(str(stmt_pools))
-        print("\ncalc_pools:")
-        print(str(calc_pools))
-    return stmt_pools, calc_pools
 
 
 def to_pure_letter_string(text):

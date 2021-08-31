@@ -24,8 +24,6 @@ from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 # from amr_verbnet_semantics.service.ontology import query_pb_vn_mapping
 from amr_verbnet_semantics.service.amr import amr_client
 
-verbose = False
-
 
 def parse_text(text):
     sentences = sent_tokenize(text)
@@ -40,7 +38,7 @@ def parse_text(text):
     return sentence_parses
 
 
-def ground_text_to_verbnet(text):
+def ground_text_to_verbnet(text, verbose=False):
     sentences = sent_tokenize(text)
     print("parsing ...")
     parse = full_parsing(text, do_coreference=True)
@@ -52,7 +50,7 @@ def ground_text_to_verbnet(text):
     for idx, sent in enumerate(sentences):
         sent_res = dict()
         amr = amr_client.get_amr(sent)
-        g_res = ground_amr(amr, verbose=True)
+        g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
         sent_res.update(g_res)
@@ -92,7 +90,7 @@ def match_semantics_by_role_set(semantics, amr_role_set, verbose=False):
     return raw_vn_role_sets[min_diff_idx], semantics[raw_vn_role_sets[min_diff_idx]]
 
 
-def build_role_set_from_mappings(node_name, verbnet_id, arg_map, role_mappings):
+def build_role_set_from_mappings(node_name, verbnet_id, arg_map, role_mappings, verbose=False):
     role_set = set()
     vn_class_name = "-".join(verbnet_id.split("-")[1:])
     for src in arg_map:
@@ -121,11 +119,10 @@ def ground_amr(amr, verbose=False):
     semantics = dict()
     pb_vn_mappings = dict()
 
-    ori_amr_cal, arg_map = construct_calculus_from_amr(amr)
+    raw_amr_cal, arg_map = construct_calculus_from_amr(amr)
     if verbose:
-        print("\nori_amr_cal:", ori_amr_cal)
-        print("arg_map:", arg_map)
-        # input()
+        print("\nraw_amr_cal:", raw_amr_cal)
+        print("\narg_map:", arg_map)
 
     for inst in g.instances():
         node_name = inst.source
@@ -159,11 +156,12 @@ def ground_amr(amr, verbose=False):
                     semantics[pb_id][verbnet_id] = matched_semantics
 
     if verbose:
-        print("role_mappings:", role_mappings)
+        print("\nrole_mappings:", role_mappings)
 
-    amr_cal = process_and_operator(ori_amr_cal)
+    amr_cal = process_and_operator(raw_amr_cal)
     sem_cal = construct_calculus_from_semantics(semantics)
     grounded_stmt = ground_semantics(arg_map, sem_cal, role_mappings)
+    unique_grounded_stmt, unique_sem_cal = induce_unique_groundings(grounded_stmt, sem_cal)
 
     if verbose:
         print("\namr_cal:", amr_cal)
@@ -175,11 +173,19 @@ def ground_amr(amr, verbose=False):
         "role_mappings": to_json(role_mappings),
         "amr_cal": to_json(amr_cal),
         "sem_cal": to_json(sem_cal),
+        "unique_sem_cal": to_json(unique_sem_cal),
         "grounded_stmt": to_json(grounded_stmt),
+        "unique_grounded_stmt": to_json(unique_grounded_stmt),
         "amr_cal_str": str(amr_cal),
         "sem_cal_str": str(sem_cal),
-        "grounded_stmt_str": str(grounded_stmt)
+        "unique_sem_cal_str": str(unique_sem_cal),
+        "grounded_stmt_str": str(grounded_stmt),
+        "unique_grounded_stmt_str": str(unique_grounded_stmt)
     }
+
+    if verbose:
+        print("\nresults:")
+        print(results)
     return results
 
 
@@ -207,11 +213,12 @@ def construct_calculus_from_semantics(semantics):
     return results
 
 
-def ground_semantics(arg_map, semantic_calc, role_mappings):
+def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
     """
     :param arg_map:
     :param semantic_calc:
     :param role_mappings:
+    :param verbose:
     :return:
     """
     if verbose:
@@ -290,6 +297,30 @@ def ground_semantics(arg_map, semantic_calc, role_mappings):
 
 
 def process_and_operator(amr_calc):
+    """
+    Handle the situation where the "and" operator should be replaced by copies of statements
+
+    Example:
+    You see a dishwasher and a fridge .
+
+    (s / see-01
+        :ARG0 (y / you)
+        :ARG1 (a / and
+            :op1 (d / dishwasher)
+            :op2 (f / fridge)))
+
+    AMR Parse in the predicate calculus form:
+    see-01(s) AND see-01.arg0(s, y) AND see-01.arg1(s, a) AND and(a) AND and.op1(a, d)
+    AND  and.op1(a, f) AND dishwasher(d) AND fridge(f)
+
+    AND-operator processing:
+    see-01.arg1(s, a) AND and(a) AND and.op1(a, d) AND  and.op1(a, f)
+    => see-01.arg1(s, d) AND see-01.arg1(s, f) AND see-01(s) AND see-01.arg0(s, y)
+    AND see-01.arg1(s, d) AND see-01.arg1(s, f) AND dishwasher(d) AND fridge(f)
+
+    :param amr_calc:
+    :return:
+    """
     # One pass to build dict
     op2args = dict()
     not_and_calc = []
@@ -319,6 +350,7 @@ def process_and_operator(amr_calc):
 
 def construct_calculus_from_amr(amr):
     """
+    Construct predicate calculus from AMR parse
     :param amr: AMR string
     :return: list of PredicateCalculus objects
     """
@@ -351,6 +383,11 @@ def construct_calculus_from_amr(amr):
 
 
 def get_event_from_argument(argument):
+    """
+    Infer event from arguments (basically for VerbNet 3.2 semantics)
+    :param argument:
+    :return:
+    """
     argument = argument.strip()
     prefixes = ["start(", "end(", "during(", "result("]
     for pre in prefixes:
@@ -359,6 +396,45 @@ def get_event_from_argument(argument):
             event_time_point = pre[:-1]
             return event, event_time_point
     return None, None
+
+
+def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
+    """
+    Generate unique groundings from multiple mappings in grounded statements
+    and the corresponding semantic calculus.
+    :param grounded_stmt:
+    :param semantic_calc:
+    :param verbose:
+    :return:
+    """
+    if verbose:
+        print("\ngrounded_stmt:")
+        print(grounded_stmt)
+        print("\nsemantic_calculus:")
+        print(semantic_calc)
+
+    stmt_pools = [dict()]
+    calc_pools = [dict()]
+    for pb_id in grounded_stmt:
+        new_stmt_pools = []
+        new_calc_pools = []
+        for vn_class in grounded_stmt[pb_id]:
+            for unique_stmts in stmt_pools:
+                unique_stmts[pb_id] = copy.deepcopy(grounded_stmt[pb_id][vn_class])
+                new_stmt_pools.append(copy.deepcopy(unique_stmts))
+
+            for unique_calcs in calc_pools:
+                unique_calcs[pb_id] = copy.deepcopy(semantic_calc[pb_id][vn_class])
+                new_calc_pools.append(copy.deepcopy(unique_calcs))
+        stmt_pools = new_stmt_pools
+        calc_pools = new_calc_pools
+
+    if verbose:
+        print("\nstmt_pools:")
+        print(str(stmt_pools))
+        print("\ncalc_pools:")
+        print(str(calc_pools))
+    return stmt_pools, calc_pools
 
 
 def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
@@ -526,7 +602,6 @@ def visualize_enhanced_amr(graph, out_dir, amr_only=False,
 
 
 if __name__ == "__main__":
-    verbose = True
     # parse_text("You enter a kitchen.")
     # parse_text("The quick brown fox jumped over the lazy moon.")
     # parse_text("You see a dishwasher and a fridge.")
@@ -537,6 +612,6 @@ if __name__ == "__main__":
     # ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # ground_text_to_verbnet("Here 's a dining table .")
     # ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
-    ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.")
-    # ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.")
+    # ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
+    ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
 
