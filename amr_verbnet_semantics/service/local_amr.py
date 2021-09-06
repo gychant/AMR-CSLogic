@@ -14,17 +14,17 @@ PARSER_DIR = f'{os.path.dirname(__file__)}/../../third_party'
 class AMRClient(object):
     def __init__(self, use_cuda=False):
         self.parser = None
-        self.use_cuda=use_cuda
+        self.use_cuda = use_cuda
 
     def _get_parser(self, use_cuda=False):
-        cwd = os.getcwd()
-        os.chdir(PARSER_DIR)
+        # cwd = os.getcwd()
+        # os.chdir(PARSER_DIR)
         amr_parser = AMRParser.from_checkpoint(CHECKPOINT_PATH,
                                                roberta_cache_path=ROBERTA_CACHE_PATH,
                                                use_cuda=use_cuda)
         # for loading resources, parse a test sentence
         amr_parser.parse_sentences([['test']])
-        os.chdir(cwd)
+        # os.chdir(cwd)
         return amr_parser
 
     def get_amr(self, text):
@@ -40,13 +40,6 @@ amr_client = AMRClient()
 
 
 if __name__ == "__main__":
-    """
-    parser = AMRParser.from_checkpoint(in_checkpoint)
-    annotations = parser.parse_sentences([['The', 'boy', 'travels'], ['He', 'visits', 'places']])
-    # Penman notation
-    for amr in annotations[0]:
-        print("".join(amr))
-    """
     amr = AMRClient().get_amr("The boy travels")
     print(amr)
 

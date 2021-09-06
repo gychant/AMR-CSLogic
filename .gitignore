@@ -133,3 +133,5 @@ DATA/
 stanford-corenlp-full-2018-10-05/
 test-output/
 path_output/
+
+*.pyc
