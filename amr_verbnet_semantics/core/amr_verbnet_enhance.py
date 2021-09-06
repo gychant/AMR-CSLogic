@@ -38,18 +38,23 @@ def parse_text(text):
     return sentence_parses
 
 
-def ground_text_to_verbnet(text, verbose=False):
+def ground_text_to_verbnet(text, local_amr_client=None, use_coreference=True, verbose=False):
     sentences = sent_tokenize(text)
     print("parsing ...")
-    parse = full_parsing(text, do_coreference=True)
     print("\ntext:\n", text)
     print("\nsentences:\n==>", "\n\n==>".join(sentences))
-    print("\ncoreference:\n", parse["coreference"])
+    parse = {"coreference": []}
+    if use_coreference:
+        parse = full_parsing(text, do_coreference=True)
+        print("\ncoreference:\n", parse["coreference"])
 
     sentence_parses = []
     for idx, sent in enumerate(sentences):
         sent_res = dict()
-        amr = amr_client.get_amr(sent)
+        if local_amr_client:
+            amr = local_amr_client.get_amr(sent)
+        else:
+            amr = amr_client.get_amr(sent)
         g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
