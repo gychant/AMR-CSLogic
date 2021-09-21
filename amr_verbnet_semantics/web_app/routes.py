@@ -73,7 +73,7 @@ def verbnet_semantics():
             "error": "Empty input text."
         }), status.HTTP_200_OK)
 
-    parse = ground_text_to_verbnet(text)
+    parse = ground_text_to_verbnet(text, verbose=False)
     results = {
         "text": text,
         "coreference": parse["coreference"],

@@ -11,6 +11,7 @@ import os
 from fuzzywuzzy import process
 from nltk.corpus.reader import VerbnetCorpusReader as VerbnetCorpusReaderOrig
 from nltk.corpus.util import LazyCorpusLoader
+import config
 
 
 class VerbnetCorpusReader(VerbnetCorpusReaderOrig):
@@ -32,7 +33,6 @@ class VerbnetCorpusReader(VerbnetCorpusReaderOrig):
 
         # Class identifier: get the xml, and find the right elt.
         classid = self.longid(fileid_or_classid)
-        import os
         classid = os.path.basename(classid)
         if classid in self._class_to_fileid:
             fileid = self._class_to_fileid[self.longid(classid)]
@@ -86,6 +86,9 @@ vn2class_id_dict = {
     "verbnet3.4": build_class_id_dict("verbnet3.4")
 }
 
+# matching_priorities = ["verbnet3.4", "verbnet3.3", "verbnet3.2"]
+matching_priorities = ["verbnet3.2"]
+
 
 def check_mapping_completeness(output_dir):
     if not os.path.exists(output_dir):
@@ -93,70 +96,81 @@ def check_mapping_completeness(output_dir):
 
     invalid_out_path = os.path.join(output_dir, "invalid_mappings.tsv")
     invalid_out_file = open(invalid_out_path, "w")
-    invalid_out_file.write(
-        "verb_roleset\tvn_class\tfuzzy_matches\tvn_version\n")
+    invalid_out_file.write("verb_roleset\tvn_class\tfuzzy_matches\tvn_version\n")
 
     valid_out_path = os.path.join(output_dir, "valid_mappings.tsv")
     valid_out_file = open(valid_out_path, "w")
     valid_out_file.write("verb_roleset\tvn_class\tmatches\tvn_version\n")
 
     valid_cnt = 0
+    total_cnt = 0
     for verb_roleset in pb_vn_mappings:
         vn_mappings = pb_vn_mappings[verb_roleset]
         # check the version that has a valid mapping
-        invalid_out_file_buffer = []
-        is_mapped = False
-        for vn_version in vn2class_id_dict:
-            class_id_dict = vn2class_id_dict[vn_version]
-            all_class_ids = class_id_dict.keys()
-            if vn_mappings["vn_class"] not in class_id_dict:
-                # print("\nInvalid mappings in vn {}:".format(vn_version))
-                # print("verb_roleset:", verb_roleset)
-                # print("vn_class:", vn_mappings["vn_class"])
-                fuzzy_matches = process.extract(
-                    vn_mappings["vn_class"], all_class_ids)[:5]
-                fuzzy_matches = [class_id_dict[m]
-                                 for m, score in fuzzy_matches]
-                # print(fuzzy_matches)
-                invalid_out_file_buffer.append("{}\t{}\t{}\t{}\n".format(
-                    verb_roleset, vn_mappings["vn_class"],
-                    str(fuzzy_matches), vn_version))
-            else:
-                valid_cnt += 1
-                is_mapped = True
-                # print("[{}] mapped to [{}] in {}".format(
-                #     verb_roleset, class_id_dict[vn_mappings["vn_class"]], vn_version))
-                valid_out_file.write("{}\t{}\t{}\t{}\n".format(
-                    verb_roleset, vn_mappings["vn_class"],
-                    class_id_dict[vn_mappings["vn_class"]], vn_version))
-                break
+        for vn_class in vn_mappings:
+            total_cnt += 1
+            # check the version that has a valid mapping
+            invalid_out_file_buffer = []
+            is_mapped = False
 
-        if not is_mapped:
-            for row in invalid_out_file_buffer:
-                invalid_out_file.write(row)
+            for vn_version in matching_priorities:
+                class_id_dict = vn2class_id_dict[vn_version]
+                all_class_ids = class_id_dict.keys()
+                if vn_class not in class_id_dict:
+                    # print("\nInvalid mappings in vn {}:".format(vn_version))
+                    # print("verb_roleset:", verb_roleset)
+                    # print("vn_class:", vn_class)
+                    fuzzy_matches = process.extract(vn_class, all_class_ids)[:5]
+                    fuzzy_matches = [class_id_dict[m] for m, score in fuzzy_matches]
+                    # print(fuzzy_matches)
+                    invalid_out_file_buffer.append("{}\t{}\t{}\t{}\n".format(
+                        verb_roleset, vn_class,
+                        str(fuzzy_matches), vn_version))
+                else:
+                    valid_cnt += 1
+                    is_mapped = True
+                    # print("[{}] mapped to [{}] in {}".format(
+                    #     verb_roleset, class_id_dict[vn_class], vn_version))
+                    valid_out_file.write("{}\t{}\t{}\t{}\n".format(
+                        verb_roleset, vn_class,
+                        class_id_dict[vn_class], vn_version))
+                    break
+
+            if not is_mapped:
+                for row in invalid_out_file_buffer:
+                    invalid_out_file.write(row)
 
     invalid_out_file.close()
     valid_out_file.close()
-    print("\nInvalid cnt:", len(pb_vn_mappings) - valid_cnt)
-    print("Total:", len(pb_vn_mappings))
+    print("\nInvalid cnt:", total_cnt - valid_cnt)
+    print("Total:", total_cnt)
     print("\nWritten to file {}".format(invalid_out_path))
     print("\nWritten to file {}".format(valid_out_path))
 
 
 def query_pb_vn_mapping(verb_roleset):
+    if config.KB_SOURCE == "rdf":
+        return query_pb_vn_mapping_from_rdf(verb_roleset)
+    return query_pb_vn_mapping_from_semlink(verb_roleset)
+
+
+def query_pb_vn_mapping_from_semlink(verb_roleset):
     if verb_roleset not in pb_vn_mappings:
         return None
 
     # check the version that has a valid mapping
     vn_mappings = pb_vn_mappings[verb_roleset]
-    for vn_version in vn2class_id_dict:
+    for vn_version in matching_priorities:
         class_id_dict = vn2class_id_dict[vn_version]
-        if "vn_class" in vn_mappings and vn_mappings["vn_class"] in class_id_dict:
-            res = {
-                "mapping": class_id_dict[vn_mappings["vn_class"]],
-                "source": vn_version
-            }
-            return res
+        mapping_res = []
+        for vn_class in vn_mappings:
+            if vn_class in class_id_dict:
+                mapping_res.append({
+                    "mapping": class_id_dict[vn_class],
+                    "source": vn_version
+                })
+        if len(mapping_res) > 0:
+            return mapping_res
     return None
 
 

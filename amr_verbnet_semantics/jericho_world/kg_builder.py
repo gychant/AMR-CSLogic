@@ -22,8 +22,8 @@ from nltk.stem.porter import PorterStemmer
 # from amr_verbnet_semantics.service.amr import amr_client
 from amr_verbnet_semantics.service.local_amr import amr_client
 from amr_verbnet_semantics.core.amr_verbnet_enhance import \
-    generate_enhanced_amr, visualize_enhanced_amr, induce_unique_groundings
-from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
+    build_graph_from_amr, build_semantic_graph, visualize_semantic_graph, \
+    induce_unique_groundings, ground_text_to_verbnet
 from amr_verbnet_semantics.utils.eval_util import Metric
 
 import random
@@ -153,51 +153,6 @@ def print_enhanced_amr(amr_object):
     print(amr_object["grounded_stmt_str"])
 
 
-def check_samples(data, sample_size=10):
-    # Select samples for initial testing
-    all_indices = list(range(len(data)))
-    random.shuffle(all_indices)
-    sample_indices = all_indices[:sample_size]
-
-    for idx in sample_indices:
-        sample = data[idx]
-
-        # text = get_observation_text_from_sample(sample)
-        # text = sample["state"]["obs"]
-        # text = "You see a dishwasher and a fridge."
-        # text = "You flip open the pizza box."
-        text = "The dresser is made out of maple carefully finished with Danish oil."
-        # text = "In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S."
-        # text = "You are carrying : a bronze - hilted dagger a clay ocarina armor and silks ( worn ) ."
-        res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
-
-        print("\nres.text:")
-        print(res.text)
-
-        res = json.loads(res.text)
-        if "amr_parse" in res:
-            for i in range(len(res["amr_parse"])):
-                print_enhanced_amr(res["amr_parse"][i])
-                list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
-                    grounded_stmt=res["amr_parse"][i]["grounded_stmt"],
-                    semantic_calc=res["amr_parse"][i]["sem_cal"])
-
-                graph_idx = 0
-                for grounded_stmt, semantic_calc in zip(
-                        list_grounded_stmt, list_semantic_calc):
-                    graph = generate_enhanced_amr(
-                        amr=res["amr_parse"][i]["amr"],
-                        grounded_stmt=grounded_stmt,
-                        semantic_calculus=semantic_calc)
-
-                    visualize_enhanced_amr(graph, amr_only=False,
-                                           graph_name="enhanced_amr_{}".format(graph_idx),
-                                           out_dir="./test-output/")
-                    graph_idx += 1
-                print("visualize_enhanced_amr DONE.")
-                input()
-
-
 def to_pure_letter_string(text):
     """
     Remove all punctuations and then spaces in the text
@@ -268,123 +223,6 @@ def get_lowest_common_ancestor(g, nodes):
             ancestors.add(anc)
         nodes = list(ancestors)
     return nodes[0]
-
-
-def build_graph_from_amr(amr, verbose=False):
-    """
-    Build undirected and directed networkx graphs from the
-    annotation of AMR parse
-    :param amr: the AMR parse
-    :param verbose:
-    :return:
-    """
-    amr_graph = penman.decode(amr)
-    g_directed = nx.DiGraph()
-    g_undirected = nx.Graph()
-
-    node_dict = dict()
-
-    # read AMR annotation
-    amr_obj = read_amr_annotation(amr)
-    if verbose:
-        print("\nnodes:", amr_obj["nodes"])
-        print("\nedges:", amr_obj["edges"])
-        print("\ntoken2node_id:", amr_obj["token2node_id"])
-        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
-        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
-
-    # construct graph from AMRs
-    for node in amr_obj["nodes"]:
-        if verbose:
-            print("node:", node)
-
-        node_id = amr_obj["node_idx2node_id"][node["node_idx"]]
-        g_directed.add_node(node_id, label=node["node_label"], source="amr")
-        g_undirected.add_node(node_id, label=node["node_label"], source="amr")
-        node_dict[node_id] = node["node_label"]
-
-        for attr in amr_graph.attributes(node_id):
-            if verbose:
-                print("attr:", attr)
-
-            if attr.target.startswith("\"") and attr.target.endswith("\""):
-                attr_constant = attr.target[1:-1]
-            else:
-                attr_constant = attr.target
-
-            # use the parent node of attributes for pattern mining
-            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
-
-    for edge in amr_obj["edges"]:
-        if verbose:
-            print("edge:", edge)
-
-        src_node_id = amr_obj["node_idx2node_id"][edge["src_node_idx"]]
-        tgt_node_id = amr_obj["node_idx2node_id"][edge["tgt_node_idx"]]
-        g_directed.add_edge(src_node_id, tgt_node_id, label=":" + edge["edge_label"], source="amr")
-        g_undirected.add_edge(src_node_id, tgt_node_id, label=":" + edge["edge_label"], source="amr")
-
-    if verbose:
-        print("\nnode_dict:", node_dict)
-        print("\ntoken2node_id post:", amr_obj["token2node_id"])
-    return g_directed, g_undirected, amr_obj
-
-
-def build_graph_from_amr_penman(amr, verbose=False):
-    """
-    Build undirected and directed networkx graphs from AMR parse
-    using penman parsed graph
-    :param amr: the AMR parse
-    :param verbose:
-    :return:
-    """
-    amr_graph = penman.decode(amr)
-    g_directed = nx.DiGraph()
-    g_undirected = nx.Graph()
-
-    node_dict = dict()
-
-    # read AMR annotation
-    amr_obj = read_amr_annotation(amr)
-    if verbose:
-        print("\nnodes:", amr_obj["nodes"])
-        print("\nedges:", amr_obj["edges"])
-        print("\ntoken2node_id:", amr_obj["token2node_id"])
-        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
-        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
-
-    # construct graph from AMRs
-    for inst in amr_graph.instances():
-        if verbose:
-            print("inst:", inst)
-
-        g_directed.add_node(inst.source, label=inst.target, source="amr")
-        g_undirected.add_node(inst.source, label=inst.target, source="amr")
-        node_dict[inst.source] = inst.target
-
-        for attr in amr_graph.attributes(inst.source):
-            if verbose:
-                print("attr:", attr)
-
-            if attr.target.startswith("\"") and attr.target.endswith("\""):
-                attr_constant = attr.target[1:-1]
-            else:
-                attr_constant = attr.target
-
-            # use the parent node of attributes for pattern mining
-            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
-
-    for edge in amr_graph.edges():
-        if verbose:
-            print("edge:", edge)
-
-        g_directed.add_edge(edge.source, edge.target, label=edge.role, source="amr")
-        g_undirected.add_edge(edge.source, edge.target, label=edge.role, source="amr")
-
-    if verbose:
-        print("\nnode_dict:", node_dict)
-        print("\ntoken2node_id post:", amr_obj["token2node_id"])
-    return g_directed, g_undirected, amr_obj
 
 
 def query_paths(graph, cutoff):
@@ -473,18 +311,67 @@ def get_token_by_node(node, amr_obj):
     return amr_obj["node_id2token"][node]
 
 
-def induce_kg_triples(amr, pattern_dict, top_k_patterns, verbose=False):
+def induce_kg_triples(text, pattern_dict, top_k_patterns,
+                      graph_type="amr", amr=None, verbose=False):
     """
     Induce triples from text using given patterns
-    :param text: the AMR parse
+    :param amr: the AMR parse
     :param pattern_dict: a dictionary storing path patterns for
         all prefined relations
+    :param top_k_patterns: top k patterns to apply
+    :param graph_type: the type of graph for KG triple induction
+        with values ["amr", "amr_verbnet", "verbnet"]
+    :param verbose:
+    :return:
+    """
+    all_triples = set()
+    parse = ground_text_to_verbnet(text, amr=amr, verbose=verbose)
+    sentence_parses = parse["sentence_parses"]
+
+    for i in range(len(sentence_parses)):
+        # if verbose:
+        #     print_enhanced_amr(sentence_parses[i])
+
+        list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
+            grounded_stmt=sentence_parses[i]["grounded_stmt"],
+            semantic_calc=sentence_parses[i]["sem_cal"])
+
+        for grounded_stmt, semantic_calc in zip(
+                list_grounded_stmt, list_semantic_calc):
+            graph, amr_obj = build_semantic_graph(
+                amr=sentence_parses[i]["amr"],
+                grounded_stmt=grounded_stmt,
+                semantic_calculus=semantic_calc)
+            triples = induce_kg_triples_from_grounding(
+                graph, amr_obj, pattern_dict, top_k_patterns,
+                graph_type, verbose=verbose)
+            all_triples.update(list(triples))
+    return all_triples
+
+
+def induce_kg_triples_from_grounding(g_directed, amr_obj, pattern_dict, top_k_patterns,
+                                     graph_type="amr", verbose=False):
+    """
+    Induce triples from text using given patterns
+    :param g_directed: the directed graph constructed from parse
+    :param amr_obj: the amr object that contains the mappings needed
+    :param pattern_dict: a dictionary storing path patterns for
+        all prefined relations
+    :param top_k_patterns: top k patterns to apply
+    :param graph_type: the type of graph for KG triple induction
+            with values ["amr", "amr_verbnet", "verbnet"]
     :param verbose:
     :return:
     """
     triples = set()
     amr_tokens = read_tokenization(amr)
-    g_directed, g_undirected, amr_obj = build_graph_from_amr(amr, verbose)
+
+    if graph_type == "amr":
+        g_directed, amr_obj = build_graph_from_amr(amr, verbose)
+    elif graph_type in ["amr_verbnet", "verbnet"]:
+        g_directed, amr_obj = build_semantic_graph(amr, verbose)
+
+    g_undirected = g_directed.to_undirected()
 
     for rel in pattern_dict:
         # print("\nrel:", rel)
@@ -546,21 +433,81 @@ def induce_kg_triples(amr, pattern_dict, top_k_patterns, verbose=False):
     return triples
 
 
-def extract_pattern(amr, triple, verbose=False):
+def extract_pattern(text, triple, graph_type="amr", amr=None, verbose=False):
     """
     Extract the path pattern between the node corresponding to the subject
     and the node corresponding to the object, in the input triple
-    :param amr: the AMR parse for constructing the graph
+    :param text: the input text
+    :param triple: a triple in the format of (subj, rel, obj)
+    :param graph_type: the type of graph for KG triple induction
+        with values ["amr", "amr_verbnet", "verbnet"]
+    :param amr: amr parse from cache
+    :param verbose:
+    :return: a set of patterns
+    """
+    if verbose:
+        print("\ntext:", text)
+        print("triple:", triple)
+        print("graph_type:", graph_type)
+        
+    all_patterns = set()
+    parse = ground_text_to_verbnet(text, amr=amr, verbose=verbose)
+    sentence_parses = parse["sentence_parses"]
+
+    for i in range(len(sentence_parses)):
+        # if verbose:
+        #     print_enhanced_amr(sentence_parses[i])
+
+        list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
+            grounded_stmt=sentence_parses[i]["grounded_stmt"],
+            semantic_calc=sentence_parses[i]["sem_cal"])
+
+        for grounded_stmt, semantic_calc in zip(
+                list_grounded_stmt, list_semantic_calc):
+            graph, amr_obj = build_semantic_graph(
+                amr=sentence_parses[i]["amr"],
+                grounded_stmt=grounded_stmt,
+                semantic_calculus=semantic_calc)
+
+            def filter_edge_func(n1, n2):
+                # print("n1, n2:", n1, n2)
+                # print("edge:", graph[n1][n2])
+                # input()
+                return graph[n1][n2]["source"] != "amr"
+
+            if graph_type == "verbnet":
+                # prune AMR edges
+                # input("subgraph_view begins ...")
+                pruned_graph = nx.subgraph_view(graph, filter_edge=filter_edge_func)
+                # input("subgraph_view ends ...")
+                # print("\ngraph:", graph)
+                # print("graph nodes:", graph.nodes)
+                # print("graph edges:", graph.edges)
+                # input()
+                pattern = extract_pattern_from_graph(pruned_graph, amr_obj, triple, verbose=verbose)
+            else:
+                pattern = extract_pattern_from_graph(graph, amr_obj, triple, verbose=verbose)
+
+            if pattern is not None:
+                all_patterns.add(pattern)
+
+    if verbose:
+        print("\nall_patterns:", all_patterns)
+        input()
+    return all_patterns
+
+
+def extract_pattern_from_graph(g_directed, amr_obj, triple, verbose=False):
+    """
+    Extract the path pattern between the node corresponding to the subject
+    and the node corresponding to the object, in the input triple
+    :param g_directed: the directed graph constructed from parse
+    :param amr_obj: the amr object that contains the mappings needed
     :param triple: a triple in the format of (subj, rel, obj)
     :param verbose:
     :return:
     """
-    if verbose:
-        print("\ntriple:", triple)
-        print("\namr:")
-        print(amr)
-
-    g_directed, g_undirected, amr_obj = build_graph_from_amr(amr, verbose)
+    g_undirected = g_directed.to_undirected()
 
     subj, pred, obj = triple
     subj_tokens = subj.lower().split()
@@ -577,6 +524,8 @@ def extract_pattern(amr, triple, verbose=False):
         print("\nobj_leaf_nodes:", obj_leaf_nodes)
 
     if len(subj_leaf_nodes) == 0 or len(obj_leaf_nodes) == 0:
+        if verbose:
+            print("len(subj_leaf_nodes) == 0 or len(obj_leaf_nodes) == 0")
         return None
 
     try:
@@ -584,12 +533,20 @@ def extract_pattern(amr, triple, verbose=False):
         obj_ancestor = get_lowest_common_ancestor(g_directed, obj_leaf_nodes)
     except nx.exception.NetworkXError:
         # LCA only defined on directed acyclic graphs.
+        if verbose:
+            print("LCA only defined on directed acyclic graphs.")
         return None
 
     if subj_ancestor is None or obj_ancestor is None:
         return None
 
-    path = shortest_path(g_undirected, subj_ancestor, obj_ancestor)
+    try:
+        path = shortest_path(g_undirected, subj_ancestor, obj_ancestor)
+    except nx.exception.NetworkXNoPath:
+        if verbose:
+            print("No path between {} and {}".format(subj_ancestor, obj_ancestor))
+        return None
+
     if verbose:
         print("\nsubj_ancestor:", subj_ancestor)
         print("\nobj_ancestor:", obj_ancestor)
@@ -664,8 +621,8 @@ def is_extractable(text, triple):
     return extractable
 
 
-def apply_path_patterns(data, pattern_file_path, output_dir,
-                        top_k_patterns=5, amr_cache_path=None,
+def apply_path_patterns(data, pattern_file_path, output_file_path,
+                        graph_type, top_k_patterns=5, amr_cache_path=None,
                         start_idx=None, verbose=False):
     """
     Apply path patterns to induce KG triples from text.
@@ -687,14 +644,15 @@ def apply_path_patterns(data, pattern_file_path, output_dir,
         print(patterns.most_common(10))
     input()
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    dir_name = os.path.dirname(output_file_path)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
 
     amr_cache = None
     if amr_cache_path is not None:
         amr_cache = load_amr_cache(amr_cache_path)
 
-    f_out = open(os.path.join(output_dir, "extracted_triples.jsonl"), "a")
+    f_out = open(output_file_path, "a")
     try:
         for sample_idx, sentences in enumerate(sample_generator(
                 data, extractable_only=False, verbose=verbose)):
@@ -722,7 +680,8 @@ def apply_path_patterns(data, pattern_file_path, output_dir,
                 else:
                     amr = amr_client.get_amr(sent)
 
-                triples = induce_kg_triples(amr, pattern_dict, top_k_patterns, verbose)
+                triples = induce_kg_triples(sent, pattern_dict, top_k_patterns,
+                                            graph_type, verbose, amr=amr)
                 # print("triples:", triples)
                 all_triples.update(triples)
 
@@ -849,19 +808,65 @@ def compute_metrics(samples, triple_file_path):
         print()
 
 
-def mine_path_patterns(data, output_dir, amr_cache_path=None,
-                       sample_size=None, verbose=False):
+def check_samples(data, sample_size=10):
+    # Select samples for initial testing
+    all_indices = list(range(len(data)))
+    random.shuffle(all_indices)
+    sample_indices = all_indices[:sample_size]
+
+    for idx in sample_indices:
+        sample = data[idx]
+
+        # text = get_observation_text_from_sample(sample)
+        # text = sample["state"]["obs"]
+        # text = "You see a dishwasher and a fridge."
+        # text = "You flip open the pizza box."
+        # text = "The dresser is made out of maple carefully finished with Danish oil."
+        # text = "In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S."
+        text = "You are carrying : a bronze-hilted dagger, a clay ocarina, armor and silks ( worn ) ."
+        res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})
+
+        print("\nres.text:")
+        print(res.text)
+
+        res = json.loads(res.text)
+        if "amr_parse" in res:
+            for i in range(len(res["amr_parse"])):
+                print_enhanced_amr(res["amr_parse"][i])
+                list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
+                    grounded_stmt=res["amr_parse"][i]["grounded_stmt"],
+                    semantic_calc=res["amr_parse"][i]["sem_cal"])
+
+                graph_idx = 0
+                for grounded_stmt, semantic_calc in zip(
+                        list_grounded_stmt, list_semantic_calc):
+                    graph = build_semantic_graph(
+                        amr=res["amr_parse"][i]["amr"],
+                        grounded_stmt=grounded_stmt,
+                        semantic_calculus=semantic_calc)
+
+                    visualize_semantic_graph(
+                        graph, graph_name="semantic_graph_{}".format(graph_idx),
+                        out_dir="./test-output/")
+                    graph_idx += 1
+                print("visualize_semantic_graph DONE.")
+                input()
+
+
+def mine_path_patterns(data, output_file_path, graph_type="amr",
+                       amr_cache_path=None, sample_size=None, verbose=False):
     """
     Mine path patterns between subject and object of a triple
     :param data: a list of raw samples
-    :param output_dir: the directory to save mined path patterns
+    :param output_file_path: the path of the output pattern file
     :param amr_cache_path: the path to the cache of AMR parse for the samples
     :param sample_size: the size of samples for sanity check
     :param verbose:
     :return:
     """
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    dir_name = os.path.dirname(output_file_path)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
 
     pattern_dict = defaultdict(Counter)
 
@@ -877,8 +882,8 @@ def mine_path_patterns(data, output_dir, amr_cache_path=None,
                 len(sample["state"]["graph"]) == 0:
             continue
 
-        if verbose:
-            print_sample(sample)
+        # if verbose:
+        #     print_sample(sample)
 
         if verbose:
             print("\nsentences:")
@@ -906,20 +911,23 @@ def mine_path_patterns(data, output_dir, amr_cache_path=None,
                         amr = amr_client.get_amr(sent)
 
                     try:
-                        pattern = extract_pattern(amr, triple, verbose)
+                        patterns = extract_pattern(sent, triple, graph_type=graph_type,
+                                                   amr=amr, verbose=verbose)
                     except Exception as e:
                         print("Exception:", e)
-                        # pattern = extract_pattern(amr, triple, verbose=True)
-                        raise e
+                        patterns = extract_pattern(sent, triple, graph_type=graph_type,
+                                                   amr=amr, verbose=True)
+                        # raise e
+                        input()
                         continue
 
-                    if pattern is None:
+                    if patterns is None or len(patterns) == 0:
                         continue
 
-                    # print("pred:", pred)
-                    # print("pattern:", pattern)
-                    pattern_dict[pred][pattern] += 1
-                    if verbose:
+                    for pattern in patterns:
+                        pattern_dict[pred][pattern] += 1
+
+                    if True:
                         print("\nsent:", sent)
                         print("\ntriple:", triple)
                         print("\npattern:", pattern)
@@ -937,7 +945,7 @@ def mine_path_patterns(data, output_dir, amr_cache_path=None,
         print(patterns.most_common(10))
 
     # save patterns to file
-    out_path = os.path.join(output_dir, "patterns_train.pkl")
+    out_path = os.path.join(output_dir, file_name)
     with open(out_path, "wb") as file_obj:
         pickle.dump(pattern_dict, file_obj)
     print("\nWritten patterns to {}".format(out_path))
@@ -1113,7 +1121,12 @@ if __name__ == "__main__":
     parser.add_argument('--game_name_statistics', action='store_true', help="game_name_statistics")
     parser.add_argument('--check_extractable_kg_triples', action='store_true', help="check_extractable_kg_triples")
     parser.add_argument('--mine_path_patterns', action='store_true', help="mine_path_patterns")
+    parser.add_argument('--path_pattern_source', type=str, default=None, help="path_pattern_source")
+    parser.add_argument('--pattern_file_path', type=str, default=None, help="pattern_file_path")
+    parser.add_argument('--output_file_path', type=str, default=None, help="output_file_path")
     parser.add_argument('--apply_path_patterns', action='store_true', help="apply_path_patterns")
+    parser.add_argument('--graph_type', type=str, default=None, choices=["amr", "amr_verbnet", "verbnet"],
+                        help="graph_type")
     parser.add_argument('--top_k_patterns', type=int, default=20, help="top_k_patterns")
     parser.add_argument('--build_amr_parse_cache', action='store_true', help="build_amr_parse_cache")
     parser.add_argument('--compute_metrics', action='store_true', help="compute_metrics")
@@ -1122,6 +1135,7 @@ if __name__ == "__main__":
     parser.add_argument('--sample_start_idx', type=int, default=0, help="sample_start_idx")
     parser.add_argument('--split_type', type=str, choices=["train", "test"],
                         default="train", help="sample_start_idx")
+    parser.add_argument('--verbose', action='store_true', help="verbose")
     args = parser.parse_args()
 
     DATA_DIR = args.data_dir
@@ -1147,13 +1161,16 @@ if __name__ == "__main__":
     elif args.check_extractable_kg_triples:
         check_extractable_kg_triples(train_data)
     elif args.mine_path_patterns:
-        mine_path_patterns(train_data, "./path_output/", amr_cache_path=args.amr_cache_path,
-                           sample_size=None, verbose=False)
+        mine_path_patterns(train_data,
+                           output_file_path=args.output_file_path,
+                           graph_type=args.graph_type,
+                           amr_cache_path=args.amr_cache_path,
+                           sample_size=None, verbose=args.verbose)
     elif args.apply_path_patterns:
-        apply_path_patterns(test_data, pattern_file_path="./path_output/patterns_train.pkl",
-                            output_dir="./path_output/", top_k_patterns=args.top_k_patterns,
-                            amr_cache_path=args.amr_cache_path, start_idx=args.sample_start_idx,
-                            verbose=False)
+        apply_path_patterns(test_data, pattern_file_path=args.pattern_file_path,
+                            output_file_path=args.output_file_path, graph_type=args.graph_type,
+                            top_k_patterns=args.top_k_patterns, amr_cache_path=args.amr_cache_path,
+                            start_idx=args.sample_start_idx, verbose=args.verbose)
     elif args.build_amr_parse_cache:
         if args.split_type == "train":
             build_amr_parse_cache(train_data, "./data/JerichoWorld/train_amr.json",

@@ -1,8 +1,12 @@
-"""PropBank query wrapper"""
+"""
+VerbNet query wrapper
+"""
 from nltk.corpus.util import LazyCorpusLoader
 from nltk.corpus.reader import VerbnetCorpusReader
 from amr_verbnet_semantics.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
 from amr_verbnet_semantics.service.propbank import query_propbank_roles
+from amr_verbnet_semantics.service.rdf_kb import query_semantics_from_rdf
+import config
 
 vn_dict = {
     "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),
@@ -11,7 +15,7 @@ vn_dict = {
 }
 
 
-def query_semantics(verbnet_id, verbnet_version):
+def query_semantics_from_corpus(verbnet_id, verbnet_version):
     semantics = dict()
     frames = vn_dict[verbnet_version].frames(verbnet_id)
 
@@ -26,8 +30,15 @@ def query_semantics(verbnet_id, verbnet_version):
     return semantics
 
 
+def query_semantics(verbnet_id, verbnet_version):
+    config.KB_SOURCE = "corpus"
+    if config.KB_SOURCE == "rdf":
+        return query_semantics_from_rdf(verbnet_id, verbnet_version)
+    return query_semantics_from_corpus(verbnet_id, verbnet_version)
+
+
 if __name__ == '__main__':
-    verbnet_id = "escape-51.1-1-1"
+    verbnet_id = "escape-51.1"
     verbnet_version = "verbnet3.4"
     print("\nQuerying verbnet class {} in version {} ...".format(verbnet_id, verbnet_version))
     print("\nresult:")
