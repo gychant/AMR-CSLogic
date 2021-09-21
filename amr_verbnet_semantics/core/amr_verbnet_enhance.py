@@ -21,6 +21,7 @@ from amr_verbnet_semantics.core.models import PredicateCalculus
 from amr_verbnet_semantics.service.propbank import query_propbank_roles
 from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
+from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 # from amr_verbnet_semantics.service.ontology import query_pb_vn_mapping
 from amr_verbnet_semantics.service.amr import amr_client
 
@@ -38,23 +39,30 @@ def parse_text(text):
     return sentence_parses
 
 
-def ground_text_to_verbnet(text, local_amr_client=None, use_coreference=True, verbose=False):
+def ground_text_to_verbnet(text, amr=None, local_amr_client=None,
+                           use_coreference=True, verbose=False):
     sentences = sent_tokenize(text)
-    print("parsing ...")
-    print("\ntext:\n", text)
-    print("\nsentences:\n==>", "\n\n==>".join(sentences))
+    if verbose:
+        print("parsing ...")
+        print("\ntext:\n", text)
+        print("\nsentences:\n==>", "\n\n==>".join(sentences))
+
     parse = {"coreference": []}
     if use_coreference:
         parse = full_parsing(text, do_coreference=True)
-        print("\ncoreference:\n", parse["coreference"])
+        if verbose:
+            print("\ncoreference:\n", parse["coreference"])
 
     sentence_parses = []
     for idx, sent in enumerate(sentences):
         sent_res = dict()
-        if local_amr_client:
-            amr = local_amr_client.get_amr(sent)
-        else:
-            amr = amr_client.get_amr(sent)
+
+        if amr is None:
+            if local_amr_client:
+                amr = local_amr_client.get_amr(sent)
+            else:
+                amr = amr_client.get_amr(sent)
+
         g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
@@ -162,6 +170,7 @@ def ground_amr(amr, verbose=False):
 
     if verbose:
         print("\nrole_mappings:", role_mappings)
+        print("\nsemantics:", semantics)
 
     amr_cal = process_and_operator(raw_amr_cal)
     sem_cal = construct_calculus_from_semantics(semantics)
@@ -442,7 +451,121 @@ def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
     return stmt_pools, calc_pools
 
 
-def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
+def build_graph_from_amr(amr, verbose=False):
+    """
+    Build undirected and directed networkx graphs from the
+    annotation of AMR parse
+    :param amr: the AMR parse
+    :param verbose:
+    :return:
+    """
+    amr_graph = penman.decode(amr)
+
+    g_directed = nx.DiGraph()
+    node_dict = dict()
+
+    # read AMR annotation
+    amr_obj = read_amr_annotation(amr)
+    if verbose:
+        print("\nnodes:", amr_obj["nodes"])
+        print("\nedges:", amr_obj["edges"])
+        print("\ntoken2node_id:", amr_obj["token2node_id"])
+        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
+        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
+
+    # construct graph from AMRs
+    for node in amr_obj["nodes"]:
+        if verbose:
+            print("node:", node)
+
+        node_id = amr_obj["node_idx2node_id"][node["node_idx"]]
+        g_directed.add_node(node_id, label=node["node_label"], source="amr")
+        node_dict[node_id] = node["node_label"]
+
+        for attr in amr_graph.attributes(node_id):
+            if verbose:
+                print("attr:", attr)
+
+            if attr.target.startswith("\"") and attr.target.endswith("\""):
+                attr_constant = attr.target[1:-1]
+            else:
+                attr_constant = attr.target
+
+            # use the parent node of attributes for pattern mining
+            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
+
+    for edge in amr_obj["edges"]:
+        if verbose:
+            print("edge:", edge)
+
+        src_node_id = amr_obj["node_idx2node_id"][edge["src_node_idx"]]
+        tgt_node_id = amr_obj["node_idx2node_id"][edge["tgt_node_idx"]]
+        g_directed.add_edge(src_node_id, tgt_node_id, label=":" + edge["edge_label"], source="amr")
+
+    if verbose:
+        print("\nnode_dict:", node_dict)
+        print("\ntoken2node_id post:", amr_obj["token2node_id"])
+    return g_directed, amr_obj
+
+
+def build_graph_from_amr_penman(amr, verbose=False):
+    """
+    Build undirected and directed networkx graphs from AMR parse
+    using penman parsed graph
+    :param amr: the AMR parse
+    :param verbose:
+    :return:
+    """
+    amr_graph = penman.decode(amr)
+    g_directed = nx.DiGraph()
+    g_undirected = nx.Graph()
+
+    node_dict = dict()
+
+    # read AMR annotation
+    amr_obj = read_amr_annotation(amr)
+    if verbose:
+        print("\nnodes:", amr_obj["nodes"])
+        print("\nedges:", amr_obj["edges"])
+        print("\ntoken2node_id:", amr_obj["token2node_id"])
+        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
+        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
+
+    # construct graph from AMRs
+    for inst in amr_graph.instances():
+        if verbose:
+            print("inst:", inst)
+
+        g_directed.add_node(inst.source, label=inst.target, source="amr")
+        g_undirected.add_node(inst.source, label=inst.target, source="amr")
+        node_dict[inst.source] = inst.target
+
+        for attr in amr_graph.attributes(inst.source):
+            if verbose:
+                print("attr:", attr)
+
+            if attr.target.startswith("\"") and attr.target.endswith("\""):
+                attr_constant = attr.target[1:-1]
+            else:
+                attr_constant = attr.target
+
+            # use the parent node of attributes for pattern mining
+            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
+
+    for edge in amr_graph.edges():
+        if verbose:
+            print("edge:", edge)
+
+        g_directed.add_edge(edge.source, edge.target, label=edge.role, source="amr")
+        g_undirected.add_edge(edge.source, edge.target, label=edge.role, source="amr")
+
+    if verbose:
+        print("\nnode_dict:", node_dict)
+        print("\ntoken2node_id post:", amr_obj["token2node_id"])
+    return g_directed, g_undirected, amr_obj
+
+
+def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
     """
     To represent the graph of semantics, we use event as pivot, then use event
     time point (e.g. start, end, or, during) as edge to connect a predicate
@@ -450,21 +573,24 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
     predicate using edges with types defined from argument roles in the semantics.
     All predicate instances are connected to the predicate type using edges of ":type".
 
-    :param amr: amr parse in string
-    :param grounded_stmt: grounded statements returned by the AMR-VerbNet service
+    :param amr: amr parse in string. Set to None if not used.
+    :param grounded_stmt: grounded statements returned by the AMR-VerbNet service. Set to None if not used.
     :param semantic_calculus: semantic calculus returned by the AMR-VerbNet service
     :param verbose: if printing intermediate results
     :return: a networkx graph instance representing the enhanced AMR graph
 
     Example:
-    graph = generate_enhanced_amr(
+    graph = build_semantic_graph(
         amr=res["amr_parse"][i]["amr"],
         grounded_stmt=res["amr_parse"][i]["grounded_stmt"],
         semantic_calculus=res["amr_parse"][i]["sem_cal"])
     where res is the result returned by the AMR-VerbNet service.
     """
-    amr_graph = penman.decode(amr)
-    g = nx.DiGraph()
+    amr_obj = None
+    if amr is not None:
+        g, amr_obj = build_graph_from_amr(amr, verbose=verbose)
+    else:
+        g = nx.DiGraph()
 
     node_dict = dict()
     event_inst_counter = Counter()
@@ -472,18 +598,24 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
     free_arg_inst_counter = Counter()
 
     # graph from AMRs
-    for inst in amr_graph.instances():
-        if verbose:
-            print("inst.source:", inst.source)
-            print("inst.target:", inst.target)
-        g.add_node(inst.source, label=inst.target, source="amr")
-        node_dict[inst.source] = inst.target
+    if amr is not None:
+        amr_graph = penman.decode(amr)
+        for inst in amr_graph.instances():
+            if verbose:
+                print("inst.source:", inst.source)
+                print("inst.target:", inst.target)
+            g.add_node(inst.source, label=inst.target, source="amr")
+            node_dict[inst.source] = inst.target
 
-    for edge in amr_graph.edges():
-        if verbose:
-            print("edge:", edge)
-        g.add_edge(edge.source, edge.target, label=edge.role, source="amr")
+        for edge in amr_graph.edges():
+            if verbose:
+                print("edge:", edge)
+            g.add_edge(edge.source, edge.target, label=edge.role, source="amr")
 
+    if grounded_stmt is None:
+        return g, amr_obj
+
+    print("\ngrounded_stmt:", grounded_stmt)
     # graph from grounded statements
     for pb_id in grounded_stmt:
         for g_idx, group in enumerate(grounded_stmt[pb_id]):
@@ -516,6 +648,8 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
                     pred_inst_counter[predicate] += 1
                     g.add_edge(predicate_id, predicate, label=":type", source="verbnet")
 
+                print("\n\n\n\n\nstmt arguments:", stmt["arguments"])
+                print("stmt:", stmt)
                 for arg_idx, arg in enumerate(stmt["arguments"]):
                     # check whether the argument is event-related
                     event, event_time_point = get_event_from_argument(arg)
@@ -532,7 +666,11 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
                         g.add_edge(event_id, predicate_id, label=":" + event_time_point, source="verbnet")
                         continue
 
+                    print("\narg:", arg)
+                    print("arg_idx:", arg_idx)
+
                     if len(arg) <= 2 and arg.startswith("E"):
+                        # the arg represents an event
                         event = arg
                         event_id = event + "-{}".format(event_inst_counter[event])
                         if event not in event2id and event_id not in node_dict:
@@ -544,6 +682,9 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
                         # handle cases where grounded statements are expanded due to the AND phrase
                         sem_cal_stmt_idx = s_idx % len(semantic_calculus[pb_id])
 
+                        print("len(semantic_calculus[pb_id]):", len(semantic_calculus[pb_id]))
+                        print("s_idx:", s_idx)
+                        print("ungrounded arguments:", semantic_calculus[pb_id][sem_cal_stmt_idx])
                         label = semantic_calculus[pb_id][sem_cal_stmt_idx]["arguments"][arg_idx]
                         if label == arg:
                             # indicate it is unknown
@@ -564,21 +705,20 @@ def generate_enhanced_amr(amr, grounded_stmt, semantic_calculus, verbose=False):
                         g.add_edge(predicate_id, arg_id, label=":" + label, source="verbnet")
 
     # print("\nEdges of enhanced AMR graph:\n", g.edges())
-    return g
+    return g, amr_obj
 
 
-def visualize_enhanced_amr(graph, out_dir, amr_only=False,
-                           graph_name="enhanced_amr", format="png"):
+def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure_format="png"):
     """
     Generate a figure that visualize the enhanced AMR graph with VerbNet semantics
     :param graph: a networkx graph instance
     :param out_dir: the directory to save the figure
     :param graph_name: the name of the graph for specifying the file name
-    :param format: format/extension of the output figure file
+    :param figure_format: format/extension of the output figure file
     :return:
     """
     engine = "dot"  # ["neato", "circo"]
-    dot = graphviz.Digraph(name=graph_name, format=format, engine=engine)
+    dot = graphviz.Digraph(name=graph_name, format=figure_format, engine=engine)
 
     color_map = {
         "amr": "blue",
@@ -588,16 +728,12 @@ def visualize_enhanced_amr(graph, out_dir, amr_only=False,
     for node in graph.nodes.data():
         # print("node:", node)
         node_id, node_attrs = node
-        if amr_only and node_attrs["source"] != "amr":
-            continue
         dot.node(node_id, label=node_attrs["label"] if "label" in node_attrs else node_id,
                  color=color_map[node_attrs["source"]])
 
     for edge in graph.edges().data():
         # print("edge:", edge)
         edge_src, edge_tgt, edge_attrs = edge
-        if amr_only and edge_attrs["source"] != "amr":
-            continue
         dot.edge(edge_src, edge_tgt, label=edge_attrs["label"],
                  color=color_map[edge_attrs["source"]])
 

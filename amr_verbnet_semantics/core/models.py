@@ -22,3 +22,10 @@ class PredicateCalculus(object):
             "is_negative": self.is_negative
         }
 
+    def from_string(self, string):
+        tokens = string.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")
+
+
+if __name__ == "__main__":
+    print(query_propbank_roleset_ids())
+
