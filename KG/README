@@ -1,0 +1,7 @@
+The KG is in RDF/OWL. The files are as follows: 
+
+UL_KB_V1_PUB.ttl -->  this file is self-contained and includes the whole graph. 
+
+KBAccess_RDF -->  is the Jupyter notebook with query examples. It will be updated with new use cases regularly. 
+
+
