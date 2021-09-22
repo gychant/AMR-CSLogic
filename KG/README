@@ -1,7 +1,13 @@
 The KG is in RDF/OWL. The files are as follows: 
 
-UL_KB_V1_PUB.ttl -->  this file is self-contained and includes the whole graph. 
+UL_KB_V1_PUB.ttl -->  the graph file is self-contained. It can be installed in any triplestore and queried with SPARQL
 
-KBAccess_RDF -->  is the Jupyter notebook with query examples. It will be updated with new use cases regularly. 
+ulkb_access.py --> (UNDER WORK) a simple API to access the graph. Right now, only three methods work: 
+    1. ulkb_sem_predicates_for -- retrieves the semantic predicates for a Verbnet verb in json. It also contains the graph nodes for the predicates. 
+    2. ulkb_sem_predicates_for_SHORT -- same as above but the json is more readable. 
+    3. ulkb_sem_roles_for -- gets the semantic roles for a propbank verb and returns its semantic constraints AND the mapping to the semantic 
+        constraints of a Verbnet verb if such a verb exists. 
+KBAccess_RDF -->  is the Jupyter notebook with query examples. It now uses the underlying module to access a simple API for accessing the semantic roles and the 
 
+Any issues or questions about the graph, contact rosariou@us.ibm.com
 
