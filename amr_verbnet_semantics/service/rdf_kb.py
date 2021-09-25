@@ -18,6 +18,12 @@ sparql = SPARQLWrapper(config.SPARQL_ENDPOINT)
 
 
 def query_pb_vn_mapping_from_rdf(propbank_id, vn_version="verbnet3.4"):
+    """
+    Query Propbank-VerbNet mappings from RDF KG.
+    :param propbank_id: probank frame id
+    :param vn_version: verbnet version of mapping
+    :return:
+    """
     query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnParamLabel WHERE {   
         ?verb rdfs:label "%s" . 
         #?verb rrp:inKB rrp:PropBank .
@@ -54,7 +60,9 @@ def query_pb_vn_mapping_from_rdf(propbank_id, vn_version="verbnet3.4"):
     return mapping_res
 
 
-def query_semantics_from_rdf(verbnet_class_id, verbnet_version="verbnet3.4"):
+def query_semantics_from_rdf(verbnet_class_id, 
+                             verbnet_version="verbnet3.4",
+                             include_example=False):
     verbnet_class_id = verbnet_class_id.replace(".", "_").replace("-", "_")
     print("verbnet_class_id:", verbnet_class_id)
 
@@ -127,9 +135,10 @@ def query_semantics_from_rdf(verbnet_class_id, verbnet_version="verbnet3.4"):
     print(str(output))
     input()
 
-    example2semantics = defaultdict(list)
+    semantics_by_role_set = defaultdict(list)
     for semantic_example in output:
         example = semantic_example["example"]
+        role_set = set()
         statements = []
         for predicate in semantic_example["predicates"]:
             arguments = []
@@ -143,14 +152,13 @@ def query_semantics_from_rdf(verbnet_class_id, verbnet_version="verbnet3.4"):
                 "arguments": arguments,
                 "is_negative": "operator" in predicate
             })
-        predicate_text = result["predicateText"]["value"]
-        example = result["example"]["value"]
-        semantic_predicate = result["semanticPredicate"]["value"]
-        print("semantic_predicate:", semantic_predicate)
-        print(example + "\t" + semantic_predicate.split('#')[1] + "\t" + predicate_text)
-        example2semantics[example].append(predicate_text.split()[1])
-    print("example2semantics:", example2semantics)
-    return example2semantics
+        if include_example:
+            semantics_by_role_set[tuple(example, tuple(role_set))] = statements
+        else:
+            semantics_by_role_set[tuple(role_set)] = statements
+    print("\nsemantics_by_role_set:", semantics_by_role_set)
+    input()
+    return semantics_by_role_set
 
 
 def query_verbnet_semantic_roles(propbank_id):
@@ -183,33 +191,6 @@ def query_verbnet_semantic_roles(propbank_id):
         else:
             vn_sem_role = "N/A"
         print(pb_sem_role + "\t(" + vn_verb_label + ", " + vn_sem_role + ")")
-
-
-def query_verbnet_semantic_predicates(verbnet_class_id):
-    verbnet_class_id = verbnet_class_id.replace(".", "_")
-
-    query_text = """SELECT DISTINCT ?example ?semanticPredicate ?predicateText ?frame WHERE {
-                      ulvn:%s rrp:hasComponent ?frame . 
-                      ?frame rrp:example ?example . 
-                      ?frame rrp:hasComponent ?semanticPredicate . 
-                      ?semanticPredicate a rrp:SemanticPredicate . 
-                      ?semanticPredicate rrp:textInfo ?predicateText .  
-                    } ORDER BY ?frame
-                    """ % verbnet_class_id
-
-    sparql.setQuery(query_prefix + query_text)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-
-    example2semantics = defaultdict(list)
-    for result in results["results"]["bindings"]:
-        predicate_text = result["predicateText"]["value"]
-        example = result["example"]["value"]
-        semantic_predicate = result["semanticPredicate"]["value"]
-        print(example + "\t" + semantic_predicate.split('#')[1] + "\t" + predicate_text)
-        example2semantics[example].append(predicate_text.split()[1])
-    print("example2semantics:", example2semantics)
-    return example2semantics
 
 
 def test_query_provenance(verb):

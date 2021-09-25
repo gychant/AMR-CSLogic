@@ -1,4 +1,4 @@
-"""A wrapper using the GRPC AMR parsing service"""
+"""Wrappers for local and remote AMR parsing client"""
 import os
 
 from third_party.transition_amr_parser.parse import AMRParser
