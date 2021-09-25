@@ -161,6 +161,8 @@ def ground_amr(amr, verbose=False):
                     verbnet_version = mapping["source"]
                     amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
                     semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
+                    print("\nsemantics_by_role_set:", semantics_by_role_set)
+                    input()
                     matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
                     # print("\nmatched_role_set:", matched_role_set)
                     # print("\nmatched_semantics:", matched_semantics)
