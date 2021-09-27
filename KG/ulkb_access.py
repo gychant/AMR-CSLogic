@@ -92,7 +92,7 @@ query_sem_predicates_node_str = """SELECT DISTINCT ?example ?operator ?semanticP
                 }} ORDER BY ?semanticPredicate
                   """
                   
-query_sem_predicates_str = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?value  WHERE {{
+query_sem_predicates_str = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?value ?expression  WHERE {{
                   ?entity rdfs:label ?label . 
                   FILTER regex(?label, "{}", "i")
                   ?entity rrp:hasComponent ?frame . 
@@ -106,6 +106,7 @@ query_sem_predicates_str = """SELECT DISTINCT ?example ?operator ?semanticPredic
                    }}
                   ?param rrp:varType ?type . 
                   ?param rrp:varName ?value .
+                  ?param rrp:varExpression ?expression . 
                   ?semanticPredicate rrp:textInfo ?predicateText .  
                 }} ORDER BY ?semanticPredicate
                   """
@@ -231,14 +232,14 @@ def ulkb_sem_predicates_for(_verb : str) -> [] :
        if 'params' not in thisPredicate: 
            thisPredicate['params'] = []
        params = thisPredicate['params']
-       params.append({'type' :result["type"]["value"], 'value' : result["value"]["value"]})
+       params.append({'type' :result["type"]["value"], 'value' : result["value"]["value"], 'expression' : result["value"]["value"]})
        #thisPredicate['type'] = result["type"]["value"]
        #thisPredicate['value'] = result["value"]["value"]         
        #print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +  
        #      result["type"]["value"] + " " + result["value"]["value"] )
  return output                 
                   
- #####################################################################
+#####################################################################
 # MAP PROPBANK AND SEMANTIC ROLES TO VERBNET -- SHORT
 #####################################################################
 def ulkb_sem_predicates_for_SHORT(_verb : str) -> [] : 
@@ -287,14 +288,17 @@ def ulkb_sem_predicates_for_SHORT(_verb : str) -> [] :
        if 'params' not in thisPredicate: 
            thisPredicate['params'] = []
        params = thisPredicate['params']
-       params.append(result["type"]["value"] + "(" + result["value"]["value"] + ")")
+       params.append(result["type"]["value"] + "(" + result["expression"]["value"] + ")")
        #thisPredicate['type'] = result["type"]["value"]
        #thisPredicate['value'] = result["value"]["value"]         
        #print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +  
        #      result["type"]["value"] + " " + result["value"]["value"] )
  return output                 
-                   
 
+
+
+    
+    
 def get_label(_entity : str) -> str : 
     global WDURI
     if WDURI not in _entity : 
