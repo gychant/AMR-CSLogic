@@ -10,23 +10,19 @@ import os
 
 import numpy as np
 import torch
-
-from fairseq import options, utils, tokenizer
-from fairseq.data import (
-    data_utils,
-    Dictionary
-)
+from fairseq import options, tokenizer, utils
+from fairseq.data import Dictionary, data_utils
 from fairseq.tasks import FairseqTask, register_task
 
-from third_party.fairseq_ext.data.language_pair_dataset import LanguagePairDataset
-from third_party.fairseq_ext.data.amr_action_pointer_dataset import AMRActionPointerDataset
-from third_party.fairseq_ext.data.data_utils import load_indexed_dataset
 from third_party.fairseq_ext.amr_spec.action_info_binarize import (
-    ActionStatesBinarizer,
-    binarize_actstates_tofile_workers,
-    load_actstates_fromfile
-)
+    ActionStatesBinarizer, binarize_actstates_tofile_workers,
+    load_actstates_fromfile)
 from third_party.fairseq_ext.binarize import binarize_file
+from third_party.fairseq_ext.data.amr_action_pointer_dataset import \
+    AMRActionPointerDataset
+from third_party.fairseq_ext.data.data_utils import load_indexed_dataset
+from third_party.fairseq_ext.data.language_pair_dataset import \
+    LanguagePairDataset
 
 
 def load_amr_action_pointer_dataset(data_path, emb_dir, split, src, tgt, src_dict, tgt_dict, tokenize, dataset_impl,
@@ -347,9 +343,11 @@ class AMRActionPointerParsingTask(FairseqTask):
             return SequenceScorer(self.target_dictionary)
         else:
             if 'graph' in model_args.arch:
-                from third_party.fairseq_ext.sequence_generator_graph import SequenceGenerator
+                from third_party.fairseq_ext.sequence_generator_graph import \
+                    SequenceGenerator
             else:
-                from third_party.fairseq_ext.sequence_generator import SequenceGenerator
+                from third_party.fairseq_ext.sequence_generator import \
+                    SequenceGenerator
             return SequenceGenerator(
                 self.target_dictionary,
                 beam_size=getattr(args, 'beam', 5),

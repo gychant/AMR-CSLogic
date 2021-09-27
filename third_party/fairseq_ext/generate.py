@@ -10,12 +10,12 @@ import os
 from collections import defaultdict
 
 import torch
-
 from fairseq import bleu, checkpoint_utils, progress_bar, tasks, utils
 from fairseq.meters import StopwatchMeter, TimeMeter
 
 from third_party.fairseq_ext import options
-from third_party.fairseq_ext.utils import post_process_action_pointer_prediction, clean_pointer_arcs
+from third_party.fairseq_ext.utils import (
+    clean_pointer_arcs, post_process_action_pointer_prediction)
 
 
 class Examples():

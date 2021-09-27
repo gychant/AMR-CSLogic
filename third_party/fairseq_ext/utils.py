@@ -1,5 +1,5 @@
-import time
 import math
+import time
 
 from fairseq.tokenizer import tokenize_line
 

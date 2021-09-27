@@ -1,32 +1,31 @@
 """Build knowledge graphs of the game using AMR-VerbNet semantics"""
-import copy
-import os
-import json
-import requests
-import pickle
-import penman
 import argparse
-from tqdm import tqdm, trange
+import copy
+import json
+import os
+import pickle
+import random
+from collections import Counter, defaultdict
+from itertools import combinations, permutations
+from pprint import pprint
 
 import networkx as nx
+import penman
+import requests
 from networkx.algorithms.lowest_common_ancestors import lowest_common_ancestor
 from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.algorithms.simple_paths import all_simple_paths
-
-from pprint import pprint
-from collections import Counter, defaultdict
-from itertools import combinations, permutations
-from nltk.tokenize import sent_tokenize, word_tokenize, RegexpTokenizer
 from nltk.stem.porter import PorterStemmer
+from nltk.tokenize import RegexpTokenizer, sent_tokenize, word_tokenize
+from tqdm import tqdm, trange
 
+from amr_verbnet_semantics.core.amr_verbnet_enhance import (
+    build_graph_from_amr, build_semantic_graph, ground_text_to_verbnet,
+    induce_unique_groundings, visualize_semantic_graph)
 # from amr_verbnet_semantics.service.amr import amr_client
 from amr_verbnet_semantics.service.local_amr import amr_client
-from amr_verbnet_semantics.core.amr_verbnet_enhance import \
-    build_graph_from_amr, build_semantic_graph, visualize_semantic_graph, \
-    induce_unique_groundings, ground_text_to_verbnet
 from amr_verbnet_semantics.utils.eval_util import Metric
 
-import random
 random.seed(42)
 
 # Add path to the dot package binary to system path

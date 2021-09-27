@@ -1,7 +1,7 @@
 import copy
 
 import torch
-from transformers import BertTokenizer, BertModel
+from transformers import BertModel, BertTokenizer
 
 from ..data.data_utils import collate_tokens
 from ..utils_font import yellow_font

@@ -1,7 +1,8 @@
-import torch
-import numpy as np
 from copy import deepcopy
 from warnings import warn
+
+import numpy as np
+import torch
 
 #def read_vocabulary(file_path):
 #    with open(file_path) as fid:

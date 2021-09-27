@@ -5,16 +5,13 @@
 
 import numpy as np
 import torch
-
 from fairseq.data import FairseqDataset
 
 from third_party.fairseq_ext.data import data_utils
-from third_party.transition_amr_parser.data_utils import (
-    collate_embeddings,
-    collate_target_masks,
-    collate_wp_idx,
-    collate_masks
-)
+from third_party.transition_amr_parser.data_utils import (collate_embeddings,
+                                                          collate_masks,
+                                                          collate_target_masks,
+                                                          collate_wp_idx)
 
 
 def collate(

@@ -1,7 +1,6 @@
 """Decoder self-attention masks, e.g. graph structure."""
-from packaging import version
-
 import torch
+from packaging import version
 
 
 def modify_mask_pre_post_softmax(mask):

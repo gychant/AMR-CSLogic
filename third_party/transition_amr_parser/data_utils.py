@@ -1,6 +1,7 @@
-import torch
-from collections import defaultdict
 import os
+from collections import defaultdict
+
+import torch
 
 
 def collate_embeddings(values, pad_idx, eos_idx=None, left_pad=False, move_eos_to_beginning=False):

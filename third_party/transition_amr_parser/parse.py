@@ -1,29 +1,35 @@
 # Standalone AMR parser from an existing trained APT model
 
-import os
-import time
-import math
-import copy
-import signal
 import argparse
+import copy
+import math
+import os
+import signal
+import time
 from datetime import timedelta
 
-from ipdb import set_trace
-from tqdm import tqdm
 import torch
 from fairseq import checkpoint_utils, utils
 from fairseq.models.roberta import RobertaModel
 from fairseq.tokenizer import tokenize_line
+from ipdb import set_trace
+from tqdm import tqdm
 
-from third_party.fairseq_ext import options    # this is key to recognizing the customized arguments
-from third_party.fairseq_ext.roberta.pretrained_embeddings import PretrainedEmbeddings
+from third_party.fairseq_ext import \
+    options  # this is key to recognizing the customized arguments
 from third_party.fairseq_ext.data.amr_action_pointer_dataset import collate
+from third_party.fairseq_ext.roberta.pretrained_embeddings import \
+    PretrainedEmbeddings
 # OR (same results) from third_party.fairseq_ext.data.amr_action_pointer_graphmp_dataset import collate
-from third_party.fairseq_ext.utils import post_process_action_pointer_prediction, clean_pointer_arcs
-from third_party.transition_amr_parser.amr_state_machine import AMRStateMachine, get_spacy_lemmatizer
-from third_party.transition_amr_parser.amr import InvalidAMRError, get_duplicate_edges
+from third_party.fairseq_ext.utils import (
+    clean_pointer_arcs, post_process_action_pointer_prediction)
+from third_party.transition_amr_parser.amr import (InvalidAMRError,
+                                                   get_duplicate_edges)
+from third_party.transition_amr_parser.amr_state_machine import (
+    AMRStateMachine, get_spacy_lemmatizer)
+from third_party.transition_amr_parser.io import (read_config_variables,
+                                                  read_tokenized_sentences)
 from third_party.transition_amr_parser.utils import yellow_font
-from third_party.transition_amr_parser.io import read_config_variables, read_tokenized_sentences
 
 
 def argument_parsing():

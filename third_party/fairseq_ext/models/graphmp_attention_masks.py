@@ -1,7 +1,6 @@
 """Decoder self-attention masks, e.g. graph structure for message passing."""
-from packaging import version
-
 import torch
+from packaging import version
 
 from .graph_attention_masks import modify_mask_pre_post_softmax
 

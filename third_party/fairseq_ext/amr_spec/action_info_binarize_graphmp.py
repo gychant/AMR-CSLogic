@@ -1,19 +1,19 @@
-import os
 import itertools
-from multiprocessing import Pool
+import os
 import time
 from collections import Counter
+from multiprocessing import Pool
 
-import torch
 import numpy as np
+import torch
 
 from third_party.transition_amr_parser.amr_state_machine import AMRStateMachine
-from .action_info_graphmp import get_actions_states
-from ..tokenizer import tokenize_line_tab
-from ..binarize import make_builder    # TODO move this to data folder
-from ..data.data_utils import load_indexed_dataset
-from ..utils import time_since
 
+from ..binarize import make_builder  # TODO move this to data folder
+from ..data.data_utils import load_indexed_dataset
+from ..tokenizer import tokenize_line_tab
+from ..utils import time_since
+from .action_info_graphmp import get_actions_states
 
 # names for all the action states; tensor names and file names MUST be paired in order
 # tensor names should be the same as those returned by `get_actions_states`, except that

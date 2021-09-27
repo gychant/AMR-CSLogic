@@ -4,7 +4,8 @@ This is used when we move away from the normal seq-to-seq realm, where target si
 of the target side output. For example, to include graph structure, we need to change the pointer values to the latest
 node representation, and also change the input token optionally.
 """
-from third_party.transition_amr_parser.amr_state_machine_amr1 import AMRStateMachine
+from third_party.transition_amr_parser.amr_state_machine_amr1 import \
+    AMRStateMachine
 
 
 def peel_pointer(action, pad=-1):

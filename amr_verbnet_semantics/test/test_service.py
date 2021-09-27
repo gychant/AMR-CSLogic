@@ -1,9 +1,10 @@
 """
 Test for services
 """
-import requests
 import json
 from pprint import pprint
+
+import requests
 
 # host = "10.208.109.152"
 host = "0.0.0.0"

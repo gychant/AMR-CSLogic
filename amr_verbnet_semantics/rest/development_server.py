@@ -1,11 +1,13 @@
 import argparse
 import os
+
 print(os.getcwd())
 
 
 from flask import Flask, request
 
-from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_text_to_verbnet
+from amr_verbnet_semantics.core.amr_verbnet_enhance import \
+    ground_text_to_verbnet
 from amr_verbnet_semantics.service.local_amr import AMRClient
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'

@@ -2,11 +2,12 @@
 VerbNet query wrapper
 """
 from nltk.corpus.util import LazyCorpusLoader
-from nltk.corpus.reader import VerbnetCorpusReader
-from amr_verbnet_semantics.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
-from amr_verbnet_semantics.service.propbank import query_propbank_roles
-from amr_verbnet_semantics.service.rdf_kb import query_semantics_from_rdf
+
 import config
+from amr_verbnet_semantics.corpus_readers.rdf_kb import \
+    query_semantics_from_rdf
+from amr_verbnet_semantics.corpus_readers.verbnet_reader import \
+    VerbnetCorpusReaderEx
 
 vn_dict = {
     "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),

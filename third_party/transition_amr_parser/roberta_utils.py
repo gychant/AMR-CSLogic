@@ -1,9 +1,10 @@
-from collections import Counter
-import torch
-from spacy.tokens import Doc
 import copy
-from fairseq.models.roberta.alignment_utils import spacy_nlp
+from collections import Counter
+
+import torch
 from fairseq.data.data_utils import collate_tokens
+from fairseq.models.roberta.alignment_utils import spacy_nlp
+from spacy.tokens import Doc
 
 
 def get_tokens(roberta, word):

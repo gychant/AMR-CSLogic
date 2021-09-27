@@ -1,18 +1,19 @@
-import os
 import itertools
-from multiprocessing import Pool
+import os
 import time
+from multiprocessing import Pool
 
-import torch
 import numpy as np
+import torch
 from tqdm import tqdm
 
 from third_party.transition_amr_parser.amr_state_machine import AMRStateMachine
-from .action_info import get_actions_states
-from ..tokenizer import tokenize_line_tab
-from ..binarize import make_builder    # TODO move this to data folder
+
+from ..binarize import make_builder  # TODO move this to data folder
 from ..data.data_utils import load_indexed_dataset
+from ..tokenizer import tokenize_line_tab
 from ..utils import time_since
+from .action_info import get_actions_states
 
 
 # reference: fairseq binarizer.py

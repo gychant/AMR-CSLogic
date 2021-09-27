@@ -2,6 +2,7 @@ import os
 import sys
 
 from tqdm import tqdm
+
 from third_party.transition_amr_parser.amr_state_machine import AMRStateMachine
 
 

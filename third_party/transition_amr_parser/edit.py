@@ -1,21 +1,18 @@
-import os
-from tqdm import tqdm
 import argparse
-from third_party.transition_amr_parser.amr_state_machine import (
-    AMRStateMachine,
-    get_spacy_lemmatizer
-)
-from third_party.transition_amr_parser.io import (
-    read_amr,
-    read_tokenized_sentences,
-    read_action_scores,
-    read_rule_stats,
-    write_tokenized_sentences,
-    write_rule_stats
-)
+import os
 from collections import Counter, defaultdict
-from smatch import compute_f
 from copy import deepcopy
+
+from smatch import compute_f
+from tqdm import tqdm
+
+from third_party.transition_amr_parser.amr_state_machine import (
+    AMRStateMachine, get_spacy_lemmatizer)
+from third_party.transition_amr_parser.io import (read_action_scores, read_amr,
+                                                  read_rule_stats,
+                                                  read_tokenized_sentences,
+                                                  write_rule_stats,
+                                                  write_tokenized_sentences)
 
 
 def yellow_font(string):

@@ -1,12 +1,15 @@
 # Standalone AMR parser
 
-import os
 import json
+import os
+
 import torch
-from third_party.transition_amr_parser.model import AMRModel
-import third_party.transition_amr_parser.utils as utils
 from fairseq.models.roberta import RobertaModel
-from third_party.transition_amr_parser.roberta_utils import extract_features_aligned_to_words
+
+import third_party.transition_amr_parser.utils as utils
+from third_party.transition_amr_parser.model import AMRModel
+from third_party.transition_amr_parser.roberta_utils import \
+    extract_features_aligned_to_words
 
 
 class AMRParser():

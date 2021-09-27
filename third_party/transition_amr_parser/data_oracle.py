@@ -1,20 +1,17 @@
+import argparse
 import json
 import re
-import argparse
 from collections import Counter, defaultdict
 
 from tqdm import tqdm
 
-from third_party.transition_amr_parser.utils import print_log
-from third_party.transition_amr_parser.io import writer, read_propbank, read_amr
 from third_party.transition_amr_parser.amr import get_duplicate_edges
+from third_party.transition_amr_parser.io import (read_amr, read_propbank,
+                                                  writer)
 from third_party.transition_amr_parser.state_machine import (
-    AMRStateMachine,
-    get_spacy_lemmatizer,
-    entity_rule_stats,
-    entity_rule_totals,
-    entity_rule_fails
-)
+    AMRStateMachine, entity_rule_fails, entity_rule_stats, entity_rule_totals,
+    get_spacy_lemmatizer)
+from third_party.transition_amr_parser.utils import print_log
 
 """
     This algorithm contains heuristics for solving

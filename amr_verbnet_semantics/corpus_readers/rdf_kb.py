@@ -2,7 +2,9 @@
 Accessing the unified KB using SPARQL
 """
 from collections import defaultdict
-from SPARQLWrapper import SPARQLWrapper, JSON
+
+from SPARQLWrapper import JSON, SPARQLWrapper
+
 import config
 
 query_prefix = """

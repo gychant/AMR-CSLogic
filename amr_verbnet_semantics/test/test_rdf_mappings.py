@@ -1,6 +1,7 @@
-import requests
-import operator
 import json
+import operator
+
+import requests
 
 url_query = "http://goedel.sl.cloud9.ibm.com:9999/blazegraph/namespace/VerbnetAndGroupings/#query"
 

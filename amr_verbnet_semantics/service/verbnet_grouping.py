@@ -6,8 +6,9 @@ Created on Thu Jun 23 2021
 """
 
 import json
-import re
 import os
+import re
+
 import requests
 from bs4 import BeautifulSoup
 

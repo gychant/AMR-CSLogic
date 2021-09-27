@@ -3,9 +3,10 @@ AMR parsing service using a locally deployed model
 """
 import os
 
-from third_party.transition_amr_parser.parse import AMRParser
 from nltk.tokenize import word_tokenize
+
 import config
+from third_party.transition_amr_parser.parse import AMRParser
 
 PARSER_DIR = f'{os.path.dirname(__file__)}/../../third_party'
 

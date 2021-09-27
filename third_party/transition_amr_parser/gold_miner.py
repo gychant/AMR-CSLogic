@@ -1,9 +1,9 @@
-from third_party.transition_amr_parser.state_machine import AMRStateMachine
-from third_party.transition_amr_parser.utils import yellow_font
-
+import smatch
 # from smatch
 from amr import AMR
-import smatch
+
+from third_party.transition_amr_parser.state_machine import AMRStateMachine
+from third_party.transition_amr_parser.utils import yellow_font
 
 
 def read_amr(file_path):

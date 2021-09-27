@@ -1,7 +1,8 @@
-import numpy as np
-import torch
 import shutil
 import time
+
+import numpy as np
+import torch
 
 from ..data import indexed_dataset
 from ..utils import time_since

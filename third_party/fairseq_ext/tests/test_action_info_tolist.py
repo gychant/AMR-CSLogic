@@ -1,12 +1,13 @@
+import sys
+
 from fairseq.data import Dictionary
 
-import sys
 # import importlib
 # sys.path.insert(0, '..')
 # importlib.import_module('third_party.fairseq_ext')
 # sys.path.pop(0)
-from third_party.fairseq_ext.amr_spec.action_info_binarize import binarize_actstates_tolist, binarize_actstates_tolist_workers
-
+from third_party.fairseq_ext.amr_spec.action_info_binarize import (
+    binarize_actstates_tolist, binarize_actstates_tolist_workers)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
