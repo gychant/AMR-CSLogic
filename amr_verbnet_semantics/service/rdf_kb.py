@@ -3,6 +3,8 @@ Accessing the unified KB using SPARQL
 """
 from collections import defaultdict
 from SPARQLWrapper import SPARQLWrapper, JSON
+
+
 import config
 
 query_prefix = """
@@ -62,12 +64,16 @@ def query_pb_vn_mapping_from_rdf(propbank_id, vn_version="verbnet3.4"):
 
 def query_semantics_from_rdf(verbnet_class_id, 
                              verbnet_version="verbnet3.4",
-                             include_example=False):
-    verbnet_class_id = verbnet_class_id.replace(".", "_").replace("-", "_")
-    print("verbnet_class_id:", verbnet_class_id)
+                             include_example=False,
+                             verbose=False):
+    if verbose:
+        print("verbnet_class_id:", verbnet_class_id)
 
-    query_text = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?value  WHERE {{
-                  ulvn:%s rrp:hasComponent ?frame . 
+    verbnet_class_id = verbnet_class_id.replace(".", "_").replace("-", "_")
+    query_text = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?expression WHERE {{
+                  ?entity rdfs:label ?label . 
+                  FILTER regex(?label, "%s", "i")
+                  ?entity rrp:hasComponent ?frame .
                   ?frame rrp:example ?example . 
                   ?frame rrp:hasComponent ?semanticPredicate . 
                   ?semanticPredicate a rrp:SemanticPredicate .
@@ -78,16 +84,17 @@ def query_semantics_from_rdf(verbnet_class_id,
                    }}
                   ?param rrp:varType ?type . 
                   ?param rrp:varName ?value . 
+                  ?param rrp:varExpression ?expression . 
                   ?semanticPredicate rrp:textInfo ?predicateText .  
                 }} ORDER BY ?semanticPredicate
                 """ % verbnet_class_id
 
+    if verbose:
+        print("query_text:", query_text)
+
     sparql.setQuery(query_prefix + query_text)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
-
-    # print("bindings:", results["results"]["bindings"])
-    # input()
 
     output = []
     thisFrame = {}
@@ -129,12 +136,10 @@ def query_semantics_from_rdf(verbnet_class_id,
         params = thisPredicate['params']
         params.append({
             'type': result["type"]["value"],
-            'value': result["value"]["value"],
-            'predicate': curPredicateID
+            'value': result["expression"]["value"]
         })
-    print(str(output))
-    input()
 
+    # Further construct the result
     semantics_by_role_set = defaultdict(list)
     for semantic_example in output:
         example = semantic_example["example"]
@@ -147,41 +152,46 @@ def query_semantics_from_rdf(verbnet_class_id,
                     "type": param["type"],
                     "value": param["value"]
                 })
+                if param["type"] == "ThemRole":
+                    role_set.add(param["value"])
+
             statements.append({
                 "predicate_value": predicate["label"],
                 "arguments": arguments,
                 "is_negative": "operator" in predicate
             })
+
         if include_example:
             semantics_by_role_set[tuple(example, tuple(role_set))] = statements
         else:
             semantics_by_role_set[tuple(role_set)] = statements
-    print("\nsemantics_by_role_set:", semantics_by_role_set)
-    input()
     return semantics_by_role_set
 
 
 def query_verbnet_semantic_roles(propbank_id):
-    query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnSemRole WHERE {
+    # print("propbank_id:", propbank_id)
 
-      ?verb rdfs:label "%s" . 
-      #?verb rrp:inKB rrp:PropBank .
-      ?verb rrp:hasParameter ?pbParam . 
-      ?pbParam rdfs:label ?pbSemRole . 
-      ?verb rrp:hasMapping ?mapping .  
-      ?vnVerb rrp:hasMapping ?mapping . 
-      ?vnVerb rrp:inKB rrp:VerbNet . 
-      ?vnVerb rdfs:label ?vnVerbLabel . 
-      OPTIONAL {
-      ?vnVerb rrp:hasParameter ?vnParam . 
-      ?pbParam rrp:mapsTo ?vnParam . 
-      ?vnParam rdfs:label ?vnSemRole 
-       } 
-      } """ % propbank_id
+    query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnParamLabel WHERE {{
+        ?verb rdfs:label "%s" . 
+        #?verb rrp:inKB rrp:PropBank .
+        ?verb rrp:hasParameter ?pbParam . 
+        ?pbParam rdfs:label ?pbSemRole . 
+        ?vnVerb rrp:inKB rrp:VerbNet . 
+        ?vnVerb rdfs:label ?vnVerbLabel . 
+        ?vnVerb rrp:hasComponent ?vnFrame . 
+        ?vnFrame rrp:hasComponent ?semPred . 
+        ?semPred rrp:hasParameter ?vnParam . 
+        ?pbParam rrp:mapsTo ?vnParam . 
+        ?vnParam rdfs:label ?vnParamLabel . 
+        }}
+        """ % propbank_id
 
     sparql.setQuery(query_prefix + query_text)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
+
+    # print("bindings:", results["results"]["bindings"])
+    # input()
 
     for result in results["results"]["bindings"]:
         pb_sem_role = result["pbSemRole"]["value"]
@@ -211,9 +221,12 @@ def test_query_provenance(verb):
 if __name__ == "__main__":
     # query_verbnet_semantic_roles("admire.01")
     # query_verbnet_semantic_roles("enter.01")
+    # query_verbnet_semantic_roles("possible.01")
+    # query_verbnet_semantic_roles("green.02")
+    # query_verbnet_semantic_roles("make_out.23")
     # query_verbnet_semantic_predicates("admire-31_2")
     # print(query_pb_vn_mapping_from_rdf("admire.01"))
     # print(query_pb_vn_mapping_from_rdf("enter.01"))
-    # print(query_semantics_from_rdf("escape-51_1-1"))
-    test_query_provenance("put-9.1-2")
+    print(query_semantics_from_rdf("escape-51_1-1"))
+    # test_query_provenance("put-9.1-2")
 

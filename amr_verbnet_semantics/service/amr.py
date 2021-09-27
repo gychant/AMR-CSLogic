@@ -1,9 +1,10 @@
 """Wrappers for local and remote AMR parsing client"""
 import os
 
-from third_party.transition_amr_parser.parse import AMRParser
 from nltk.tokenize import word_tokenize
+from nltk import sent_tokenize
 from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
+from third_party.transition_amr_parser.parse import AMRParser
 
 import config
 
@@ -57,9 +58,33 @@ else:
     raise Exception("Missing AMR parsing configuration ...")
 
 
+def parse_text(text, verbose=False):
+    sentences = sent_tokenize(text)
+
+    if verbose:
+        print("\ntext:\n", text)
+        print("\nsentences:\n==>", "\n\n==>".join(sentences))
+        print("parsing ...")
+
+    sentence_parses = []
+    for idx, sent in enumerate(sentences):
+        sent_amr = amr_client.get_amr(sent)
+        sentence_parses.append(sent_amr)
+
+    if verbose:
+        print("\nsentence_parses:", sentence_parses)
+    return sentence_parses
+
+
 if __name__ == "__main__":
     text = "The quick brown fox jumped over the lazy moon."
     amr = amr_client.get_amr(text)
     print("\ntext:", text)
     print("\namr:", amr)
+
+    # parse_text("You enter a kitchen.")
+    # parse_text("The quick brown fox jumped over the lazy moon.")
+    # parse_text("You see a dishwasher and a fridge.")
+    # parse_text("Here 's a dining table .")
+    # parse_text("You see a red apple and a dirty plate on the table .")
 

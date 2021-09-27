@@ -4,6 +4,7 @@ Core functions that enhance AMR with VerbNet semantics
 import os
 import copy
 import json
+import requests
 import nltk
 from nltk import word_tokenize
 from nltk import sent_tokenize
@@ -23,24 +24,10 @@ from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 # from amr_verbnet_semantics.service.ontology import query_pb_vn_mapping
-from amr_verbnet_semantics.service.amr import amr_client
+import config
 
 
-def parse_text(text):
-    sentences = sent_tokenize(text)
-    print("\ntext:\n", text)
-    print("\nsentences:\n==>", "\n\n==>".join(sentences))
-
-    print("parsing ...")
-    sentence_parses = []
-    for idx, sent in enumerate(sentences):
-        amr = amr_client.get_amr(sent)
-        sentence_parses.append(amr)
-    return sentence_parses
-
-
-def ground_text_to_verbnet(text, amr=None, local_amr_client=None,
-                           use_coreference=True, verbose=False):
+def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
     sentences = sent_tokenize(text)
     if verbose:
         print("parsing ...")
@@ -58,11 +45,12 @@ def ground_text_to_verbnet(text, amr=None, local_amr_client=None,
         sent_res = dict()
 
         if amr is None:
-            if local_amr_client:
-                amr = local_amr_client.get_amr(sent)
-            else:
-                amr = amr_client.get_amr(sent)
+            response = requests.get("http://{}:{}/amr_parsing".format(
+                config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
+                params={'text': text})
+            amr = json.loads(response.text).get("result", None)
 
+        print("\namr:\n", amr)
         g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
@@ -745,16 +733,13 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 
 
 if __name__ == "__main__":
-    # parse_text("You enter a kitchen.")
-    # parse_text("The quick brown fox jumped over the lazy moon.")
-    # parse_text("You see a dishwasher and a fridge.")
-    # parse_text("Here 's a dining table .")
-    # parse_text("You see a red apple and a dirty plate on the table .")
-
     # ground_text_to_verbnet("You enter a kitchen.")
-    # ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # ground_text_to_verbnet("Here 's a dining table .")
     # ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     # ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
-    ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
+    # ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
+    # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
+    # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
+    print(res)
 

@@ -32,3 +32,7 @@ AMR_PARSING_MODEL = "local"
 REMOTE_AMR_HOST = "mnlp-demo.sl.cloud9.ibm.com"
 REMOTE_AMR_PORT = 59990
 
+# Configure local service
+LOCAL_SERVICE_HOST = "0.0.0.0"
+LOCAL_SERVICE_PORT = 5000
+
