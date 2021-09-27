@@ -92,7 +92,7 @@ query_sem_predicates_node_str = """SELECT DISTINCT ?example ?operator ?semanticP
                 }} ORDER BY ?semanticPredicate
                   """
                   
-query_sem_predicates_str = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?value ?expression  WHERE {{
+query_sem_predicates_str = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?expression  WHERE {{
                   ?entity rdfs:label ?label . 
                   FILTER regex(?label, "{}", "i")
                   ?entity rrp:hasComponent ?frame . 
@@ -232,7 +232,7 @@ def ulkb_sem_predicates_for(_verb : str) -> [] :
        if 'params' not in thisPredicate: 
            thisPredicate['params'] = []
        params = thisPredicate['params']
-       params.append({'type' :result["type"]["value"], 'value' : result["value"]["value"], 'expression' : result["value"]["value"]})
+       params.append({'type' :result["type"]["value"],  'value' : result["expression"]["value"]})
        #thisPredicate['type'] = result["type"]["value"]
        #thisPredicate['value'] = result["value"]["value"]         
        #print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +  
