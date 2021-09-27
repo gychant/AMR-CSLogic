@@ -18,8 +18,8 @@ from . import app
 # HTTP Status Codes
 from . import status
 
-from amr_verbnet_semantics.service.amr import amr_client
-from amr_verbnet_semantics.core.amr_verbnet_enhance import parse_text, ground_text_to_verbnet
+from amr_verbnet_semantics.service.amr import parse_text
+from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_text_to_verbnet
 
 ######################################################################
 # GET INDEX
@@ -52,9 +52,7 @@ def amr_parsing():
 
     parse = parse_text(text)
     results = {
-        "text": text,
-        "coreference": parse["coreference"],
-        "amr_parse": parse["sentence_parses"]
+        "result": parse[0]
     }
     app.logger.info("Finished parsing ...")
     return make_response(jsonify(results), status.HTTP_200_OK)
