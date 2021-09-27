@@ -27,5 +27,5 @@ class PredicateCalculus(object):
 
 
 if __name__ == "__main__":
-    print(query_propbank_roleset_ids())
+    pass
 
