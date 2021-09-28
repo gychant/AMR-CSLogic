@@ -1,25 +1,21 @@
 # AMR parsing given a sentence and a model
-import time
+import argparse
 import os
 import signal
-import argparse
+import time
 from collections import Counter
 
 import numpy as np
 from tqdm import tqdm
 
+from third_party.transition_amr_parser.amr import (InvalidAMRError,
+                                                   get_duplicate_edges)
+from third_party.transition_amr_parser.io import (read_rule_stats,
+                                                  read_tokenized_sentences,
+                                                  writer)
 from third_party.transition_amr_parser.state_machine import (
-    AMRStateMachine,
-    DepParsingStateMachine,
-    get_spacy_lemmatizer
-)
+    AMRStateMachine, DepParsingStateMachine, get_spacy_lemmatizer)
 from third_party.transition_amr_parser.utils import yellow_font
-from third_party.transition_amr_parser.amr import InvalidAMRError, get_duplicate_edges
-from third_party.transition_amr_parser.io import (
-    writer,
-    read_tokenized_sentences,
-    read_rule_stats,
-)
 
 
 def argument_parser():

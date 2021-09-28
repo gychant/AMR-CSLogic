@@ -3,7 +3,8 @@ import sys
 
 from tqdm import tqdm
 
-from third_party.transition_amr_parser.amr_state_machine_reformer import AMRActionReformer
+from third_party.transition_amr_parser.amr_state_machine_reformer import \
+    AMRActionReformer
 
 
 def get_actions_states(*, tokens=None, tokseq_len=None, actions=None):

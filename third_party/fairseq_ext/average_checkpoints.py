@@ -6,9 +6,10 @@
 
 import argparse
 import collections
-import torch
 import os
 import re
+
+import torch
 
 
 def average_checkpoints(inputs):

@@ -8,18 +8,21 @@ GET /amr_parsing - Returns AMR parsing results
 GET /verbnet_semantics - Returns grounding results using VerbNet semantics
 """
 
+import logging
 import os
 import sys
-import logging
-from flask import Flask, jsonify, request, url_for, make_response, abort
-from werkzeug.exceptions import NotFound
-# Import Flask application
-from . import app
-# HTTP Status Codes
-from . import status
 
-from amr_verbnet_semantics.service.amr import parse_text
-from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_text_to_verbnet
+from flask import Flask, abort, jsonify, make_response, request, url_for
+from werkzeug.exceptions import NotFound
+
+from amr_verbnet_semantics.core.amr_verbnet_enhance import (
+    ground_text_to_verbnet, parse_text)
+from amr_verbnet_semantics.service.amr import amr_client, parse_text
+
+# HTTP Status Codes
+# Import Flask application
+from . import app, status
+
 
 ######################################################################
 # GET INDEX
@@ -94,4 +97,3 @@ def check_content_type(media_type):
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         "Content-Type must be {}".format(media_type),
     )
-

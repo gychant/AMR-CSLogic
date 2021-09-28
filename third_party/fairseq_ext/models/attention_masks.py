@@ -1,6 +1,5 @@
-from packaging import version
-
 import torch
+from packaging import version
 
 
 def make_bsz_tgt_src_align_mask(tgt_src_cursors, src_max_len, src_pad_mask=None):

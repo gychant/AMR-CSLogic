@@ -37,6 +37,7 @@ def load_indexed_dataset(path, dictionary, dataset_impl=None, combine=False, def
             single ConcatDataset instance.
     """
     from fairseq.data.concat_dataset import ConcatDataset
+
     from . import indexed_dataset
 
     datasets = []

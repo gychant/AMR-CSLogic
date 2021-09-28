@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 try:
     import matplotlib.pyplot as plt
 except ImportError:

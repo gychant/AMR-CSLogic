@@ -11,17 +11,18 @@ Data pre-processing: build vocabularies and binarize training data.
 import os
 import shutil
 from collections import Counter
+from multiprocessing import Pool
 
 import numpy as np
 # from fairseq import options, tasks, utils
 from fairseq import tasks, utils
-from fairseq.data import indexed_dataset
 from fairseq.binarizer import Binarizer
-from multiprocessing import Pool
+from fairseq.data import indexed_dataset
 from fairseq.tokenizer import tokenize_line
 
 from third_party.fairseq_ext import options
-from third_party.fairseq_ext.roberta.binarize_embeddings import make_roberta_embeddings
+from third_party.fairseq_ext.roberta.binarize_embeddings import \
+    make_roberta_embeddings
 
 
 def main(args):

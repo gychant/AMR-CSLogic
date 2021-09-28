@@ -1,6 +1,8 @@
 import numpy as np
 import torch
-from fairseq.data.indexed_dataset import __best_fitting_dtype, MMapIndexedDatasetBuilder, IndexedDatasetBuilder
+from fairseq.data.indexed_dataset import (IndexedDatasetBuilder,
+                                          MMapIndexedDatasetBuilder,
+                                          __best_fitting_dtype)
 from fairseq.tokenizer import tokenize_line
 
 

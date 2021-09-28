@@ -2,8 +2,8 @@
 Accessing the unified KB using SPARQL
 """
 from collections import defaultdict
-from SPARQLWrapper import SPARQLWrapper, JSON
 
+from SPARQLWrapper import JSON, SPARQLWrapper
 
 import config
 
@@ -26,20 +26,20 @@ def query_pb_vn_mapping_from_rdf(propbank_id, vn_version="verbnet3.4"):
     :param vn_version: verbnet version of mapping
     :return:
     """
-    query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnParamLabel WHERE {   
-        ?verb rdfs:label "%s" . 
+    query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnParamLabel WHERE {
+        ?verb rdfs:label "%s" .
         #?verb rrp:inKB rrp:PropBank .
-        ?verb rrp:hasParameter ?pbParam . 
-        ?pbParam rdfs:label ?pbSemRole . 
+        ?verb rrp:hasParameter ?pbParam .
+        ?pbParam rdfs:label ?pbSemRole .
         OPTIONAL {
-            ?vnVerb rrp:inKB rrp:VerbNet . 
-            ?vnVerb rdfs:label ?vnVerbLabel . 
-            ?vnVerb rrp:hasComponent ?vnFrame . 
-            ?vnFrame rrp:hasComponent ?semPred . 
-            ?semPred rrp:hasParameter ?vnParam . 
-            ?pbParam rrp:mapsTo ?vnParam . 
-            ?vnParam rdfs:label ?vnParamLabel . 
-        } 
+            ?vnVerb rrp:inKB rrp:VerbNet .
+            ?vnVerb rdfs:label ?vnVerbLabel .
+            ?vnVerb rrp:hasComponent ?vnFrame .
+            ?vnFrame rrp:hasComponent ?semPred .
+            ?semPred rrp:hasParameter ?vnParam .
+            ?pbParam rrp:mapsTo ?vnParam .
+            ?vnParam rdfs:label ?vnParamLabel .
+        }
     } """ % propbank_id
 
     sparql.setQuery(query_prefix + query_text)
@@ -62,7 +62,7 @@ def query_pb_vn_mapping_from_rdf(propbank_id, vn_version="verbnet3.4"):
     return mapping_res
 
 
-def query_semantics_from_rdf(verbnet_class_id, 
+def query_semantics_from_rdf(verbnet_class_id,
                              verbnet_version="verbnet3.4",
                              include_example=False,
                              verbose=False):
@@ -71,21 +71,21 @@ def query_semantics_from_rdf(verbnet_class_id,
 
     verbnet_class_id = verbnet_class_id.replace(".", "_").replace("-", "_")
     query_text = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?expression WHERE {{
-                  ?entity rdfs:label ?label . 
+                  ?entity rdfs:label ?label .
                   FILTER regex(?label, "%s", "i")
                   ?entity rrp:hasComponent ?frame .
-                  ?frame rrp:example ?example . 
-                  ?frame rrp:hasComponent ?semanticPredicate . 
+                  ?frame rrp:example ?example .
+                  ?frame rrp:hasComponent ?semanticPredicate .
                   ?semanticPredicate a rrp:SemanticPredicate .
-                  ?semanticPredicate rdfs:label ?semanticPredicateLabel. 
-                  ?semanticPredicate rrp:hasParameter ?param . 
+                  ?semanticPredicate rdfs:label ?semanticPredicateLabel.
+                  ?semanticPredicate rrp:hasParameter ?param .
                   OPTIONAL {{
-                    ?semanticPredicate rrp:logicOperatorName ?operator .  
+                    ?semanticPredicate rrp:logicOperatorName ?operator .
                    }}
-                  ?param rrp:varType ?type . 
-                  ?param rrp:varName ?value . 
-                  ?param rrp:varExpression ?expression . 
-                  ?semanticPredicate rrp:textInfo ?predicateText .  
+                  ?param rrp:varType ?type .
+                  ?param rrp:varName ?value .
+                  ?param rrp:varExpression ?expression .
+                  ?semanticPredicate rrp:textInfo ?predicateText .
                 }} ORDER BY ?semanticPredicate
                 """ % verbnet_class_id
 
@@ -172,17 +172,17 @@ def query_verbnet_semantic_roles(propbank_id):
     # print("propbank_id:", propbank_id)
 
     query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnParamLabel WHERE {{
-        ?verb rdfs:label "%s" . 
+        ?verb rdfs:label "%s" .
         #?verb rrp:inKB rrp:PropBank .
-        ?verb rrp:hasParameter ?pbParam . 
-        ?pbParam rdfs:label ?pbSemRole . 
-        ?vnVerb rrp:inKB rrp:VerbNet . 
-        ?vnVerb rdfs:label ?vnVerbLabel . 
-        ?vnVerb rrp:hasComponent ?vnFrame . 
-        ?vnFrame rrp:hasComponent ?semPred . 
-        ?semPred rrp:hasParameter ?vnParam . 
-        ?pbParam rrp:mapsTo ?vnParam . 
-        ?vnParam rdfs:label ?vnParamLabel . 
+        ?verb rrp:hasParameter ?pbParam .
+        ?pbParam rdfs:label ?pbSemRole .
+        ?vnVerb rrp:inKB rrp:VerbNet .
+        ?vnVerb rdfs:label ?vnVerbLabel .
+        ?vnVerb rrp:hasComponent ?vnFrame .
+        ?vnFrame rrp:hasComponent ?semPred .
+        ?semPred rrp:hasParameter ?vnParam .
+        ?pbParam rrp:mapsTo ?vnParam .
+        ?vnParam rdfs:label ?vnParamLabel .
         }}
         """ % propbank_id
 
@@ -229,4 +229,3 @@ if __name__ == "__main__":
     # print(query_pb_vn_mapping_from_rdf("enter.01"))
     print(query_semantics_from_rdf("escape-51_1-1"))
     # test_query_provenance("put-9.1-2")
-

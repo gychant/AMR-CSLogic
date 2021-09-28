@@ -1,6 +1,5 @@
-import os
 import importlib
-
+import os
 
 # automatically infer the user module name (in case there is a change during the development)
 user_module_name = os.path.split(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))[1]

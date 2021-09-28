@@ -3,9 +3,8 @@ import re
 from xml.etree import ElementTree
 
 from nltk.corpus import treebank
+from nltk.corpus.reader import PropbankCorpusReader, VerbnetCorpusReader
 from nltk.corpus.util import LazyCorpusLoader
-from nltk.corpus.reader import VerbnetCorpusReader, PropbankCorpusReader
-
 
 propbank = LazyCorpusLoader(
     "propbank-latest",

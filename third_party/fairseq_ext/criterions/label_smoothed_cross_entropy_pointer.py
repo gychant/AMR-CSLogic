@@ -7,7 +7,6 @@ import math
 
 import torch
 from fairseq import utils
-
 from fairseq.criterions import FairseqCriterion, register_criterion
 
 

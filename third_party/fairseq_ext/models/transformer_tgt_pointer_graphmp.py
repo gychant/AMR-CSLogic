@@ -4,36 +4,27 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from packaging import version
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from fairseq import options, utils
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqIncrementalDecoder,
-    FairseqEncoderDecoderModel,
-    register_model,
-    register_model_architecture,
-)
-from fairseq.modules import (
-    AdaptiveSoftmax,
-    LayerNorm,
-    PositionalEmbedding,
-    SinusoidalPositionalEmbedding,
-    # TransformerDecoderLayer,
-    # TransformerEncoderLayer,
-)
+from fairseq.models import (FairseqEncoder, FairseqEncoderDecoderModel,
+                            FairseqIncrementalDecoder, register_model,
+                            register_model_architecture)
+from fairseq.modules import (  # TransformerDecoderLayer,; TransformerEncoderLayer,
+    AdaptiveSoftmax, LayerNorm, PositionalEmbedding,
+    SinusoidalPositionalEmbedding)
+from packaging import version
 
-from third_party.transition_amr_parser.stack_state_machine import state_machine_encoder
+from third_party.transition_amr_parser.stack_state_machine import \
+    state_machine_encoder
 
-
-from ..modules.transformer_layer import TransformerEncoderLayer, TransformerDecoderLayer
-from .attention_masks import get_cross_attention_mask, get_cross_attention_mask_heads
+from ..modules.transformer_layer import (TransformerDecoderLayer,
+                                         TransformerEncoderLayer)
+from .attention_masks import (get_cross_attention_mask,
+                              get_cross_attention_mask_heads)
 from .graphmp_attention_masks import get_graph_self_attn_mask
-
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024

@@ -1,13 +1,14 @@
-import re
-import json
-from collections import Counter
-import subprocess
-from third_party.transition_amr_parser.amr import JAMR_CorpusReader
 import ast
-import xml.etree.ElementTree as ET
-
+import json
+import re
 import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+from collections import Counter
+
 import numpy as np
+
+from third_party.transition_amr_parser.amr import JAMR_CorpusReader
 
 
 def clbar(

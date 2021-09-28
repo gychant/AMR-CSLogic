@@ -1,14 +1,15 @@
 import itertools
-import subprocess
 import random
+import subprocess
 from collections import Counter
 from datetime import datetime
-from spacy.tokens.doc import Doc
+
 import numpy as np
 import torch.nn as nn
 import torch.nn.init
-from torch.utils.data import Dataset
+from spacy.tokens.doc import Doc
 from torch.nn import functional as F
+from torch.utils.data import Dataset
 
 
 class AMRDataset(Dataset):

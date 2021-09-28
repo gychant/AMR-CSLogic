@@ -4,10 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import argparse
-
-import torch
 import sys
 
+import torch
 from fairseq import utils
 from fairseq.data.indexed_dataset import get_available_dataset_impl
 
@@ -88,7 +87,7 @@ def parse_args_and_arch(parser, input_args=None, parse_known=False, suppress_def
             if v is not None
         })
 
-    from fairseq.models import ARCH_MODEL_REGISTRY, ARCH_CONFIG_REGISTRY
+    from fairseq.models import ARCH_CONFIG_REGISTRY, ARCH_MODEL_REGISTRY
 
     # The parser doesn't know about model/criterion/optimizer-specific args, so
     # we parse twice. First we parse the model/criterion/optimizer, then we

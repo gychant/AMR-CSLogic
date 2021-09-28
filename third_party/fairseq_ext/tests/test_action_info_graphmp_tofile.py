@@ -3,9 +3,9 @@ import sys
 
 from fairseq.data import Dictionary
 
-from third_party.fairseq_ext.amr_spec.action_info_binarize_graphmp import (binarize_actstates_tofile,
-                                                               binarize_actstates_tofile_workers,
-                                                               load_actstates_fromfile)
+from third_party.fairseq_ext.amr_spec.action_info_binarize_graphmp import (
+    binarize_actstates_tofile, binarize_actstates_tofile_workers,
+    load_actstates_fromfile)
 
 # import sys
 # import importlib

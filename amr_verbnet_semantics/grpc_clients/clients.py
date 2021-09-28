@@ -3,7 +3,7 @@ GRPC clients
 """
 import grpc
 
-from ..grpc_defs import ace_pb2_grpc, ace_pb2
+from ..grpc_defs import ace_pb2, ace_pb2_grpc
 from ..grpc_defs.enhanced_amr_pb2 import Sentence
 from ..grpc_defs.enhanced_amr_pb2_grpc import AMR_EnhancerStub
 

@@ -1,6 +1,7 @@
 
-from nltk.corpus import propbank
 from xml.etree import ElementTree
+
+from nltk.corpus import propbank
 
 """
 pb_instances = propbank.instances()

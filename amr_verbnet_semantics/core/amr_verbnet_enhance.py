@@ -1,30 +1,29 @@
 """
 Core functions that enhance AMR with VerbNet semantics
 """
-import os
-import copy
 import json
-import requests
-import nltk
-from nltk import word_tokenize
-from nltk import sent_tokenize
-from typing import List
-from pprint import pprint
+import os
 from collections import Counter
-import penman
-import networkx as nx
-import graphviz
+from pprint import pprint
+from typing import List
 
-from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
-from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
-from amr_verbnet_semantics.utils.format_util import to_json
-from amr_verbnet_semantics.core.models import PredicateCalculus
-from amr_verbnet_semantics.service.propbank import query_propbank_roles
-from amr_verbnet_semantics.service.verbnet import query_semantics
-from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
-from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
-# from amr_verbnet_semantics.service.ontology import query_pb_vn_mapping
+import copyimport
+import graphviz
+import networkx as nx
+import nltk
+import penman
+import requests
+from nltk import sent_tokenize, word_tokenize
+
 import config
+from amr_verbnet_semantics.core.models import PredicateCalculus
+from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
+from amr_verbnet_semantics.corpus_readers.propbank import query_propbank_roles
+from amr_verbnet_semantics.corpus_readers.semlink import query_pb_vn_mapping
+from amr_verbnet_semantics.corpus_readers.verbnet import query_semantics
+from amr_verbnet_semantics.service.amr import amr_client
+from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
+from amr_verbnet_semantics.utils.format_util import to_json
 
 
 def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
@@ -742,4 +741,3 @@ if __name__ == "__main__":
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
     print(res)
-

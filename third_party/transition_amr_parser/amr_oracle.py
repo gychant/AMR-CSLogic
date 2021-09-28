@@ -1,16 +1,14 @@
-import json
 import argparse
-from collections import Counter, defaultdict
+import json
 import re
+from collections import Counter, defaultdict
 
 from tqdm import tqdm
 
-from third_party.transition_amr_parser.io import read_propbank, read_amr, write_tokenized_sentences
 from third_party.transition_amr_parser.amr_state_machine import (
-    AMRStateMachine,
-    get_spacy_lemmatizer
-)
-
+    AMRStateMachine, get_spacy_lemmatizer)
+from third_party.transition_amr_parser.io import (read_amr, read_propbank,
+                                                  write_tokenized_sentences)
 
 """
 This algorithm contains heuristics for generating linearized action sequences for AMR graphs in a rule based way.

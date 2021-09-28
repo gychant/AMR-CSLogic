@@ -1,8 +1,8 @@
-import sys
 import re
-from collections import Counter
+import sys
+from collections import Counter, defaultdict
+
 from third_party.transition_amr_parser.utils import print_log
-from collections import defaultdict
 
 
 def find_subgraph_edges(total_edges, split_node_id):

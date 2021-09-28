@@ -4,11 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+import torch.nn.functional as F
+from fairseq import utils
 from torch import nn
 from torch.nn import Parameter
-import torch.nn.functional as F
-
-from fairseq import utils
 
 
 class MultiheadAttention(nn.Module):

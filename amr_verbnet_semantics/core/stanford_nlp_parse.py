@@ -1,10 +1,10 @@
 """StanfordCoreNLP Parsing"""
 
 from pprint import pprint
+
 import nltk
 from nltk.tokenize import sent_tokenize
 from stanfordcorenlp import StanfordCoreNLP
-
 
 STANFORD_CORENLP_PATH = "./stanford-corenlp-full-2018-10-05"
 nlp = None

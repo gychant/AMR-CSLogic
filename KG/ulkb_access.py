@@ -6,11 +6,12 @@ Created on Tue Jun  1 21:07:04 2021
 @author: rosariouceda-sosa
 """
 
-from SPARQLWrapper import SPARQLWrapper, JSON
-from nltk.stem import PorterStemmer
-import requests
-import operator
 import json
+import operator
+
+import requests
+from nltk.stem import PorterStemmer
+from SPARQLWrapper import JSON, SPARQLWrapper
 
 #from csv import reader
 #GLOBALS 
