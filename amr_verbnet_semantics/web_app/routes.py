@@ -17,7 +17,7 @@ from werkzeug.exceptions import NotFound
 
 from amr_verbnet_semantics.core.amr_verbnet_enhance import (
     ground_text_to_verbnet, parse_text)
-from amr_verbnet_semantics.service.amr import amr_client
+from amr_verbnet_semantics.service.amr import amr_client, parse_text
 
 # HTTP Status Codes
 # Import Flask application
@@ -55,9 +55,7 @@ def amr_parsing():
 
     parse = parse_text(text)
     results = {
-        "text": text,
-        "coreference": parse["coreference"],
-        "amr_parse": parse["sentence_parses"]
+        "result": parse[0]
     }
     app.logger.info("Finished parsing ...")
     return make_response(jsonify(results), status.HTTP_200_OK)
@@ -99,4 +97,3 @@ def check_content_type(media_type):
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         "Content-Type must be {}".format(media_type),
     )
-

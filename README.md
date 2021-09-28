@@ -1,6 +1,6 @@
 # amr-verbnet-semantics
 
-To create a project specific virtual environment, 
+To create/activate a project specific virtual environment, 
 ```
 $ . set_environment.sh
 ```
@@ -112,6 +112,12 @@ To compute the precision and recall of extracted triples with the ground truth,
 $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --compute_metrics \
     --triple_file_path ./path_output/extracted_triples.jsonl
+```
+
+To deploy a local SPARQL endpoint of the RDF triple store which stores unified linguistic knowledge, download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and load it into a namespace of Blazegraph. Then set the SPARQL_ENDPOINT address in config.py.
+Specifically, to start blazegraph
+```
+$ java -server -Xmx32g -jar blazegraph.jar
 ```
 
 ### Using AMR parser directly

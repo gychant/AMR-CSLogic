@@ -1,5 +1,6 @@
 """PropBank query wrapper"""
 import re
+from xml.etree import ElementTree
 
 from nltk.corpus import treebank
 from nltk.corpus.reader import PropbankCorpusReader, VerbnetCorpusReader
@@ -17,15 +18,19 @@ propbank = LazyCorpusLoader(
 
 
 def query_propbank_roles(propbank_id):
-    # print("query_propbank_roles for propbank_id {}".format(propbank_id))
+    print("\nquery_propbank_roles for propbank_id {}".format(propbank_id))
     try:
         role_set = propbank.roleset(propbank_id)
-    except ValueError:
+    except Exception as e:
+        print(e)
         return None
 
     role_mappings = dict()
+    print("role_set:", ElementTree.tostring(role_set, encoding='unicode'))
     for role in role_set.findall("roles/role"):
+        print("role:", ElementTree.tostring(role, encoding='unicode'))
         for vn_role in role.findall('vnrole'):
+            print("vn_role:", ElementTree.tostring(vn_role, encoding='unicode'))
             arg_key = ":ARG{}".format(role.attrib['n'])
             if arg_key not in role_mappings:
                 role_mappings[arg_key] = []
@@ -34,7 +39,7 @@ def query_propbank_roles(propbank_id):
                 "vntheta": vn_role.attrib["vntheta"],
                 "description": role.attrib['descr']
             })
-    # print("query_propbank_roles role_mappings:", role_mappings)
+    print("query_propbank_roles role_mappings:", role_mappings)
     return role_mappings
 
 
@@ -46,5 +51,6 @@ def query_propbank_roleset_ids():
 
 
 if __name__ == "__main__":
-    print(query_propbank_roleset_ids())
+    # print(query_propbank_roleset_ids())
+    print(query_propbank_roles("make_out.23"))
 
