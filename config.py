@@ -1,3 +1,6 @@
+"""
+Config file for FLASK web service.
+"""
 import logging
 import os
 
