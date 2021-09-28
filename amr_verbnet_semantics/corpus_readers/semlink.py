@@ -13,6 +13,7 @@ from nltk.corpus.reader import VerbnetCorpusReader as VerbnetCorpusReaderOrig
 from nltk.corpus.util import LazyCorpusLoader
 
 import config
+from amr_verbnet_semantics.corpus_readers.rdf_kb import query_pb_vn_mapping_from_rdf
 
 
 class VerbnetCorpusReader(VerbnetCorpusReaderOrig):

@@ -17,14 +17,14 @@ class AMRClient(object):
         self.use_cuda = use_cuda
 
     def _get_parser(self, use_cuda=False):
-        # cwd = os.getcwd()
-        # os.chdir(PARSER_DIR)
+        cwd = os.getcwd()
+        os.chdir(PARSER_DIR)
         amr_parser = AMRParser.from_checkpoint(config.AMR_MODEL_CHECKPOINT_PATH,
                                                roberta_cache_path=config.ROBERTA_CACHE_PATH,
                                                use_cuda=use_cuda)
         # for loading resources, parse a test sentence
         amr_parser.parse_sentences([['test']])
-        # os.chdir(cwd)
+        os.chdir(cwd)
         return amr_parser
 
     def get_amr(self, text):
