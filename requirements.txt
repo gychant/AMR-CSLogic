@@ -19,6 +19,7 @@ graphviz
 ipykernel
 SPARQLWrapper
 ipdb
+pyyaml
 
 # third party dependencies
 torch==1.3

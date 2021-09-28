@@ -52,6 +52,7 @@ def query_propbank_roleset_ids():
 
 
 if __name__ == "__main__":
-    # print(query_propbank_roleset_ids())
-    print(query_propbank_roles("make_out.23"))
+    print(query_propbank_roleset_ids())
+    # print(query_propbank_roles("make_out.23"))
+    # print(query_propbank_roles("make.01"))
 

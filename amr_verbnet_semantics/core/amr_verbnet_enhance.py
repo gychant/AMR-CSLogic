@@ -24,7 +24,8 @@ from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 # from amr_verbnet_semantics.service.ontology import query_pb_vn_mapping
-import config
+
+from app_config import config
 
 
 def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):

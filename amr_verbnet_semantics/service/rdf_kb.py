@@ -4,8 +4,8 @@ Accessing the unified KB using SPARQL
 from collections import defaultdict
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-
-import config
+from KG.ulkb_access import ulkb_sem_predicates_for
+from app_config import config
 
 query_prefix = """
 prefix rrp: <http://www.ibm.com/RRP#>
@@ -70,74 +70,7 @@ def query_semantics_from_rdf(verbnet_class_id,
         print("verbnet_class_id:", verbnet_class_id)
 
     verbnet_class_id = verbnet_class_id.replace(".", "_").replace("-", "_")
-    query_text = """SELECT DISTINCT ?example ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?expression WHERE {{
-                  ?entity rdfs:label ?label . 
-                  FILTER regex(?label, "%s", "i")
-                  ?entity rrp:hasComponent ?frame .
-                  ?frame rrp:example ?example . 
-                  ?frame rrp:hasComponent ?semanticPredicate . 
-                  ?semanticPredicate a rrp:SemanticPredicate .
-                  ?semanticPredicate rdfs:label ?semanticPredicateLabel. 
-                  ?semanticPredicate rrp:hasParameter ?param . 
-                  OPTIONAL {{
-                    ?semanticPredicate rrp:logicOperatorName ?operator .  
-                   }}
-                  ?param rrp:varType ?type . 
-                  ?param rrp:varName ?value . 
-                  ?param rrp:varExpression ?expression . 
-                  ?semanticPredicate rrp:textInfo ?predicateText .  
-                }} ORDER BY ?semanticPredicate
-                """ % verbnet_class_id
-
-    if verbose:
-        print("query_text:", query_text)
-
-    sparql.setQuery(query_prefix + query_text)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-
-    output = []
-    thisFrame = {}
-    output.append(thisFrame)
-    curPredicateID = ""
-    thisPredicate = {}
-
-    # PROCESS OUTPUT IN A JSON-FRIENDLY FORMAT
-    for result in results["results"]["bindings"]:
-        example = result["example"]["value"]
-
-        if 'example' not in thisFrame:
-            thisFrame['example'] = example
-        if example != thisFrame['example']:
-            thisFrame = {}
-            output.append(thisFrame)
-            thisFrame['example'] = example
-            curPredicateID = ""
-        thisPredicateID = result["semanticPredicate"]["value"]
-
-        if 'predicates' not in thisFrame:
-            thisFrame['predicates'] = []
-        predicates = thisFrame['predicates']
-
-        if thisPredicateID != curPredicateID:
-            thisPredicate = {}
-            predicates.append(thisPredicate)
-            curPredicateID = thisPredicateID
-
-        # predicateText = result["predicateText"]["value"]
-        predLabel = result["semanticPredicateLabel"]["value"]
-
-        thisPredicate['label'] = predLabel
-        if "operator" in result:
-            thisPredicate['operator'] = result["operator"]["value"]
-
-        if 'params' not in thisPredicate:
-            thisPredicate['params'] = []
-        params = thisPredicate['params']
-        params.append({
-            'type': result["type"]["value"],
-            'value': result["expression"]["value"]
-        })
+    output = ulkb_sem_predicates_for(verbnet_class_id)
 
     # Further construct the result
     semantics_by_role_set = defaultdict(list)

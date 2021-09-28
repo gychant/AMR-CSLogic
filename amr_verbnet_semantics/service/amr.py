@@ -6,7 +6,7 @@ from nltk import sent_tokenize
 from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
 from third_party.transition_amr_parser.parse import AMRParser
 
-import config
+from app_config import config
 
 PARSER_DIR = f'{os.path.dirname(__file__)}/../../third_party'
 
