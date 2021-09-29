@@ -11,6 +11,7 @@ from nltk.stem import PorterStemmer
 import requests
 import operator
 import json
+from app_config import config
 
 #from csv import reader
 #GLOBALS 
@@ -35,8 +36,8 @@ query_prefix =  ("prefix rrp: <http://www.ibm.com/RRP#> \n"
                 "prefix ulpb: <http://www.ibm.com/UL_PB#> \n"  
                 "prefix ulkb: <http://www.ibm.com/UL_KB#> \n")
 
-#THIS IS THE SERVER 
-sparql = SPARQLWrapper("http://goedel.sl.cloud9.ibm.com:9999/blazegraph/namespace/UL_KB_V2")
+#THIS IS THE SERVER
+sparql = SPARQLWrapper(config.SPARQL_ENDPOINT)
 #THIS IS A LOCAL VERSION (ROSARIO'S)
 #sparql = SPARQLWrapper("http://127.0.0.1:9999/blazegraph/namespace/UL_KB_V0")
 

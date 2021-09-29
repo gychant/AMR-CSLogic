@@ -150,8 +150,6 @@ def ground_amr(amr, verbose=False):
                     verbnet_version = mapping["source"]
                     amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
                     semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
-                    print("\nsemantics_by_role_set:", semantics_by_role_set)
-                    input()
                     matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
                     # print("\nmatched_role_set:", matched_role_set)
                     # print("\nmatched_semantics:", matched_semantics)
@@ -735,11 +733,11 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 
 if __name__ == "__main__":
     # ground_text_to_verbnet("You enter a kitchen.")
-    res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # ground_text_to_verbnet("Here 's a dining table .")
     # ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     # ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
-    # ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
+    res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
     print(res)

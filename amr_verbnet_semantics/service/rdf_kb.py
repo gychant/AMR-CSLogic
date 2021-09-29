@@ -1,10 +1,11 @@
 """
 Accessing the unified KB using SPARQL
 """
+import json
 from collections import defaultdict
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-from KG.ulkb_access import ulkb_sem_predicates_for
+from KG.ulkb_access import ulkb_sem_predicates_for_vn, ulkb_sem_roles_for_pb
 from app_config import config
 
 query_prefix = """
@@ -70,7 +71,7 @@ def query_semantics_from_rdf(verbnet_class_id,
         print("verbnet_class_id:", verbnet_class_id)
 
     verbnet_class_id = verbnet_class_id.replace(".", "_").replace("-", "_")
-    output = ulkb_sem_predicates_for(verbnet_class_id)
+    output = ulkb_sem_predicates_for_vn(verbnet_class_id)
 
     # Further construct the result
     semantics_by_role_set = defaultdict(list)
@@ -123,9 +124,6 @@ def query_verbnet_semantic_roles(propbank_id):
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
 
-    # print("bindings:", results["results"]["bindings"])
-    # input()
-
     for result in results["results"]["bindings"]:
         pb_sem_role = result["pbSemRole"]["value"]
         vn_verb_label = result["vnVerbLabel"]["value"]
@@ -157,9 +155,13 @@ if __name__ == "__main__":
     # query_verbnet_semantic_roles("possible.01")
     # query_verbnet_semantic_roles("green.02")
     # query_verbnet_semantic_roles("make_out.23")
+    query_verbnet_semantic_roles("make_out.12")
     # query_verbnet_semantic_predicates("admire-31_2")
     # print(query_pb_vn_mapping_from_rdf("admire.01"))
     # print(query_pb_vn_mapping_from_rdf("enter.01"))
-    print(query_semantics_from_rdf("escape-51_1-1"))
+    # print(query_semantics_from_rdf("escape-51_1-1"))
     # test_query_provenance("put-9.1-2")
+    # output = ulkb_sem_roles_for_pb("carry.01")
+    # output = ulkb_sem_roles_for_pb("make_out.12")
+    # print(json.dumps(output, indent=4, sort_keys=True))
 

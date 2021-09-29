@@ -6,10 +6,12 @@ from nltk.corpus import treebank
 from nltk.corpus.util import LazyCorpusLoader
 from nltk.corpus.reader import VerbnetCorpusReader, PropbankCorpusReader
 
+from amr_verbnet_semantics.corpus_readers.propbank_reader import PropbankCorpusReaderEx
+
 
 propbank = LazyCorpusLoader(
     "propbank-latest",
-    PropbankCorpusReader,
+    PropbankCorpusReaderEx,
     "prop.txt",
     r"frames/.*\.xml",
     "verbs.txt",
@@ -27,11 +29,11 @@ def query_propbank_roles(propbank_id):
         return None
 
     role_mappings = dict()
-    print("role_set:", ElementTree.tostring(role_set, encoding='unicode'))
+    # print("role_set:", ElementTree.tostring(role_set, encoding='unicode'))
     for role in role_set.findall("roles/role"):
-        print("role:", ElementTree.tostring(role, encoding='unicode'))
+        # print("role:", ElementTree.tostring(role, encoding='unicode'))
         for vn_role in role.findall('vnrole'):
-            print("vn_role:", ElementTree.tostring(vn_role, encoding='unicode'))
+            # print("vn_role:", ElementTree.tostring(vn_role, encoding='unicode'))
             arg_key = ":ARG{}".format(role.attrib['n'])
             if arg_key not in role_mappings:
                 role_mappings[arg_key] = []
@@ -52,7 +54,13 @@ def query_propbank_roleset_ids():
 
 
 if __name__ == "__main__":
-    print(query_propbank_roleset_ids())
+    # print(query_propbank_roleset_ids())
     # print(query_propbank_roles("make_out.23"))
+    # print(query_propbank_roles("make"))
     # print(query_propbank_roles("make.01"))
+    # print(query_propbank_roles("make.02"))
+    # print(query_propbank_roles("make_up.08"))
+    # print(query_propbank_roles("possible.01"))
+    # print(query_propbank_roles("green.02"))
+    print(query_propbank_roles("except.01"))
 
