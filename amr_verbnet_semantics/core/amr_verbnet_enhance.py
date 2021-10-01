@@ -15,15 +15,13 @@ import penman
 import requests
 from nltk import sent_tokenize, word_tokenize
 
-import config
 from amr_verbnet_semantics.core.models import PredicateCalculus
-from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
-from amr_verbnet_semantics.corpus_readers.propbank import query_propbank_roles
-from amr_verbnet_semantics.corpus_readers.semlink import query_pb_vn_mapping
-from amr_verbnet_semantics.corpus_readers.verbnet import query_semantics
-from amr_verbnet_semantics.service.amr import amr_client
+from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
+from amr_verbnet_semantics.service.verbnet import query_semantics
+from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
-from amr_verbnet_semantics.utils.format_util import to_json
+
+from app_config import config
 
 
 def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
@@ -49,7 +47,8 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
                 params={'text': text})
             amr = json.loads(response.text).get("result", None)
 
-        print("\namr:\n", amr)
+        print("\namr:\n")
+        print(amr)
         g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
@@ -131,7 +130,7 @@ def ground_amr(amr, verbose=False):
         if len(inst.target) > 3 and inst.target[-3] == "-" and inst.target[-2:].isnumeric():
             pb_id = inst.target[:-3] + "." + inst.target[-2:]
             if pb_id not in role_mappings:
-                role_map = query_propbank_roles(pb_id)
+                role_map = query_verbnet_semantic_roles(pb_id)
                 if role_map is None:
                     continue
                 role_mappings[pb_id] = role_map
@@ -140,6 +139,7 @@ def ground_amr(amr, verbose=False):
                 continue
 
             mapping_res = query_pb_vn_mapping(pb_id)
+
             if mapping_res is not None and pb_id not in semantics:
                 # deal with multiple mappings
                 pb_vn_mappings[pb_id] = mapping_res
@@ -148,8 +148,6 @@ def ground_amr(amr, verbose=False):
                     verbnet_version = mapping["source"]
                     amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
                     semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
-                    print("\nsemantics_by_role_set:", semantics_by_role_set)
-                    input()
                     matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
                     # print("\nmatched_role_set:", matched_role_set)
                     # print("\nmatched_semantics:", matched_semantics)
@@ -211,8 +209,6 @@ def construct_calculus_from_semantics(semantics):
                     predicate=event["predicate_value"].upper(),
                     arguments=[arg["value"] for arg in event["arguments"]],
                     is_negative=event["is_negative"]))
-    # print(results)
-    # input()
     return results
 
 
@@ -255,8 +251,6 @@ def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
                             role_info = cur_role_mappings[role]
                             for vn_cls_info in role_info:
                                 if stmt.arguments[arg_idx].lower() == vn_cls_info["vntheta"].lower():
-                                    # print("role:", role)
-                                    # print("arg_map:", arg_map)
                                     if role not in arg_map[propbank_id][src]:
                                         continue
 
@@ -378,10 +372,8 @@ def construct_calculus_from_amr(amr):
             arg_map[tgt] = dict()
         if edge.source not in arg_map[tgt]:
             arg_map[tgt][edge.source] = dict()
-        arg_map[tgt][edge.source][edge.role] = edge.target
-    # print(amr_calc)
-    # print(arg_map)
-    # input()
+        arg_map[tgt][edge.source][edge.role[1:]] = edge.target
+
     return amr_calc, arg_map
 
 
@@ -732,12 +724,12 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 
 
 if __name__ == "__main__":
-    # ground_text_to_verbnet("You enter a kitchen.")
-    res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
-    # ground_text_to_verbnet("Here 's a dining table .")
-    # ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
-    # ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
-    # ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
+    # res = ground_text_to_verbnet("You enter a kitchen.")
+    # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    # res = ground_text_to_verbnet("Here 's a dining table .")
+    # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
+    res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
+    # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
     print(res)

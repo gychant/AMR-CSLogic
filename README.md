@@ -34,6 +34,8 @@ To set PYTHONPATH, run
 $ export PYTHONPATH=.
 ```
 
+Note that we use YAML config file to set app specific parameters. To get started, create your own local config file using config_template.yaml file and customize values of difference fields if needed and save with name config.yaml.
+
 To start the service, run
 ```
 $ export FLASK_APP=./amr_verbnet_semantics/web_app/__init__.py
