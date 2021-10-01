@@ -27,6 +27,8 @@ if __name__ == '__main__':
     ulkb = UnifiedKb()
     print(ulkb.query_semantics("escape-51.1", verbnet_version="verbnet3.4"))
     print()
+    print(ulkb.query_semantics("spray-9.7-2", verbnet_version="verbnet3.4"))
+    print()
     print(ulkb.query_propbank_verbnet_class_mapping("enter.01"))
     print()
     print(ulkb.query_verbnet_semantic_roles("enter.01"))

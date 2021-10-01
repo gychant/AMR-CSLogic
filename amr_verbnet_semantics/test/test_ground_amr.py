@@ -6,4 +6,5 @@ sample_ret = {'coreference': [], 'sentence_parses': [{'text': 'The dresser is ma
 amr = sample_ret['sentence_parses'][0]['amr']
 r = ground_amr(amr, verbose=False)
 print(r)
-print('grounded_stmt_str', r['grounded_stmt_str'])
+print('\ngrounded_stmt_str:', r['grounded_stmt_str'])
+print('\nunique_grounded_stmt_str:', r['unique_grounded_stmt_str'])

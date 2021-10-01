@@ -7,7 +7,7 @@ from collections import Counter
 from pprint import pprint
 from typing import List
 
-import copyimport
+import copy
 import graphviz
 import networkx as nx
 import nltk
@@ -16,10 +16,12 @@ import requests
 from nltk import sent_tokenize, word_tokenize
 
 from amr_verbnet_semantics.core.models import PredicateCalculus
+from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
 from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
 from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
+from amr_verbnet_semantics.utils.format_util import to_json
 
 from app_config import config
 
@@ -728,8 +730,9 @@ if __name__ == "__main__":
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
-    res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
+    # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
     # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
+    res = ground_text_to_verbnet("You are carrying a blue shoe, a green shirt.", verbose=True)
     print(res)

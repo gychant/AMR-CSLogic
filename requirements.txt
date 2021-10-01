@@ -20,6 +20,7 @@ ipykernel
 SPARQLWrapper
 ipdb
 pyyaml
+notebook
 
 # third party dependencies
 torch==1.3

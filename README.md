@@ -51,6 +51,7 @@ $ python amr_verbnet_semantics/test/test_service.py
 If you want to use jupyter notebook for development, use the following commands to install the virtual environment into the jupyter notebook,
 ```
 $ pip install ipykernel
+$ pip install notebook
 $ python -m ipykernel install --user --name=venv
 $ jupyter notebook
 ```

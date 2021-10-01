@@ -424,7 +424,6 @@ def ulkb_sem_predicates_for_vn(_verb: str) -> []:
 
     output = []
     thisFrame = {}
-    output.append(thisFrame)
     curPredicateID = ""
     thisPredicate = {}
     for result in results["results"]["bindings"]:
@@ -433,8 +432,9 @@ def ulkb_sem_predicates_for_vn(_verb: str) -> []:
         if 'example' not in thisFrame:
             thisFrame['example'] = example
         if example != thisFrame['example']:
-            thisFrame = {}
             output.append(thisFrame)
+
+            thisFrame = {}
             thisFrame['example'] = example
             curPredicateID = ""
         thisPredicateID = result["semanticPredicate"]["value"]
@@ -464,6 +464,8 @@ def ulkb_sem_predicates_for_vn(_verb: str) -> []:
         # thisPredicate['value'] = result["value"]["value"]
         # print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +
         #      result["type"]["value"] + " " + result["value"]["value"] )
+    if len(thisFrame) > 0:
+        output.append(thisFrame)
     return output
 
 
