@@ -1,11 +1,11 @@
 """
 VerbNet query wrapper
 """
+
 from nltk.corpus.util import LazyCorpusLoader
-from nltk.corpus.reader import VerbnetCorpusReader
 from amr_verbnet_semantics.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
-from amr_verbnet_semantics.service.propbank import query_propbank_roles
-from amr_verbnet_semantics.service.rdf_kb import query_semantics_from_rdf
+from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
+from amr_verbnet_semantics.service.sparql import query_semantics_from_rdf
 from app_config import config
 
 vn_dict = {
@@ -31,7 +31,6 @@ def query_semantics_from_corpus(verbnet_id, verbnet_version):
 
 
 def query_semantics(verbnet_id, verbnet_version):
-    config.KB_SOURCE = "corpus"
     if config.KB_SOURCE == "rdf":
         return query_semantics_from_rdf(verbnet_id, verbnet_version)
     return query_semantics_from_corpus(verbnet_id, verbnet_version)
