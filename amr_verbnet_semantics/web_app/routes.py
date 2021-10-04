@@ -15,8 +15,7 @@ import sys
 from flask import Flask, abort, jsonify, make_response, request, url_for
 from werkzeug.exceptions import NotFound
 
-from amr_verbnet_semantics.core.amr_verbnet_enhance import (
-    ground_text_to_verbnet, parse_text)
+from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_text_to_verbnet
 from amr_verbnet_semantics.service.amr import amr_client, parse_text
 
 # HTTP Status Codes

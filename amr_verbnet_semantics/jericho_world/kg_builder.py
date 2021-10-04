@@ -22,8 +22,7 @@ from tqdm import tqdm, trange
 from amr_verbnet_semantics.core.amr_verbnet_enhance import (
     build_graph_from_amr, build_semantic_graph, ground_text_to_verbnet,
     induce_unique_groundings, visualize_semantic_graph)
-# from amr_verbnet_semantics.service.amr import amr_client
-from amr_verbnet_semantics.service.local_amr import amr_client
+from amr_verbnet_semantics.service.amr import amr_client
 from amr_verbnet_semantics.utils.eval_util import Metric
 
 random.seed(42)
@@ -469,20 +468,11 @@ def extract_pattern(text, triple, graph_type="amr", amr=None, verbose=False):
                 semantic_calculus=semantic_calc)
 
             def filter_edge_func(n1, n2):
-                # print("n1, n2:", n1, n2)
-                # print("edge:", graph[n1][n2])
-                # input()
                 return graph[n1][n2]["source"] != "amr"
 
             if graph_type == "verbnet":
                 # prune AMR edges
-                # input("subgraph_view begins ...")
                 pruned_graph = nx.subgraph_view(graph, filter_edge=filter_edge_func)
-                # input("subgraph_view ends ...")
-                # print("\ngraph:", graph)
-                # print("graph nodes:", graph.nodes)
-                # print("graph edges:", graph.edges)
-                # input()
                 pattern = extract_pattern_from_graph(pruned_graph, amr_obj, triple, verbose=verbose)
             else:
                 pattern = extract_pattern_from_graph(graph, amr_obj, triple, verbose=verbose)
@@ -930,7 +920,7 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
                         print("\nsent:", sent)
                         print("\ntriple:", triple)
                         print("\npattern:", pattern)
-                        input()
+                        # input()
                 # else:
                     # print("Invalid triple:", triple)
                     # input()

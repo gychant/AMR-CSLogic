@@ -49,8 +49,10 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
                 params={'text': text})
             amr = json.loads(response.text).get("result", None)
 
-        print("\namr:\n")
-        print(amr)
+        if verbose:
+            print("\namr:\n")
+            print(amr)
+
         g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
@@ -395,6 +397,44 @@ def get_event_from_argument(argument):
     return None, None
 
 
+def build_statement_dict(statements):
+    statement_dict = dict()
+    for stmt in statements:
+        key = get_statement_dict_key(stmt)
+        statement_dict[key] = stmt
+    return statement_dict
+
+
+def get_statement_dict_key(stmt):
+    arguments = []
+    for arg in stmt["arguments"]:
+        if "(E)" in arg or (arg.startswith("e") and len(arg) == 2) or (arg.startswith("ë") and len(arg) == 2):
+            arguments.append(arg)
+    key = (stmt["predicate"], stmt["is_negative"], tuple(arguments))
+    return key
+
+
+def replace_path_statement(semantic_calculus):
+    new_semantic_calculus = dict()
+
+    for pb_id in semantic_calculus:
+        if pb_id not in new_semantic_calculus:
+            new_semantic_calculus[pb_id] = []
+
+        for stmt in semantic_calculus[pb_id]:
+            # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
+            if stmt["predicate"] == "PATH":
+                # LOCATION(start(E), Theme, ?Initial_Location)
+                # and LOCATION(end(E), Theme, Destination)
+                theme = stmt["arguments"][1]
+                dest = stmt["arguments"][4]
+                new_semantic_calculus[pb_id].append(to_json(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"])))
+                new_semantic_calculus[pb_id].append(to_json(PredicateCalculus("LOCATION", ["end(E)", theme, dest])))
+            else:
+                new_semantic_calculus[pb_id].append(stmt)
+    return new_semantic_calculus
+
+
 def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
     """
     Generate unique groundings from multiple mappings in grounded statements
@@ -598,9 +638,12 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
     if grounded_stmt is None:
         return g, amr_obj
 
-    print("\ngrounded_stmt:", grounded_stmt)
+    semantic_calculus = replace_path_statement(semantic_calculus)
+
     # graph from grounded statements
     for pb_id in grounded_stmt:
+        semantic_calculus_dict = build_statement_dict(semantic_calculus[pb_id])
+
         for g_idx, group in enumerate(grounded_stmt[pb_id]):
             # statements a group share the same group of events
             event2id = dict()
@@ -611,6 +654,13 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
 
             for arg in free_arg_inst_counter:
                 free_arg_inst_counter[arg] += 1
+
+            group_stmt_dict = build_statement_dict(group)
+
+            if verbose:
+                print("\npb_id:", pb_id)
+                print("\ngrounded_stmt_dict1:", group_stmt_dict)
+                print("\nsemantic_stmt_dict2:", semantic_calculus_dict)
 
             for s_idx, stmt in enumerate(group):
                 # create node for predicate
@@ -631,8 +681,6 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
                     pred_inst_counter[predicate] += 1
                     g.add_edge(predicate_id, predicate, label=":type", source="verbnet")
 
-                print("\n\n\n\n\nstmt arguments:", stmt["arguments"])
-                print("stmt:", stmt)
                 for arg_idx, arg in enumerate(stmt["arguments"]):
                     # check whether the argument is event-related
                     event, event_time_point = get_event_from_argument(arg)
@@ -649,9 +697,6 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
                         g.add_edge(event_id, predicate_id, label=":" + event_time_point, source="verbnet")
                         continue
 
-                    print("\narg:", arg)
-                    print("arg_idx:", arg_idx)
-
                     if len(arg) <= 2 and arg.startswith("E"):
                         # the arg represents an event
                         event = arg
@@ -663,12 +708,12 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
                         g.add_edge(predicate_id, event_id, label=":event", source="verbnet")
                     else:
                         # handle cases where grounded statements are expanded due to the AND phrase
-                        sem_cal_stmt_idx = s_idx % len(semantic_calculus[pb_id])
+                        key = get_statement_dict_key(stmt)
+                        if key not in semantic_calculus_dict:
+                            continue
+                            
+                        label = semantic_calculus_dict[key]["arguments"][arg_idx]
 
-                        print("len(semantic_calculus[pb_id]):", len(semantic_calculus[pb_id]))
-                        print("s_idx:", s_idx)
-                        print("ungrounded arguments:", semantic_calculus[pb_id][sem_cal_stmt_idx])
-                        label = semantic_calculus[pb_id][sem_cal_stmt_idx]["arguments"][arg_idx]
                         if label == arg:
                             # indicate it is unknown
                             if not arg.startswith("?"):
