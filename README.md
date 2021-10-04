@@ -61,7 +61,7 @@ Then the notebook will be running at port 8888 by default. To open the remote no
 $ ssh -NL 8888:localhost:8888 {USER_NAME}@{SERVER_URL}
 ```
 
-To deploy a local SPARQL endpoint of the RDF triple store which stores unified linguistic knowledge, download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and load it into a namespace of Blazegraph. Then set the SPARQL_ENDPOINT address in config.py.
+To deploy a local SPARQL endpoint of the RDF triple store which stores unified linguistic knowledge, download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and load it into a namespace of Blazegraph. Then set the SPARQL_ENDPOINT address in the config.yaml file.
 Specifically, to start blazegraph
 ```
 $ java -server -Xmx32g -jar blazegraph.jar
