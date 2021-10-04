@@ -1,5 +1,6 @@
 # amr-verbnet-semantics
 
+## Install
 To create/activate a project specific virtual environment, 
 ```
 $ . set_environment.sh
@@ -60,6 +61,29 @@ Then the notebook will be running at port 8888 by default. To open the remote no
 $ ssh -NL 8888:localhost:8888 {USER_NAME}@{SERVER_URL}
 ```
 
+To deploy a local SPARQL endpoint of the RDF triple store which stores unified linguistic knowledge, download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and load it into a namespace of Blazegraph. Then set the SPARQL_ENDPOINT address in config.py.
+Specifically, to start blazegraph
+```
+$ java -server -Xmx32g -jar blazegraph.jar
+```
+
+### Using AMR parser directly
+To use AMR parser directly instead of a gRPC endpoint, You have to download the model file from the following path on CCC. Then you have to unzip the file in third_party directory.
+```
+/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip
+```
+
+Secondly you have to execute the following command. 
+```
+cd third_party
+wget https://dl.fbaipublicfiles.com/fairseq/models/roberta.large.tar.gz
+tar -zxvf roberta.large.tar.gz
+rm roberta.large.tar.gz
+```
+
+
+
+## How to use
 To build AMR parse cache for the training samples,
 ```
 $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
@@ -117,22 +141,4 @@ $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --triple_file_path ./path_output/extracted_triples.jsonl
 ```
 
-To deploy a local SPARQL endpoint of the RDF triple store which stores unified linguistic knowledge, download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and load it into a namespace of Blazegraph. Then set the SPARQL_ENDPOINT address in config.py.
-Specifically, to start blazegraph
-```
-$ java -server -Xmx32g -jar blazegraph.jar
-```
 
-### Using AMR parser directly
-To use AMR parser directly instead of a gRPC endpoint, You have to download the model file from the following path on CCC. Then you have to unzip the file in third_party directory.
-```
-/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip
-```
-
-Secondly you have to execute the following command. 
-```
-cd third_party
-wget https://dl.fbaipublicfiles.com/fairseq/models/roberta.large.tar.gz
-tar -zxvf roberta.large.tar.gz
-rm roberta.large.tar.gz
-```
