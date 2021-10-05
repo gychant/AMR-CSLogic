@@ -1,0 +1,75 @@
+# INSTALLATION: amr-verbnet-semantics
+
+## Create virtual environment
+```
+$ conda create -n amr-verbnet python=3.7
+$ conda activate amr-verbnet
+$ conda install -c anaconda graphviz
+$ bash scripts/install.sh
+$ 
+$ # Ubuntu and Debian
+$ sudo apt-get install graphviz graphviz-dev
+$ pip install pygraphviz
+$ 
+$ # macOS
+$ brew install graphviz
+$ pip install pygraphviz
+```
+
+You can know how to install pygraphviz on other environments with 
+[the document](https://pygraphviz.github.io/documentation/stable/install.html).
+
+
+## Download linguistic resources
+```
+$ bash scripts/download_verbnet.sh ~/nltk_data/corpora/
+$ bash scripts/download_propbank.sh ~/nltk_data/corpora/
+$ bash scripts/download_semlink.sh ./data
+$ bash scripts/download_stanford_nlp.sh ./
+```
+
+
+## Setup knowledge base
+(1) download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and unzip it. As of 5th Oct, we are using UL_KB_V3_PUB.ttl.zip.  
+
+(2) start a database server with the command `$ java -server -Xmx32g -jar blazegraph.jar`. You can see the server through `http://127.0.0.1:9999/blazegraph/`. 
+
+(3) On the ‘namespaces’ tab, create a new namespace with the name you want. Make sure you tick ‘inference’ and ‘full text index’  
+<img src="./assets/blazegraph_install_1.jpg">
+
+(4) On the ‘update’ tab, drag and drop one .ttl file you want to use and click ‘update’. 
+<img src="./assets/blazegraph_install_2.jpg">
+
+(5) On the ‘namespaces’ tab, confirm that the namespace you want to use is running. 
+<img src="./assets/blazegraph_install_3.jpg">
+
+(6) set the SPARQL_ENDPOINT address in the config.yaml file.
+
+
+## Download pre-trained model
+```
+$ cd third_party
+$ wget https://dl.fbaipublicfiles.com/fairseq/models/roberta.large.tar.gz
+$ tar -zxvf roberta.large.tar.gz
+$ rm roberta.large.tar.gz
+```
+
+Secondly You have to download the following model file from the following path on CCC. Then you have to unzip the file in `third_party` directory. 
+- `/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip`
+
+
+## Create config file
+Note that we use YAML config file to set app specific parameters. To get started, create your own local config file using config_template.yaml file and customize values of difference fields if needed and save with name config.yaml.
+
+
+## Start a server
+```
+$ export FLASK_APP=./amr_verbnet_semantics/web_app/__init__.py
+$ python -m flask run --host=0.0.0.0
+```
+The Flask logs indicate what URL the service is running on.
+
+To test the service, try a test example:
+```
+$ python amr_verbnet_semantics/test/test_service.py
+```
