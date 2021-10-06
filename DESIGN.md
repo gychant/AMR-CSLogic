@@ -1,4 +1,23 @@
+# Architecture
 
+```
+amr_verbnet_semantics
+├── core
+├── corpus_readers
+├── etl
+├── grpc_clients
+├── grpc_defs
+├── jericho_world
+├── rest
+├── service
+│   └── predicate_kb
+├── test
+├── utils
+└── web_app
+```
+
+# Subcomponent
+## knowledge base
 For querying the linguistic resource KB, either via corpus reader or via RDF triple store, we wrap the functionalities to provide several interfaces for use, which are defined in the abstract class as the following:
 ```
 class AbstractKb:
