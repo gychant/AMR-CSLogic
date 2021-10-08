@@ -87,6 +87,9 @@ def query_semantics_from_rdf(verbnet_class_id,
     # Further construct the result
     semantics_by_role_set = defaultdict(list)
     for semantic_example in output:
+        if len(semantic_example) == 0:
+            continue
+
         example = semantic_example["example"]
         role_set = set()
         statements = []

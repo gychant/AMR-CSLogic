@@ -772,7 +772,7 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 
 if __name__ == "__main__":
     # res = ground_text_to_verbnet("You enter a kitchen.")
-    # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)

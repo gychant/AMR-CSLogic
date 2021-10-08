@@ -27,6 +27,8 @@ if __name__ == '__main__':
     corpus_kb = CorpusKb()
     print(corpus_kb.query_semantics("escape-51.1", verbnet_version="verbnet3.4"))
     print()
+    print(corpus_kb.query_semantics("spray-9.7-2", verbnet_version="verbnet3.4"))
+    print()
     print(corpus_kb.query_propbank_verbnet_class_mapping("enter.01"))
     print()
     print(corpus_kb.query_verbnet_semantic_roles("enter.01"))

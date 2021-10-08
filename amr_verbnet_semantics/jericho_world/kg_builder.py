@@ -341,18 +341,21 @@ def induce_kg_triples(text, pattern_dict, top_k_patterns,
                 grounded_stmt=grounded_stmt,
                 semantic_calculus=semantic_calc)
             triples = induce_kg_triples_from_grounding(
-                graph, amr_obj, pattern_dict, top_k_patterns,
-                graph_type, verbose=verbose)
+                graph, sentence_parses[i]["amr"], grounded_stmt, semantic_calc,
+                pattern_dict, top_k_patterns, graph_type, verbose=verbose)
             all_triples.update(list(triples))
     return all_triples
 
 
-def induce_kg_triples_from_grounding(g_directed, amr_obj, pattern_dict, top_k_patterns,
-                                     graph_type="amr", verbose=False):
+def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_calc,
+                                     pattern_dict, top_k_patterns, graph_type="amr",
+                                     verbose=False):
     """
     Induce triples from text using given patterns
     :param g_directed: the directed graph constructed from parse
-    :param amr_obj: the amr object that contains the mappings needed
+    :param amr: the AMR parse
+    :param grounded_stmt: grounded statement
+    :param semantic_calc: semantic calculus
     :param pattern_dict: a dictionary storing path patterns for
         all prefined relations
     :param top_k_patterns: top k patterns to apply
@@ -364,10 +367,12 @@ def induce_kg_triples_from_grounding(g_directed, amr_obj, pattern_dict, top_k_pa
     triples = set()
     amr_tokens = read_tokenization(amr)
 
+    print("\namr:\n", amr)
     if graph_type == "amr":
         g_directed, amr_obj = build_graph_from_amr(amr, verbose)
     elif graph_type in ["amr_verbnet", "verbnet"]:
-        g_directed, amr_obj = build_semantic_graph(amr, verbose)
+        g_directed, amr_obj = build_semantic_graph(
+            amr, grounded_stmt, semantic_calc, verbose)
 
     g_undirected = g_directed.to_undirected()
 
@@ -394,7 +399,7 @@ def induce_kg_triples_from_grounding(g_directed, amr_obj, pattern_dict, top_k_pa
 
                 # print("\npath:", path)
                 for node_pair in path2node_pairs[path]:
-                    # print("node_pair:", node_pair)
+                    print("node_pair:", node_pair)
                     subj_node, obj_node = node_pair
 
                     subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
@@ -633,9 +638,9 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
         print(patterns.most_common(10))
     input()
 
-    dir_name = os.path.dirname(output_file_path)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+    output_dir = os.path.dirname(output_file_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     amr_cache = None
     if amr_cache_path is not None:
@@ -670,7 +675,7 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
                     amr = amr_client.get_amr(sent)
 
                 triples = induce_kg_triples(sent, pattern_dict, top_k_patterns,
-                                            graph_type, verbose, amr=amr)
+                                            graph_type, amr=amr, verbose=verbose)
                 # print("triples:", triples)
                 all_triples.update(triples)
 
@@ -848,14 +853,15 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
     Mine path patterns between subject and object of a triple
     :param data: a list of raw samples
     :param output_file_path: the path of the output pattern file
+    :param graph_type: the type of semantic graph to use
     :param amr_cache_path: the path to the cache of AMR parse for the samples
     :param sample_size: the size of samples for sanity check
     :param verbose:
     :return:
     """
-    dir_name = os.path.dirname(output_file_path)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+    output_dir = os.path.dirname(output_file_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     pattern_dict = defaultdict(Counter)
 
@@ -928,16 +934,18 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
             if verbose and len(extractable_triples) > 0:
                 print(extractable_triples)
 
+        if len(pattern_dict) > 0:
+            break
+
     for rel in pattern_dict:
         patterns = pattern_dict[rel]
         print("\nrel:", rel)
         print(patterns.most_common(10))
 
     # save patterns to file
-    out_path = os.path.join(output_dir, file_name)
-    with open(out_path, "wb") as file_obj:
+    with open(output_file_path, "wb") as file_obj:
         pickle.dump(pattern_dict, file_obj)
-    print("\nWritten patterns to {}".format(out_path))
+    print("\nWritten patterns to {}".format(output_file_path))
 
 
 def sample_generator(data, extractable_only=True, sample_size=None, verbose=False):
@@ -1009,9 +1017,9 @@ def build_amr_parse_cache(data, output_path, start_idx=0,
     :param verbose:
     :return:
     """
-    dir_name = os.path.dirname(output_path)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+    output_dir = os.path.dirname(output_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     f = open(output_path, "a")
     for sample_idx, sentences in enumerate(tqdm(sample_generator(
