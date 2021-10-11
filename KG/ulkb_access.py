@@ -11,21 +11,13 @@ from nltk.stem import PorterStemmer
 import requests
 import operator
 import json
-from . import config
+import config
+
 
 # from csv import reader
 # GLOBALS
 schemaLibrary = {}
 schemaIndex = {}  # qNode, label
-
-# WIKIDATA ##############################################################
-WDURI = "http://www.wikidata.org/entity/"
-
-url_DARPAs = "https://dsbox02.isi.edu:8888/wikidataos/bigdata/namespace/wdq/sparql"
-url_PUBLICs = "https://query.wikidata.org/sparql"
-url_PRIVATE = "http://wikidata-int.sl.cloud9.ibm.com:9999/bigdata/namespace/wdq/sparql"
-url_CURRENT = url_DARPAs
-url_SUBCLASSES = url_CURRENT
 
 # UL_KB ##################################################################
 
@@ -36,7 +28,7 @@ query_prefix = ("prefix rrp: <http://www.ibm.com/RRP#> \n"
                 "prefix ulpb: <http://www.ibm.com/UL_PB#> \n"
                 "prefix ulkb: <http://www.ibm.com/UL_KB#> \n")
 
-# THIS IS THE SERVER
+# THIS IS THE SERVER, which is taken from config
 sparql = SPARQLWrapper(config.SPARQL_ENDPOINT)
 # THIS IS A LOCAL VERSION (ROSARIO'S)
 # sparql = SPARQLWrapper("http://127.0.0.1:9999/blazegraph/namespace/UL_KB_V0")
