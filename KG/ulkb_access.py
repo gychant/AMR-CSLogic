@@ -11,7 +11,7 @@ from nltk.stem import PorterStemmer
 import requests
 import operator
 import json
-import config
+from app_config import config
 
 
 # from csv import reader

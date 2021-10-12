@@ -75,7 +75,7 @@ class CacheClient:
         self.count = 0
         self.cache = collections.OrderedDict()
         if use_snapshot:
-            self.cache = self._read_snapshot()
+            self._read_snapshot()
 
 
     def _read_snapshot(self):

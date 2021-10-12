@@ -7,9 +7,7 @@ THIRD_PARTY_PATH: 'third_party'
 use_cuda: false
 
 # Configure RDF store
-# SPARQL_ENDPOINT = "http://goedel.sl.cloud9.ibm.com:9999/blazegraph/namespace/UL_KB_V0"
-SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V1_PUB"
-# SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V2_PUB"
+SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V3_PUB"
 
 # Configure VerbNet
 VERBNET_VERSION: "verbnet3.2"

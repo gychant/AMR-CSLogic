@@ -73,7 +73,9 @@ def verbnet_semantics():
             "error": "Empty input text."
         }), status.HTTP_200_OK)
 
-    parse = ground_text_to_verbnet(text, verbose=False)
+    use_coreference = request.args.get('use_coreference', default=1, type=int)
+
+    parse = ground_text_to_verbnet(text, use_coreference=use_coreference, verbose=False)
     results = {
         "text": text,
         "coreference": parse["coreference"],
