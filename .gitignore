@@ -1,3 +1,14 @@
+# project specific files
+third_party
+*blazegraph.jar
+data/
+stanford-corenlp-full-2018-10-05
+test-output
+path_output
+config.yaml
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,12 +138,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-data/
-DATA/
-stanford-corenlp-full-2018-10-05/
-test-output/
-path_output/
-config.yaml
 
 *.pyc

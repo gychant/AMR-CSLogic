@@ -46,15 +46,12 @@ $ bash scripts/download_stanford_nlp.sh ./
 (6) set the SPARQL_ENDPOINT address in the config.yaml file.
 
 
-## Download pre-trained model
+## Download third_party
 ```
-$ cd third_party
-$ wget https://dl.fbaipublicfiles.com/fairseq/models/roberta.large.tar.gz
-$ tar -zxvf roberta.large.tar.gz
-$ rm roberta.large.tar.gz
+$ bash scripts/download_third_party.sh 
 ```
-
-Secondly You have to download the following model file from the following path on CCC. Then you have to unzip the file in `third_party` directory. 
+Secondly You have to download the pre-trained model file for AMR from the following path on CCC. 
+Then you have to unzip the file in `third_party` directory. 
 - `/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip`
 
 
