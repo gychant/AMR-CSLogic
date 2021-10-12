@@ -1,14 +1,13 @@
 """Wrappers for local and remote AMR parsing client"""
 import os
+import sys
 
 from nltk.tokenize import word_tokenize
 from nltk import sent_tokenize
 from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
-from third_party.transition_amr_parser.parse import AMRParser
 
 from app_config import config
 
-PARSER_DIR = f'{os.path.dirname(__file__)}/../../third_party'
 
 
 class LocalAMRClient(object):
@@ -17,15 +16,24 @@ class LocalAMRClient(object):
         self.use_cuda = use_cuda
 
     def _get_parser(self, use_cuda=False):
+        sys.path.append(os.path.abspath(config.THIRD_PARTY_PATH))
+        from transition_amr_parser.parse import AMRParser
+
         cwd = os.getcwd()
-        os.chdir(PARSER_DIR)
+        os.chdir(config.THIRD_PARTY_PATH)
+        print('cwd', os.getcwd())
         amr_parser = AMRParser.from_checkpoint(
-            config.AMR_MODEL_CHECKPOINT_PATH,
-            roberta_cache_path=config.ROBERTA_CACHE_PATH,
-            use_cuda=use_cuda)
+            checkpoint=config.AMR_MODEL_CHECKPOINT_PATH,
+            roberta_cache_path=config.ROBERTA_CACHE_PATH)
         # for loading resources, parse a test sentence
         amr_parser.parse_sentences([['test']])
         os.chdir(cwd)
+
+        if not use_cuda:
+            amr_parser.use_cuda = False
+            list(map(lambda x: x.cpu(), amr_parser.models))
+            amr_parser.embeddings.roberta.cpu()
+
         return amr_parser
 
     def get_amr(self, text):
@@ -78,6 +86,7 @@ def parse_text(text, verbose=False):
 
 if __name__ == "__main__":
     text = "The quick brown fox jumped over the lazy moon."
+    amr_client = LocalAMRClient(config.use_cuda)
     amr = amr_client.get_amr(text)
     print("\ntext:", text)
     print("\namr:", amr)
