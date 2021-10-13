@@ -25,7 +25,7 @@ third_party
 
 # Subcomponent
 ## third_party
-The content "third_party" directory is IBM AMR parser and will be mostly produced by scripts/install_amr.sh. 
+The content "third_party" directory is IBM AMR parser and will be mostly produced by scripts/download_third_party.sh. 
 According to the IP department, when we make this code OSS, we need to put all the external code in “third_party” directory.
 
 
