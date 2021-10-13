@@ -11,7 +11,7 @@ import threading
 from nltk import sent_tokenize
 from nltk.tokenize import word_tokenize
 
-from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
+from amr_verbnet_semantics.grpc_clients.clients import AMRClientTransformer
 from app_config import config
 
 
