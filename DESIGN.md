@@ -14,9 +14,21 @@ amr_verbnet_semantics
 ├── test
 ├── utils
 └── web_app
+
+third_party
+├── (DATA)
+├── (fairseq_ext)
+├── (roberta.large)
+└── (transition_amr_parser)
 ```
 
+
 # Subcomponent
+## third_party
+The content "third_party" directory is IBM AMR parser and will be mostly produced by scripts/install_amr.sh. 
+According to the IP department, when we make this code OSS, we need to put all the external code in “third_party” directory.
+
+
 ## knowledge base
 For querying the linguistic resource KB, either via corpus reader or via RDF triple store, we wrap the functionalities to provide several interfaces for use, which are defined in the abstract class as the following:
 ```
