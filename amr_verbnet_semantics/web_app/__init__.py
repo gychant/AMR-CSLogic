@@ -3,7 +3,9 @@ Package: service
 Package for the application models and service routes
 This module creates and configures the Flask app and sets up the logging
 """
+import importlib
 import logging
+import os
 
 from flask import Flask
 
@@ -11,9 +13,13 @@ from flask import Flask
 app = Flask(__name__)
 app.config.from_object("config")
 
-if True:
-    # Import the routes After the Flask app is created
-    from . import error_handlers, models, routes
+# Import the routes After the Flask app is created
+user_module_name = os.path.split(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))[1]
+submodule_name = os.path.split(os.path.abspath(os.path.dirname(__file__)))[1]
+for file in os.listdir(os.path.dirname(__file__)):
+    if file.endswith('.py') and not file.startswith('_'):
+        module = file[:file.find('.py')]
+        importlib.import_module(user_module_name + '.' + submodule_name + '.' + module)
 
 # Set up logging for production
 print("Setting up logging for {}...".format(__name__))
