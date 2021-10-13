@@ -306,6 +306,8 @@ def get_node_label(graph, node):
 
 
 def get_token_by_node(node, amr_obj):
+    if node not in amr_obj["node_id2token"]:
+        return None
     return amr_obj["node_id2token"][node]
 
 
@@ -340,6 +342,7 @@ def induce_kg_triples(text, pattern_dict, top_k_patterns,
                 amr=sentence_parses[i]["amr"],
                 grounded_stmt=grounded_stmt,
                 semantic_calculus=semantic_calc)
+
             triples = induce_kg_triples_from_grounding(
                 graph, sentence_parses[i]["amr"], grounded_stmt, semantic_calc,
                 pattern_dict, top_k_patterns, graph_type, verbose=verbose)
@@ -367,7 +370,7 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
     triples = set()
     amr_tokens = read_tokenization(amr)
 
-    print("\namr:\n", amr)
+    # print("\namr:\n", amr)
     if graph_type == "amr":
         g_directed, amr_obj = build_graph_from_amr(amr, verbose)
     elif graph_type in ["amr_verbnet", "verbnet"]:
@@ -399,17 +402,22 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
 
                 # print("\npath:", path)
                 for node_pair in path2node_pairs[path]:
-                    print("node_pair:", node_pair)
+                    # print("node_pair:", node_pair)
                     subj_node, obj_node = node_pair
 
-                    subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
-                    obj_desc = get_descendant_leaf_nodes(g_directed, obj_node)
+                    if graph_type == "verbnet":
+                        subj_desc = subj_node
+                        obj_desc = obj_node
+                    else:
+                        subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
+                        obj_desc = get_descendant_leaf_nodes(g_directed, obj_node)
 
                     if len(subj_desc) == 0:
                         subj = get_token_by_node(subj_node, amr_obj)
                     else:
                         subj_tokens = set([get_token_by_node(n, amr_obj)
                                            for n in subj_desc])
+                        subj_tokens = set([tok for tok in subj_tokens if tok is not None])
                         subj = find_text_span(amr_tokens, subj_tokens)
 
                     if len(obj_desc) == 0:
@@ -417,20 +425,25 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
                     else:
                         obj_tokens = set([get_token_by_node(n, amr_obj)
                                           for n in obj_desc])
+                        obj_tokens = set([tok for tok in obj_tokens if tok is not None])
                         obj = find_text_span(amr_tokens, obj_tokens)
 
-                    if verbose:
-                        print("\npath:", path)
-                        print("\nnode_pair:", node_pair)
-                        print("subj_desc:", subj_desc)
-                        print("obj_desc:", obj_desc)
-                        print("subj:", subj)
-                        print("obj:", obj)
-                        print("\namr:")
-                        print(amr)
-                        input()
-
                     if subj is not None and obj is not None:
+                        if True:
+                            visualize_semantic_graph(
+                                g_directed, graph_name="semantic_graph".format(),
+                                out_dir="./test-output/")
+
+                            print("\namr:")
+                            print(amr)
+                            print("\npath:", path)
+                            print("\nnode_pair:", node_pair)
+                            print("subj_desc:", subj_desc)
+                            print("obj_desc:", obj_desc)
+                            print("subj:", subj)
+                            print("obj:", obj)
+                            input()
+
                         print("\ntriple:", (subj, rel, obj))
                         triples.add((subj, rel, obj))
     return triples
@@ -676,7 +689,6 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
 
                 triples = induce_kg_triples(sent, pattern_dict, top_k_patterns,
                                             graph_type, amr=amr, verbose=verbose)
-                # print("triples:", triples)
                 all_triples.update(triples)
 
             # print("all_triples:", list(all_triples))
@@ -934,8 +946,8 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
             if verbose and len(extractable_triples) > 0:
                 print(extractable_triples)
 
-        if len(pattern_dict) > 0:
-            break
+        # if len(pattern_dict) > 0:
+        #     break
 
     for rel in pattern_dict:
         patterns = pattern_dict[rel]
@@ -1131,7 +1143,7 @@ if __name__ == "__main__":
     parser.add_argument('--triple_file_path', type=str, default=None, help="triple_file_path")
     parser.add_argument('--sample_start_idx', type=int, default=0, help="sample_start_idx")
     parser.add_argument('--split_type', type=str, choices=["train", "test"],
-                        default="train", help="sample_start_idx")
+                        default="train", help="split_type")
     parser.add_argument('--verbose', action='store_true', help="verbose")
     args = parser.parse_args()
 

@@ -1,8 +1,9 @@
 """
 VerbNet query wrapper
 """
-
+from collections import defaultdict
 from nltk.corpus.util import LazyCorpusLoader
+
 from amr_verbnet_semantics.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
 from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
 from amr_verbnet_semantics.service.sparql import query_semantics_from_rdf
@@ -15,19 +16,25 @@ vn_dict = {
 }
 
 
-def query_semantics_from_corpus(verbnet_id, verbnet_version):
-    semantics = dict()
+def query_semantics_from_corpus(verbnet_id, verbnet_version,
+                                include_example=False, verbose=False):
+    semantics = defaultdict(list)
     frames = vn_dict[verbnet_version].frames(verbnet_id)
 
     for frame in frames:
-        roles = set()
+        role_set = set()
         for element in frame["syntax"]:
             role = element["modifiers"]["value"].strip()
             if len(role) > 0 and role.istitle():
                 # not empty string and is title-case
-                roles.add(role)
-        semantics[tuple(roles)] = frame["semantics"]
-    return semantics
+                role_set.add(role)
+
+        if include_example:
+            example = frame["example"].replace("\n", "")
+            semantics[(example, tuple(sorted(role_set)))].append(frame["semantics"])
+        else:
+            semantics[tuple(sorted(role_set))].append(frame["semantics"])
+    return dict(semantics)
 
 
 def query_semantics(verbnet_id, verbnet_version):
