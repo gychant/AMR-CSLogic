@@ -8,12 +8,11 @@ import pickle
 import sys
 import threading
 
-from nltk.tokenize import word_tokenize
 from nltk import sent_tokenize
+from nltk.tokenize import word_tokenize
+
 from amr_verbnet_semantics.grpc_clients import AMRClientTransformer
-
 from app_config import config
-
 
 
 class LocalAMRClient(object):

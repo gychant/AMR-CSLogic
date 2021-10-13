@@ -2,7 +2,6 @@
 Utility functions for formatting
 """
 import inspect
-import json
 
 
 def to_json(obj):

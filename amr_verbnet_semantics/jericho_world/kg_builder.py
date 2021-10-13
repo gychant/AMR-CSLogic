@@ -1,6 +1,5 @@
 """Build knowledge graphs of the game using AMR-VerbNet semantics"""
 import argparse
-import copy
 import json
 import os
 import pickle
@@ -10,7 +9,6 @@ from itertools import combinations, permutations
 from pprint import pprint
 
 import networkx as nx
-import penman
 import requests
 from networkx.algorithms.lowest_common_ancestors import lowest_common_ancestor
 from networkx.algorithms.shortest_paths.generic import shortest_path

@@ -2,9 +2,9 @@
 Config file for isolating endpoint configuration difference. Checks for 
 config.yaml in the project OR a config_sparql.yaml in the current directory
 """
-import yaml
-import json
 import os
+
+import yaml
 
 SPARQL_ENDPOINT = "" 
 config = "" 

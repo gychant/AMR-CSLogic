@@ -3,9 +3,10 @@ RDF query interfaces for the KB.
 """
 
 from amr_verbnet_semantics.service.abstract_kb import AbstractKb
-from amr_verbnet_semantics.service.verbnet import query_semantics_from_rdf
-from amr_verbnet_semantics.service.sparql import query_verbnet_semantic_roles_from_rdf
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping_from_rdf
+from amr_verbnet_semantics.service.sparql import \
+    query_verbnet_semantic_roles_from_rdf
+from amr_verbnet_semantics.service.verbnet import query_semantics_from_rdf
 
 
 class UnifiedKb(AbstractKb):

@@ -1,5 +1,7 @@
 import time
-from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_text_to_verbnet
+
+from amr_verbnet_semantics.core.amr_verbnet_enhance import \
+    ground_text_to_verbnet
 
 if __name__ == '__main__':
     start = time.time()

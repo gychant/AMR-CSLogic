@@ -4,8 +4,8 @@ VerbNet query wrapper
 from collections import defaultdict
 from nltk.corpus.util import LazyCorpusLoader
 
-from amr_verbnet_semantics.corpus_readers.verbnet_reader import VerbnetCorpusReaderEx
-from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
+from amr_verbnet_semantics.corpus_readers.verbnet_reader import \
+    VerbnetCorpusReaderEx
 from amr_verbnet_semantics.service.sparql import query_semantics_from_rdf
 from app_config import config
 

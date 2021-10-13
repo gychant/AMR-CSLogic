@@ -7,7 +7,6 @@ Created on Thu Jul 13 2021
 
 import json
 import os
-import re
 import xml.etree.ElementTree as ET
 
 

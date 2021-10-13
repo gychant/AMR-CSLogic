@@ -21,6 +21,8 @@ SPARQLWrapper
 ipdb
 pyyaml
 notebook
+autoflake
+isort
 
 # third party dependencies
 torch==1.3

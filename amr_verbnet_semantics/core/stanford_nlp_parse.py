@@ -1,8 +1,6 @@
 """StanfordCoreNLP Parsing"""
 
-from pprint import pprint
 
-import nltk
 from nltk.tokenize import sent_tokenize
 from stanfordcorenlp import StanfordCoreNLP
 

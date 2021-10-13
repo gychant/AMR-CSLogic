@@ -1,6 +1,6 @@
 import time
-from amr_verbnet_semantics.service.amr import CacheClient
-from amr_verbnet_semantics.service.amr import LocalAMRClient
+
+from amr_verbnet_semantics.service.amr import CacheClient, LocalAMRClient
 
 if __name__ == "__main__":
 
