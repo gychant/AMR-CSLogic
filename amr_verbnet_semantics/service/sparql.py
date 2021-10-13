@@ -113,9 +113,9 @@ def query_semantics_from_rdf(verbnet_class_id,
             })
 
         if include_example:
-            semantics_by_role_set[tuple(example, tuple(role_set))] = statements
+            semantics_by_role_set[(example, tuple(sorted(role_set)))].append(statements)
         else:
-            semantics_by_role_set[tuple(role_set)] = statements
+            semantics_by_role_set[tuple(sorted(role_set))].append(statements)
     return dict(semantics_by_role_set)
 
 

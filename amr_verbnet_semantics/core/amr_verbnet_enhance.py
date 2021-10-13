@@ -64,6 +64,14 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
 
 
 def match_semantics_by_role_set(semantics, amr_role_set, verbose=False):
+    """
+    This is to match the semantics from VerbNet given a role set
+    inferred from AMR parse. We use matching between sets.
+    :param semantics: a dictionary with role set as key and list of semantics as values.
+    :param amr_role_set: role set inferred from AMR parse
+    :param verbose:
+    :return:
+    """
     raw_vn_role_sets = list(semantics.keys())
     raw_amr_role_set = amr_role_set
     if verbose:
@@ -87,7 +95,15 @@ def match_semantics_by_role_set(semantics, amr_role_set, verbose=False):
 
     min_diff_idx = sorted(set_diff_sizes, key=lambda x: x[1])[0][0]
 
-    return raw_vn_role_sets[min_diff_idx], semantics[raw_vn_role_sets[min_diff_idx]]
+    if verbose:
+        print("\nMatched role set:")
+        print(raw_vn_role_sets[min_diff_idx])
+        print("\nMatched semantics:")
+        print(semantics[raw_vn_role_sets[min_diff_idx]])
+
+    # if multiple semantics for the role set, return the first one for the time being
+    # TODO: compare AMR parse of the example of the semantics for more accurate matching
+    return raw_vn_role_sets[min_diff_idx], semantics[raw_vn_role_sets[min_diff_idx]][0]
 
 
 def build_role_set_from_mappings(node_name, verbnet_id, arg_map, role_mappings, verbose=False):
@@ -148,6 +164,7 @@ def ground_amr(amr, verbose=False):
                     verbnet_id = mapping["mapping"]
                     verbnet_version = mapping["source"]
                     amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
+                    # One role set might correspond to multiple set of semantics
                     semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
                     matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
                     # print("\nmatched_role_set:", matched_role_set)
@@ -776,5 +793,5 @@ if __name__ == "__main__":
     # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
-    res = ground_text_to_verbnet("You are carrying a blue shoe, a green shirt.", verbose=True)
+    # res = ground_text_to_verbnet("You are carrying a blue shoe, a green shirt.", verbose=True)
     print(res)
