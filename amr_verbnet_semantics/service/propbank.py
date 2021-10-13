@@ -1,16 +1,14 @@
 """PropBank query wrapper"""
 import re
-from xml.etree import ElementTree
 
 from nltk.corpus import treebank
-from nltk.corpus.reader import PropbankCorpusReader, VerbnetCorpusReader
 from nltk.corpus.util import LazyCorpusLoader
-from nltk.corpus.reader import VerbnetCorpusReader, PropbankCorpusReader
 
-from amr_verbnet_semantics.corpus_readers.propbank_reader import PropbankCorpusReaderEx
-from amr_verbnet_semantics.service.sparql import query_verbnet_semantic_roles_from_rdf
+from amr_verbnet_semantics.corpus_readers.propbank_reader import \
+    PropbankCorpusReaderEx
+from amr_verbnet_semantics.service.sparql import \
+    query_verbnet_semantic_roles_from_rdf
 from app_config import config
-
 
 propbank = LazyCorpusLoader(
     "propbank-latest",

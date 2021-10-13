@@ -2,7 +2,7 @@
 Load configuration from .yaml file.
 """
 import os
-import logging
+
 import yaml
 
 from amr_verbnet_semantics.utils.format_util import DictObject, to_json

@@ -4,6 +4,7 @@ Reference: https://www.nltk.org/_modules/nltk/corpus/reader/propbank.html
 """
 from collections import defaultdict
 from xml.etree import ElementTree
+
 from nltk.corpus.reader import PropbankCorpusReader
 
 

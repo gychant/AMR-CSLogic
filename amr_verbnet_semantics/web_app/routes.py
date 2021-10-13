@@ -8,15 +8,12 @@ GET /amr_parsing - Returns AMR parsing results
 GET /verbnet_semantics - Returns grounding results using VerbNet semantics
 """
 
-import logging
-import os
-import sys
 
-from flask import Flask, abort, jsonify, make_response, request, url_for
-from werkzeug.exceptions import NotFound
+from flask import abort, jsonify, make_response, request
 
-from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_text_to_verbnet
-from amr_verbnet_semantics.service.amr import amr_client, parse_text
+from amr_verbnet_semantics.core.amr_verbnet_enhance import \
+    ground_text_to_verbnet
+from amr_verbnet_semantics.service.amr import parse_text
 
 # HTTP Status Codes
 # Import Flask application

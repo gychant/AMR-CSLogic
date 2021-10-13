@@ -1,28 +1,25 @@
 """
 Core functions that enhance AMR with VerbNet semantics
 """
+import copy
 import json
 import os
 from collections import Counter
 from pprint import pprint
-from typing import List
 
-import copy
 import graphviz
 import networkx as nx
-import nltk
 import penman
 import requests
-from nltk import sent_tokenize, word_tokenize
+from nltk import sent_tokenize
 
 from amr_verbnet_semantics.core.models import PredicateCalculus
 from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
 from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
-from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
+from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 from amr_verbnet_semantics.utils.format_util import to_json
-
 from app_config import config
 
 

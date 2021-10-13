@@ -3,9 +3,11 @@ Corpus query interfaces for the KB.
 """
 
 from amr_verbnet_semantics.service.abstract_kb import AbstractKb
+from amr_verbnet_semantics.service.propbank import \
+    query_verbnet_semantic_roles_from_corpus
+from amr_verbnet_semantics.service.semlink import \
+    query_pb_vn_mapping_from_semlink
 from amr_verbnet_semantics.service.verbnet import query_semantics_from_corpus
-from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles_from_corpus
-from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping_from_semlink
 
 
 class CorpusKb(AbstractKb):

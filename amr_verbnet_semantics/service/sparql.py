@@ -3,10 +3,12 @@ Accessing the unified KB using SPARQL
 """
 import json
 from collections import defaultdict
-from SPARQLWrapper import SPARQLWrapper, JSON
 
-from KG.ulkb_access import ulkb_sem_predicates_for_vn, ulkb_sem_roles_for_pb_by_role
+from SPARQLWrapper import JSON, SPARQLWrapper
+
 from app_config import config
+from KG.ulkb_access import (ulkb_sem_predicates_for_vn,
+                            ulkb_sem_roles_for_pb_by_role)
 
 query_prefix = """
 prefix rrp: <http://www.ibm.com/RRP#>

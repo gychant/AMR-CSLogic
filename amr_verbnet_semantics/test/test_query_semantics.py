@@ -1,6 +1,5 @@
 from amr_verbnet_semantics.service.verbnet import query_semantics
 
-
 verbnet_version = 'verbnet3.4'
 
 verbnet_id = 'escape-51.1'
