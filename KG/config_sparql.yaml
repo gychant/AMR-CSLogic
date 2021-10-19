@@ -6,7 +6,7 @@
 # file in this directory will attempt to read it first. 
 # Configure RDF store
 #Use this if you are going to use the server
-SPARQL_ENDPOINT = "http://goedel.sl.cloud9.ibm.com:9999/blazegraph/namespace/UL_KB_V3"
+SPARQL_ENDPOINT = "http://goedel.sl.cloud9.ibm.com:9999/blazegraph/namespace/UL_KB_V4"
 #Use this if you install the server locally 
-#SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V3_PUB"
+#SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V4_PUB"
 
