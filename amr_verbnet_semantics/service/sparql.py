@@ -99,8 +99,8 @@ def query_semantics_from_rdf(verbnet_class_id,
             arguments = []
             for param in predicate["params"]:
                 arguments.append({
-                    "type": param["type"],
-                    "value": param["value"]
+                    "type": param["type"].strip(),
+                    "value": param["value"].strip()
                 })
 
             statements.append({
