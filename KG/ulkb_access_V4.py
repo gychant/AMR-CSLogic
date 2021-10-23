@@ -129,7 +129,7 @@ query_sem_predicates_str = """SELECT DISTINCT ?example ?roleList ?operator ?sema
                   ?param rrp:varName ?value .
                   ?param rrp:varExpression ?expression . 
                   ?semanticPredicate rrp:textInfo ?predicateText .  
-                }} ORDER BY ?semanticPredicate
+                }} ORDER BY ?param
                   """
 
 query_check_verb_name_str = """SELECT DISTINCT ?entity ?provenance  WHERE {{

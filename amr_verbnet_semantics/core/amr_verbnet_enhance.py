@@ -807,8 +807,8 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 if __name__ == "__main__":
     # res = ground_text_to_verbnet("You enter a kitchen.")
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
-    # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
-    res = ground_text_to_verbnet("You close the window .")
+    res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.")
+    # res = ground_text_to_verbnet("You close the window .")
     # res = ground_text_to_verbnet("A wet hoodie .")
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
