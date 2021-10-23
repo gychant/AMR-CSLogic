@@ -313,15 +313,21 @@ def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
                     results[pb_id][vn_class] = []
                 results[pb_id][vn_class].append(semantic_calc[pb_id][vn_class])
 
-    # Add a question mark before an unbound argument
     for pb_id in results:
         for vn_class in results[pb_id]:
             calculus_group = results[pb_id][vn_class]
             for calc in calculus_group:
-                for stmt in calc:
+                for stmt_idx in range(len(calc)):
+                    stmt = calc[stmt_idx]
                     for arg_idx in range(len(stmt.arguments)):
+                        # Add a question mark before an unbound argument
                         if stmt.arguments[arg_idx][0].isupper():
                             stmt.arguments[arg_idx] = "?" + stmt.arguments[arg_idx]
+                            # Add new statement replacing ?V_Final_State with propbank frame lemma
+                            if stmt.arguments[arg_idx] == "?V_Final_State":
+                                new_stmt = copy.deepcopy(stmt)
+                                new_stmt.arguments[arg_idx] = pb_id.split(".")[0]
+                                calc.append(new_stmt)
     return results
 
 
@@ -802,8 +808,10 @@ if __name__ == "__main__":
     # res = ground_text_to_verbnet("You enter a kitchen.")
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
     # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
+    res = ground_text_to_verbnet("You close the window .")
+    # res = ground_text_to_verbnet("A wet hoodie .")
     # res = ground_text_to_verbnet("Here 's a dining table .")
-    res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
+    # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
     # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
