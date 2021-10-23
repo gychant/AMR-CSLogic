@@ -376,6 +376,7 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
             amr, grounded_stmt, semantic_calc, verbose)
 
     g_undirected = g_directed.to_undirected()
+    path_cache = dict()
 
     for rel in pattern_dict:
         # print("\nrel:", rel)
@@ -386,11 +387,18 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
         # input()
         patterns = pattern_dict[rel].most_common(top_k_patterns)
         for pattern, freq in patterns:
+            if len(pattern) == 0:
+                continue
+
             # print("pattern:", pattern)
             # pattern = tuple([':ARG0', 'carry-01', ':ARG1', 'and', ':op2'])
             # paths = query_paths(g_undirected, cutoff=len(pattern))
             cutoff = int((len(pattern) - 1) / 2 + 1)
-            path2node_pairs = query_paths(g_undirected, cutoff)
+            if cutoff in path_cache:
+                path2node_pairs = path_cache[cutoff]
+            else:
+                path2node_pairs = query_paths(g_undirected, cutoff)
+                path_cache[cutoff] = path2node_pairs
 
             for path in path2node_pairs:
                 if path != pattern:
@@ -398,14 +406,16 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
                 if len(path) <= 1:
                     continue
 
-                # print("\npath:", path)
-                for node_pair in path2node_pairs[path]:
-                    # print("node_pair:", node_pair)
+                node_pairs = path2node_pairs[path]
+                print("\npath:", path)
+                print("node_pairs:", node_pairs)
+                for node_pair in node_pairs:
+                    print("node_pair:", node_pair)
                     subj_node, obj_node = node_pair
 
                     if graph_type == "verbnet":
-                        subj_desc = subj_node
-                        obj_desc = obj_node
+                        subj_desc = [subj_node]
+                        obj_desc = [obj_node]
                     else:
                         subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
                         obj_desc = get_descendant_leaf_nodes(g_directed, obj_node)
@@ -426,6 +436,9 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
                         obj_tokens = set([tok for tok in obj_tokens if tok is not None])
                         obj = find_text_span(amr_tokens, obj_tokens)
 
+                    print("subj:", subj)
+                    print("obj:", obj)
+                    input()
                     if subj is not None and obj is not None:
                         if True:
                             visualize_semantic_graph(

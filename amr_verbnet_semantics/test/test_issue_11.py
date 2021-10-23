@@ -2,11 +2,13 @@ from amr_verbnet_semantics.core.amr_verbnet_enhance import ground_amr
 import requests
 
 text = 'You put the wet hoodie on the patio chair.'
-endpoint = f'http://9.116.32.235:5000/verbnet_semantics'  # temporary development server
+endpoint = f'http://128.113.12.96:5000/verbnet_semantics'  # temporary development server
+# endpoint = f'http://9.116.32.235:5000/verbnet_semantics'  # temporary development server
 
 params = {'text': text, 'use_coreference': 0}
 r = requests.get(endpoint, params=params)
 r = r.json()
+print(r)
 amr = r['amr_parse'][0]['amr']
 amr_cal_str = r['amr_parse'][0]['amr_cal_str']
 

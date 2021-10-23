@@ -7,8 +7,8 @@ from collections import defaultdict
 from SPARQLWrapper import JSON, SPARQLWrapper
 
 from app_config import config
-from KG.ulkb_access import (ulkb_sem_predicates_for_vn,
-                            ulkb_sem_roles_for_pb_by_role)
+from KG.ulkb_access_V4 import ulkb_sem_predicates_LONG, \
+    ulkb_sem_roles_for_pb_by_role
 
 query_prefix = """
 prefix rrp: <http://www.ibm.com/RRP#>
@@ -84,7 +84,7 @@ def query_semantics_from_rdf(verbnet_class_id,
     if verbose:
         print("verbnet_class_id:", verbnet_class_id)
 
-    output = ulkb_sem_predicates_for_vn(verbnet_class_id)
+    output = ulkb_sem_predicates_LONG(verbnet_class_id)
 
     # Further construct the result
     semantics_by_role_set = defaultdict(list)
@@ -93,7 +93,7 @@ def query_semantics_from_rdf(verbnet_class_id,
             continue
 
         example = semantic_example["example"]
-        role_set = set()
+        role_set = set(semantic_example["roleList"])
         statements = []
         for predicate in semantic_example["predicates"]:
             arguments = []
@@ -102,9 +102,6 @@ def query_semantics_from_rdf(verbnet_class_id,
                     "type": param["type"],
                     "value": param["value"]
                 })
-                if param["type"] == "ThemRole" and \
-                        not param["value"].startswith("?"):
-                    role_set.add(param["value"])
 
             statements.append({
                 "predicate_value": predicate["label_predicate"],
@@ -172,14 +169,14 @@ if __name__ == "__main__":
     # query_verbnet_semantic_roles("make_out.23")
     # query_verbnet_semantic_roles("make-out.08")
     # query_verbnet_semantic_roles("make_out.12")
-    print(query_pb_vn_mapping_from_rdf("be-located-at-91"))
+    # print(query_pb_vn_mapping_from_rdf("be-located-at-91"))
     # query_verbnet_semantic_predicates("admire-31_2")
     # print(query_pb_vn_mapping_from_rdf("admire.01"))
     # print(query_pb_vn_mapping_from_rdf("enter.01"))
-    # print(query_semantics_from_rdf("escape-51_1-1"))
+    print(query_semantics_from_rdf("escape-51.1-1"))
     # test_query_provenance("put-9.1-2")
-    roles = query_verbnet_semantic_roles_from_rdf("be-located-at-91")
-    # roles = query_verbnet_semantic_roles_from_rdf("carry.01")
+    # roles = query_verbnet_semantic_roles_from_rdf("be-located-at-91")
+    roles = query_verbnet_semantic_roles_from_rdf("carry.01")
     # roles = ulkb_sem_roles_for_pb("make_out.12")
     print(json.dumps(roles, indent=4, sort_keys=True))
 

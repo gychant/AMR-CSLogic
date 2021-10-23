@@ -7,6 +7,7 @@ import os
 import pickle
 import sys
 import threading
+import torch
 
 from nltk import sent_tokenize
 from nltk.tokenize import word_tokenize
@@ -26,10 +27,11 @@ class LocalAMRClient(object):
 
         cwd = os.getcwd()
         os.chdir(config.THIRD_PARTY_PATH)
-        print('cwd', os.getcwd())
+        print("Loading checkpoint ...")
         amr_parser = AMRParser.from_checkpoint(
             checkpoint=config.AMR_MODEL_CHECKPOINT_PATH,
             roberta_cache_path=config.ROBERTA_CACHE_PATH)
+        print("Loaded checkpoint ...")
         # for loading resources, parse a test sentence
         amr_parser.parse_sentences([['test']])
         os.chdir(cwd)
@@ -75,7 +77,6 @@ class CacheClient:
         self.cache = collections.OrderedDict()
         if use_snapshot:
             self._read_snapshot()
-
 
     def _read_snapshot(self):
         dt_name_pairs = []
@@ -135,7 +136,6 @@ class CacheClient:
             print(e)
 
 
-
 if config.AMR_PARSING_MODEL == "local":
     amr_client = LocalAMRClient(config.use_cuda)
 elif config.AMR_PARSING_MODEL == "remote":
@@ -144,6 +144,7 @@ else:
     raise Exception("Missing AMR parsing configuration ...")
 
 amr_client = CacheClient(amr_client)
+
 
 def parse_text(text, verbose=False):
     sentences = sent_tokenize(text)

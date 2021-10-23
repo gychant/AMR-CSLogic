@@ -15,7 +15,8 @@ from nltk.stem import PorterStemmer
 import requests
 import operator
 import json
-import config
+
+from app_config import config
 
 
 # from csv import reader
@@ -322,8 +323,9 @@ def ulkb_sem_predicates_SHORT(_verb: str) -> []:
         if 'example' not in thisFrame:
             thisFrame['example'] = example
             
-        if 'roleList' in result  and 'roleList' not in thisPredicate : 
+        if 'roleList' in result and 'roleList' not in thisFrame:
             thisFrame['roleList'] = result['roleList']['value'].split(',')
+
         if example != thisFrame['example']:
             thisFrame = {}
             output.append(thisFrame)
@@ -377,12 +379,13 @@ def ulkb_sem_predicates_LONG(_verb: str) -> []:
     output.append(thisFrame)
     curPredicateID = ""
     thisPredicate = {}
+
     for result in results["results"]["bindings"]:
         example = result["example"]["value"]
 
         if 'example' not in thisFrame:
             thisFrame['example'] = example
-        if 'roleList' in result  and 'roleList' not in thisPredicate : 
+        if 'roleList' in result and 'roleList' not in thisFrame:
             thisFrame['roleList'] = result['roleList']['value'].split(',')
             
         if example != thisFrame['example']:
@@ -445,7 +448,7 @@ def ulkb_sem_predicates_for_lemma_SHORT(_verb: str) -> []:
             curPredicateID = ""
         thisPredicateID = result["semanticPredicate"]["value"]
         
-        if 'roleList' in result  and 'roleList' not in thisPredicate : 
+        if 'roleList' in result and 'roleList' not in thisFrame:
             thisFrame['roleList'] = result['roleList']['value'].split(',')
 
         if 'predicates' not in thisFrame:
@@ -475,7 +478,6 @@ def ulkb_sem_predicates_for_lemma_SHORT(_verb: str) -> []:
     return output
 
 
-
 if __name__ == '__main__':
     # print(str(check_verb_name("MIMI")))
 
@@ -486,8 +488,14 @@ if __name__ == '__main__':
     # output = ulkb_sem_predicates_for("escape-51.1-1-1")
     # print(str(output))
 
-     output = ulkb_sem_predicates_SHORT("escape-51.1")
-     print(str(output))
+    print("\nulkb_sem_predicates_SHORT: escape-51.1")
+    output = ulkb_sem_predicates_SHORT("escape-51.1")
+    print(str(output))
+
+    print("\nulkb_sem_predicates_SHORT: escape-51.1")
+    output = ulkb_sem_predicates_LONG("escape-51.1")
+    print(str(output))
+
     # TEST API WITH LEMMAS
     #print("\nCalling ulkb_sem_roles_for_lemma for make_out ...")
     #output = ulkb_sem_roles_for_lemma("make_out")

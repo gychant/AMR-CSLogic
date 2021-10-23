@@ -44,6 +44,7 @@ To apply path patterns from AMR+VerbNet graph on the test samples to extract tri
 ```
 $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --apply_path_patterns \
+    --graph_type amr_verbnet \
     --amr_cache_path ./data/JerichoWorld/test_amr.json \
     --pattern_file_path ./path_output/patterns_train_amr_verbnet.pkl \
     --output_file_path ./path_output/extracted_triples_amr_verbnet.jsonl
@@ -53,6 +54,7 @@ To apply path patterns from AMR graph on the test samples to extract triples,
 ```
 $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --apply_path_patterns \
+    --graph_type amr \
     --amr_cache_path ./data/JerichoWorld/test_amr.json \
     --pattern_file_path ./path_output/patterns_train_amr.pkl \
     --output_file_path ./path_output/extracted_triples_amr.jsonl
@@ -62,6 +64,7 @@ To apply path patterns from VerbNet graph on the test samples to extract triples
 ```
 $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --apply_path_patterns \
+    --graph_type verbnet \
     --amr_cache_path ./data/JerichoWorld/test_amr.json \
     --pattern_file_path ./path_output/patterns_train_verbnet.pkl \
     --output_file_path ./path_output/extracted_triples_verbnet.jsonl

@@ -43,7 +43,7 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
         if amr is None:
             response = requests.get("http://{}:{}/amr_parsing".format(
                 config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
-                params={'text': text})
+                params={'text': sent})
             amr = json.loads(response.text).get("result", None)
 
         if verbose:
@@ -166,9 +166,13 @@ def ground_amr(amr, verbose=False):
                     amr_role_set = build_role_set_from_mappings(node_name, verbnet_id, arg_map[pb_id], role_mappings[pb_id])
                     # One role set might correspond to multiple set of semantics
                     semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
-                    matched_role_set, matched_semantics = match_semantics_by_role_set(semantics_by_role_set, amr_role_set)
-                    # print("\nmatched_role_set:", matched_role_set)
-                    # print("\nmatched_semantics:", matched_semantics)
+                    matched_role_set, matched_semantics = match_semantics_by_role_set(
+                        semantics_by_role_set, amr_role_set, verbose)
+                    if verbose:
+                        print("\nsemantics_by_role_set:", semantics_by_role_set)
+                        print("\nmatched_role_set:", matched_role_set)
+                        print("\nmatched_semantics:", matched_semantics)
+
                     if pb_id not in semantics:
                         semantics[pb_id] = dict()
                     semantics[pb_id][verbnet_id] = matched_semantics
@@ -786,7 +790,8 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 
 if __name__ == "__main__":
     # res = ground_text_to_verbnet("You enter a kitchen.")
-    res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)

@@ -62,7 +62,7 @@ def amr_parsing():
 ######################################################################
 @app.route("/verbnet_semantics", methods=["GET"])
 def verbnet_semantics():
-    """Returns AMR parse of input text"""
+    """Returns VerbNet groundings of input text"""
     app.logger.info("AMR parsing of text ...")
     text = request.args.get("text")
     if len(text.strip()) == 0:
@@ -72,7 +72,8 @@ def verbnet_semantics():
 
     use_coreference = request.args.get('use_coreference', default=1, type=int)
 
-    parse = ground_text_to_verbnet(text, use_coreference=use_coreference, verbose=False)
+    print("text:", text)
+    parse = ground_text_to_verbnet(text, use_coreference=use_coreference, verbose=True)
     results = {
         "text": text,
         "coreference": parse["coreference"],
