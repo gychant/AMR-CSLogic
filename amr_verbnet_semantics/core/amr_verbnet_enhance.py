@@ -312,6 +312,16 @@ def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
                 if vn_class not in results[pb_id]:
                     results[pb_id][vn_class] = []
                 results[pb_id][vn_class].append(semantic_calc[pb_id][vn_class])
+
+    # Add a question mark before an unbound argument
+    for pb_id in results:
+        for vn_class in results[pb_id]:
+            calculus_group = results[pb_id][vn_class]
+            for calc in calculus_group:
+                for stmt in calc:
+                    for arg_idx in range(len(stmt.arguments)):
+                        if stmt.arguments[arg_idx][0].isupper():
+                            stmt.arguments[arg_idx] = "?" + stmt.arguments[arg_idx]
     return results
 
 
@@ -791,9 +801,9 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 if __name__ == "__main__":
     # res = ground_text_to_verbnet("You enter a kitchen.")
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
-    res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
+    # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("Here 's a dining table .")
-    # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
+    res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
     # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
     # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
