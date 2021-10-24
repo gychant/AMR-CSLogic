@@ -12,6 +12,10 @@ SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V3_PUB"
 # Configure VerbNet
 VERBNET_VERSION: "verbnet3.2"
 
+# whether to remove contradicting statements
+# when the time dimension is ignored.
+FILTER_INVALID_STATEMENTS: true
+
 # Configure KB source
 # Set to "rdf" if you want to query from the RDF triple store
 # KB_SOURCE: "corpus"

@@ -183,7 +183,8 @@ def ground_amr(amr, verbose=False):
 
     amr_cal = process_and_operator(raw_amr_cal)
     sem_cal = construct_calculus_from_semantics(semantics)
-    grounded_stmt = ground_semantics(arg_map, sem_cal, role_mappings)
+    grounded_stmt = ground_semantics(arg_map, sem_cal, role_mappings,
+                                     filter_invalid_statements=config.FILTER_INVALID_STATEMENTS)
     unique_grounded_stmt, unique_sem_cal = induce_unique_groundings(grounded_stmt, sem_cal)
 
     if verbose:
@@ -234,11 +235,14 @@ def construct_calculus_from_semantics(semantics):
     return results
 
 
-def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
+def ground_semantics(arg_map, semantic_calc, role_mappings,
+                     filter_invalid_statements=True, verbose=False):
     """
-    :param arg_map:
-    :param semantic_calc:
-    :param role_mappings:
+    :param arg_map: the argument map inferred from AMRs
+    :param semantic_calc: the semantic calculus
+    :param role_mappings: the role mappings between Propbank and VerbNet
+    :param filter_invalid_statements: whether to remove contradicting statements
+        when the time dimension is ignored.
     :param verbose:
     :return:
     """
@@ -272,7 +276,8 @@ def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
                         for role in cur_role_mappings:
                             role_info = cur_role_mappings[role]
                             for vn_cls_info in role_info:
-                                if stmt.arguments[arg_idx].lower() == vn_cls_info["vntheta"].lower():
+                                if stmt.arguments[arg_idx].lower() == vn_cls_info["vntheta"].lower() \
+                                        or stmt.arguments[arg_idx][1:].lower() == vn_cls_info["vntheta"].lower():
                                     if role not in arg_map[propbank_id][src]:
                                         continue
 
@@ -321,14 +326,58 @@ def ground_semantics(arg_map, semantic_calc, role_mappings, verbose=False):
                     stmt = calc[stmt_idx]
                     for arg_idx in range(len(stmt.arguments)):
                         # Add a question mark before an unbound argument
-                        if stmt.arguments[arg_idx][0].isupper():
+                        if stmt.arguments[arg_idx][0].isupper() and stmt.arguments[arg_idx] != "E":
                             stmt.arguments[arg_idx] = "?" + stmt.arguments[arg_idx]
                             # Add new statement replacing ?V_Final_State with propbank frame lemma
                             if stmt.arguments[arg_idx] == "?V_Final_State":
                                 new_stmt = copy.deepcopy(stmt)
                                 new_stmt.arguments[arg_idx] = pb_id.split(".")[0]
                                 calc.append(new_stmt)
+
+    if filter_invalid_statements:
+        # remove contradicting statements when the time dimension is ignored.
+        for pb_id in results:
+            for vn_class in results[pb_id]:
+                calculus_group = results[pb_id][vn_class]
+                for group_idx in range(len(calculus_group)):
+                    calc = calculus_group[group_idx]
+                    stmt_pool = set()
+                    final_calculus = []
+                    for stmt_idx in reversed(range(len(calc))):
+                        cur_stmt = calc[stmt_idx]
+                        contradictory = False
+                        for stmt in stmt_pool:
+                            if check_contradiction(cur_stmt, stmt):
+                                contradictory = True
+
+                        if not contradictory:
+                            final_calculus.insert(0, cur_stmt)
+                            stmt_pool.add(cur_stmt)
+                    calculus_group[group_idx] = final_calculus
     return results
+
+
+def check_contradiction(statement1, statement2):
+    """
+    Check if two statements are contradictory ignoring the time dimension.
+    :param statement1: the first statement
+    :param statement2: the second statement
+    :return:
+    """
+    if not (statement1.arguments[0][0].startswith("e")
+            and statement1.arguments[0][-1].isnumeric()) \
+            and statement1.arguments[0] != "E":
+        return False
+
+    if not (statement2.arguments[0][0].startswith("e")
+            and statement2.arguments[0][-1].isnumeric()) \
+            and statement2.arguments[0] != "E":
+        return False
+
+    ret = statement1.predicate == statement2.predicate \
+        and statement1.arguments[1:] == statement2.arguments[1:] \
+        and statement1.is_negative != statement2.is_negative
+    return ret
 
 
 def process_and_operator(amr_calc):
@@ -807,12 +856,12 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 if __name__ == "__main__":
     # res = ground_text_to_verbnet("You enter a kitchen.")
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
-    res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.")
+    # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("You close the window .")
     # res = ground_text_to_verbnet("A wet hoodie .")
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
-    # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
+    res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
     # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
