@@ -20,6 +20,7 @@ from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.service.verbnet import query_semantics
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 from amr_verbnet_semantics.utils.format_util import to_json
+from amr_verbnet_semantics.utils.reification_util import reify_amr
 from app_config import config
 
 
@@ -128,7 +129,17 @@ def build_role_set_from_mappings(node_name, verbnet_id, arg_map, role_mappings, 
     return role_set
 
 
-def ground_amr(amr, verbose=False):
+def ground_amr(amr, reify=True, verbose=False):
+    if verbose:
+        print("\nOriginal amr:")
+        print(amr)
+
+    if reify:
+        amr = reify_amr(amr)
+        if verbose:
+            print("\nReified amr:")
+            print(amr)
+
     g = penman.decode(amr)
 
     role_mappings = dict()
@@ -333,6 +344,19 @@ def ground_semantics(arg_map, semantic_calc, role_mappings,
                                 new_stmt = copy.deepcopy(stmt)
                                 new_stmt.arguments[arg_idx] = pb_id.split(".")[0]
                                 calc.append(new_stmt)
+
+    # map reified AMR relation to VerbNet semantic predicates
+    if "be-located-at.91" not in results \
+            and "be-located-at-91" in arg_map \
+            and len(role_mappings["be-located-at.91"]) == 0:
+        statements = []
+        for node in arg_map["be-located-at-91"]:
+            args = []
+            for arg_role in sorted(arg_map["be-located-at-91"][node].keys()):
+                args.append(arg_map["be-located-at-91"][node][arg_role])
+            statements.append(PredicateCalculus("HAS_LOCATION", args))
+        results["be-located-at.91"] = dict()
+        results["be-located-at.91"]["be-located-at-91"] = [statements]
 
     if filter_invalid_statements:
         # remove contradicting statements when the time dimension is ignored.
@@ -544,7 +568,10 @@ def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
                 new_stmt_pools.append(copy.deepcopy(unique_stmts))
 
             for unique_calcs in calc_pools:
-                unique_calcs[pb_id] = copy.deepcopy(semantic_calc[pb_id][vn_class])
+                if pb_id in semantic_calc:
+                    unique_calcs[pb_id] = copy.deepcopy(semantic_calc[pb_id][vn_class])
+                else:
+                    unique_calcs[pb_id] = []
                 new_calc_pools.append(copy.deepcopy(unique_calcs))
         stmt_pools = new_stmt_pools
         calc_pools = new_calc_pools
@@ -854,14 +881,20 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure
 
 
 if __name__ == "__main__":
-    # res = ground_text_to_verbnet("You enter a kitchen.")
-    # res = ground_text_to_verbnet("You see a dishwasher and a fridge.")
+    # res = ground_text_to_verbnet("You enter a kitchen.", verbose=True)
+    # res = ground_text_to_verbnet("You see a dishwasher and a fridge.", verbose=True)
     # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("You close the window .")
     # res = ground_text_to_verbnet("A wet hoodie .")
     # res = ground_text_to_verbnet("Here 's a dining table .")
+    # res = ground_text_to_verbnet("They put upon me a brilliant, red helm.", verbose=True)
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
-    res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
+    res = ground_text_to_verbnet("On the nightstand is a clean red dress.", verbose=True)
+    # res = ground_text_to_verbnet("On the chair is a hoodie.", verbose=True)
+    # res = ground_text_to_verbnet("The bench is shaky.", verbose=True)
+    # res = ground_text_to_verbnet("The fleece jacket seems out of place here.", verbose=True)
+    # res = ground_text_to_verbnet("The court shoes appears to be well matched to everything else here.", verbose=True)
+    # res = ground_text_to_verbnet("The dresser is made out of maple carefully finished with Danish oil.", verbose=True)
     # res = ground_text_to_verbnet("In accordance with our acceptance of funds from the U.S. Treasury, cash dividends on common stock are not permitted without prior approval from the U.S.", verbose=True)
     # res = ground_text_to_verbnet("You can make out a green shirt.", verbose=True)
     # res = ground_text_to_verbnet("There isn't a thing there except a fridge.", verbose=True)
