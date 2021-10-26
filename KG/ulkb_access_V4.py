@@ -426,7 +426,9 @@ def ulkb_pb_lemma_vn_mappings(_pbName : str) :
             curVerb["ARG0"] = verbNets[vnVerbLabel][0]
         if len(verbNets[vnVerbLabel]) >= 2:
             curVerb["ARG1"] = verbNets[vnVerbLabel][1]
-        returnResults[_pbName] = curVerb
+        myTemp = {}
+        myTemp[vnVerbLabel] = curVerb
+        returnResults[_pbName] = myTemp
             
     return returnResults  
 
