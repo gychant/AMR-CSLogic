@@ -16,13 +16,10 @@ import requests
 import operator
 import json
 
-##### CONFIGURATION CHANGES  ################################ 
-#Jason, this is your string
-#from app_config import config
-
-#Rosario, this is your string
-import config
-##### CONFIGURATION CHANGES ################################# 
+try:
+    from . import config
+except ImportError:
+    import config
 
 # from csv import reader
 # GLOBALS
