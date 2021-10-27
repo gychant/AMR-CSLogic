@@ -157,6 +157,7 @@ def ground_amr(amr, reify=True, verbose=False):
         # if it is a propbank frame
         if len(inst.target) > 3 and inst.target[-3] == "-" and inst.target[-2:].isnumeric():
             pb_id = inst.target[:-3] + "." + inst.target[-2:]
+            pb_id = pb_id.replace("-", "_")
             if pb_id not in role_mappings:
                 role_map = query_verbnet_semantic_roles(pb_id)
                 if role_map is None:
@@ -469,6 +470,7 @@ def construct_calculus_from_amr(amr):
     for inst in g.instances():
         src2tgt[inst.source] = inst.target
         amr_calc.append(PredicateCalculus(inst.target, [inst.source]))
+
     for edge in g.edges():
         if edge.role.lower().startswith(":arg") \
                 or edge.role.lower().startswith(":op"):
@@ -477,8 +479,10 @@ def construct_calculus_from_amr(amr):
             predicate = edge.role[1:].lower()
         amr_calc.append(PredicateCalculus(predicate, [edge.source, edge.target]))
         tgt = src2tgt[edge.source]
-        if tgt != "and" and "-" in tgt and tgt.index("-") == len(tgt) - 3:
+        if tgt != "and" and "-" in tgt and tgt.rindex("-") == len(tgt) - 3:
             tgt = tgt[:-3] + "." + tgt[-2:]
+
+        tgt = tgt.replace("-", "_")
         if tgt not in arg_map:
             arg_map[tgt] = dict()
         if edge.source not in arg_map[tgt]:
@@ -885,11 +889,11 @@ if __name__ == "__main__":
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.", verbose=True)
     # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("You close the window .")
-    # res = ground_text_to_verbnet("A wet hoodie .")
+    res = ground_text_to_verbnet("A wet hoodie .", verbose=True)
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("They put upon me a brilliant, red helm.", verbose=True)
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
-    res = ground_text_to_verbnet("On the nightstand is a clean red dress.", verbose=True)
+    # res = ground_text_to_verbnet("On the nightstand is a clean red dress.", verbose=True)
     # res = ground_text_to_verbnet("On the chair is a hoodie.", verbose=True)
     # res = ground_text_to_verbnet("The bench is shaky.", verbose=True)
     # res = ground_text_to_verbnet("The fleece jacket seems out of place here.", verbose=True)

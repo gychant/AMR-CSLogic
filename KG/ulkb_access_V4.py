@@ -431,7 +431,7 @@ def ulkb_pb_lemma_vn_mappings(_pbName : str) :
 
    
 #####################################################################
-# API  -- ulkb_sem_roles_for_pb_by_role("enter.01")
+# API  -- ulkb_sem_roles_for_pb_by_role("enter.01") to be deprecated
 # Usage : from a propbank verb, it gives the semantic role mappings
 #         for it and returns results after arranging by roles
 #####################################################################

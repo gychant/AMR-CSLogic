@@ -8,7 +8,7 @@ from SPARQLWrapper import JSON, SPARQLWrapper
 
 from app_config import config
 from KG.ulkb_access_V4 import ulkb_sem_predicates_LONG, \
-    ulkb_sem_roles_for_pb_by_role
+    ulkb_sem_roles_for_pb_by_role, ulkb_pb_vn_mappings
 
 query_prefix = """
 prefix rrp: <http://www.ibm.com/RRP#>
@@ -35,38 +35,15 @@ def query_pb_vn_mapping_from_rdf(propbank_id,
     if verbose:
         print("propbank_id:", propbank_id)
 
-    query_text = """SELECT DISTINCT ?verb ?pbSemRole ?vnVerbLabel ?vnParamLabel WHERE {   
-        ?verb rdfs:label "%s" . 
-        #?verb rrp:inKB rrp:PropBank .
-        ?verb rrp:hasParameter ?pbParam . 
-        ?pbParam rdfs:label ?pbSemRole . 
-        OPTIONAL {
-            ?vnVerb rrp:inKB rrp:VerbNet . 
-            ?vnVerb rdfs:label ?vnVerbLabel . 
-            ?vnVerb rrp:hasComponent ?vnFrame . 
-            ?vnFrame rrp:hasComponent ?semPred . 
-            ?semPred rrp:hasParameter ?vnParam . 
-            ?pbParam rrp:mapsTo ?vnParam . 
-            ?vnParam rdfs:label ?vnParamLabel . 
-        } 
-    } """ % propbank_id
-
-    sparql.setQuery(query_prefix + query_text)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-
-    vn_class_set = set()
-    for result in results["results"]["bindings"]:
-        if "vnVerbLabel" in result:
-            vn_verb_label = result["vnVerbLabel"]["value"]
-            vn_class_set.add(vn_verb_label)
+    output = ulkb_pb_vn_mappings(propbank_id)
 
     mapping_res = []
-    for vn_class in vn_class_set:
-        mapping_res.append({
-            "mapping": vn_class,
-            "source": verbnet_version
-        })
+    if propbank_id in output:
+        for vn_class in output[propbank_id]:
+            mapping_res.append({
+                "mapping": vn_class,
+                "source": output["provenance"]
+            })
 
     if len(mapping_res) == 0:
         return None
@@ -74,7 +51,24 @@ def query_pb_vn_mapping_from_rdf(propbank_id,
 
 
 def query_verbnet_semantic_roles_from_rdf(propbank_id):
-    return ulkb_sem_roles_for_pb_by_role(propbank_id)
+    results = dict()
+    output = ulkb_pb_vn_mappings(propbank_id)
+    
+    if propbank_id not in output:
+        return results
+
+    for vn_class in output[propbank_id]:
+        for arg_role in output[propbank_id][vn_class]:
+            if arg_role not in results:
+                results[arg_role] = []
+            theme_role = output[propbank_id][vn_class][arg_role]
+            results[arg_role].append({
+                "description": "",
+                "vncls": "-".join(vn_class.split("-")[1:]),
+                "vntheta": theme_role.strip()[len("ThemRole("):-1].lower()
+            })
+
+    return results
 
 
 def query_semantics_from_rdf(verbnet_class_id,
@@ -176,7 +170,8 @@ if __name__ == "__main__":
     print(query_semantics_from_rdf("escape-51.1-1"))
     # test_query_provenance("put-9.1-2")
     # roles = query_verbnet_semantic_roles_from_rdf("be-located-at-91")
-    roles = query_verbnet_semantic_roles_from_rdf("carry.01")
+    # roles = query_verbnet_semantic_roles_from_rdf("carry.01")
+    roles = query_verbnet_semantic_roles_from_rdf("make_out.23")
     # roles = ulkb_sem_roles_for_pb("make_out.12")
     print(json.dumps(roles, indent=4, sort_keys=True))
 
