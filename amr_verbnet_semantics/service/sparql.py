@@ -53,7 +53,7 @@ def query_pb_vn_mapping_from_rdf(propbank_id,
 def query_verbnet_semantic_roles_from_rdf(propbank_id):
     results = dict()
     output = ulkb_pb_vn_mappings(propbank_id)
-    
+
     if propbank_id not in output:
         return results
 
@@ -87,7 +87,10 @@ def query_semantics_from_rdf(verbnet_class_id,
             continue
 
         example = semantic_example["example"]
-        role_set = set(semantic_example["roleList"])
+        if "roleList" in semantic_example:
+            role_set = set(semantic_example["roleList"])
+        else:
+            role_set = set()
         statements = []
         for predicate in semantic_example["predicates"]:
             arguments = []
