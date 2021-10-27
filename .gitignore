@@ -142,3 +142,5 @@ dmypy.json
 .pyre/
 
 *.pyc
+
+.idea/
