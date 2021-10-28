@@ -438,9 +438,9 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
 
                     print("subj:", subj)
                     print("obj:", obj)
-                    input()
+                    # input()
                     if subj is not None and obj is not None:
-                        if True:
+                        if False:
                             visualize_semantic_graph(
                                 g_directed, graph_name="semantic_graph".format(),
                                 out_dir="./test-output/")

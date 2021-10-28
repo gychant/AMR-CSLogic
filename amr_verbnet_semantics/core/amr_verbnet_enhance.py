@@ -749,6 +749,8 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
                 print("edge:", edge)
             g.add_edge(edge.source, edge.target, label=edge.role, source="amr")
 
+    # print("\nNodes of AMR graph:\n", g.nodes())
+    # print("\nEdges of AMR graph:\n", g.edges())
     if grounded_stmt is None:
         return g, amr_obj
 
@@ -841,11 +843,13 @@ def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
                         else:
                             arg_id = arg
 
+                        g.add_node(arg_id, label=label, source="verbnet")
                         # remove "?" for edge labels
                         if label.startswith("?"):
                             label = label[1:]
                         g.add_edge(predicate_id, arg_id, label=":" + label, source="verbnet")
 
+    # print("\nNodes of enhanced AMR graph:\n", g.nodes())
     # print("\nEdges of enhanced AMR graph:\n", g.edges())
     return g, amr_obj
 
