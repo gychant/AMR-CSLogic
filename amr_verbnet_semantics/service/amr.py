@@ -36,10 +36,10 @@ class LocalAMRClient(object):
         amr_parser.parse_sentences([['test']])
         os.chdir(cwd)
 
-        if not use_cuda:
-            amr_parser.use_cuda = False
-            list(map(lambda x: x.cpu(), amr_parser.models))
-            amr_parser.embeddings.roberta.cpu()
+        # if not use_cuda:
+        #     amr_parser.use_cuda = False
+        #     list(map(lambda x: x.cpu(), amr_parser.models))
+        #     amr_parser.embeddings.roberta.cpu()
 
         return amr_parser
 
