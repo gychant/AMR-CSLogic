@@ -61,7 +61,20 @@ Then you have to unzip the file in `third_party` directory and set the values of
 - `/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip`
 
 
-## Start a server
+## Start a Stanford CoreNLP server
+If you would like to set up an independent server, cd into the CoreNLP package and run the following:
+```
+$ cd ./stanford-corenlp-full-2018-10-05/
+$ java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port 9000 -timeout 15000
+```
+If it says java.net.BindException: Address already in use for this port, either use another one or run
+```
+$ pkill java
+```
+to stop any existing ones. Then set STANFORD_CORENLP_PATH to null and fill in the host name and port number to use this running server.
+
+
+## Start the FLASK server
 ```
 $ export FLASK_APP=./amr_verbnet_semantics/web_app/__init__.py
 $ python -m flask run --host=0.0.0.0
