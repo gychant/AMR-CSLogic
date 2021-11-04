@@ -24,6 +24,12 @@ KB_SOURCE: "rdf"
 # Configure Conda home
 CONDA_HOME: "~/anaconda3"
 
+# Configure local Stanford NLP parser
+STANFORD_CORENLP_PATH: "./stanford-corenlp-full-2018-10-05"
+# STANFORD_CORENLP_PATH: null
+STANFORD_CORENLP_HOST: "http://localhost"
+STANFORD_CORENLP_PORT: 9000
+
 # Configure AMR parsing
 # AMR_PARSING_MODEL: "remote"
 AMR_PARSING_MODEL: "local"
@@ -32,6 +38,6 @@ AMR_PARSING_MODEL: "local"
 REMOTE_AMR_HOST: "mnlp-demo.sl.cloud9.ibm.com"
 REMOTE_AMR_PORT: 59990
 
-# Configure local service
+# Configure local FLASK service
 LOCAL_SERVICE_HOST: "0.0.0.0"
 LOCAL_SERVICE_PORT: 5000

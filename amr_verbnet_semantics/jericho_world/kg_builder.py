@@ -887,6 +887,7 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
         os.makedirs(output_dir)
 
     pattern_dict = defaultdict(Counter)
+    sentence_triple_cache = set()
 
     amr_cache = None
     if amr_cache_path is not None:
@@ -913,6 +914,12 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
 
             extractable_triples = []
             for triple in sample["state"]["graph"]:
+                cache_key = tuple([sent, tuple(triple)])
+                if cache_key in sentence_triple_cache:
+                    continue
+                else:
+                    sentence_triple_cache.add(cache_key)
+
                 subj, pred, obj = triple
                 if len(subj.strip()) == 0 or len(pred.strip()) == 0 or len(obj.strip()) == 0:
                     continue
@@ -946,9 +953,9 @@ def mine_path_patterns(data, output_file_path, graph_type="amr",
                         pattern_dict[pred][pattern] += 1
 
                     if True:
-                        print("\nsent:", sent)
-                        print("\ntriple:", triple)
-                        print("\npattern:", pattern)
+                        print("\n\n\nsent:", sent)
+                        print("triple:", triple)
+                        print("pattern:", pattern)
                         # input()
                 # else:
                     # print("Invalid triple:", triple)

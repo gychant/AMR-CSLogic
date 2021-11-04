@@ -4,7 +4,8 @@
 from nltk.tokenize import sent_tokenize
 from stanfordcorenlp import StanfordCoreNLP
 
-STANFORD_CORENLP_PATH = "./stanford-corenlp-full-2018-10-05"
+from app_config import config
+
 nlp = None
 
 
@@ -14,8 +15,13 @@ def full_parsing(text, do_coreference=False, do_word_tokenize=False,
     global nlp
     if nlp is None:
         print("Loading StanfordCoreNLP models ...")
-        nlp = StanfordCoreNLP(STANFORD_CORENLP_PATH)
-        print("Models created ...")
+        if config.STANFORD_CORENLP_PATH is not None:
+            nlp = StanfordCoreNLP(config.STANFORD_CORENLP_PATH)
+        else:
+            # Use an existing server
+            nlp = StanfordCoreNLP(config.STANFORD_CORENLP_HOST,
+                                  port=config.STANFORD_CORENLP_PORT)
+        print("Models loaded ...")
 
     annotation = dict()
 

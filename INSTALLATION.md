@@ -15,6 +15,7 @@ $ # macOS
 $ brew install graphviz
 $ pip install pygraphviz
 ```
+Note that the scripts/install.sh downloads some NLTK corpora like punkt, verbnet, and propbank. If you already have some existing corpora under ~/nltk-data, please do backup accordingly.
 
 You can know how to install pygraphviz on other environments with 
 [the document](https://pygraphviz.github.io/documentation/stable/install.html).
@@ -46,17 +47,18 @@ $ bash scripts/download_stanford_nlp.sh ./
 (6) set the SPARQL_ENDPOINT address in the config.yaml file.
 
 
+## Create config file
+Note that we use YAML config file to set app specific parameters. To get started, create your own local config file using config_template.yaml file and customize values of difference fields if needed and save with name config.yaml.
+Specifically, if you would like to use an existing Stanford CoreNLP parsing server, please set STANFORD_CORENLP_PATH to null and fill in the host name and port number, otherwise fill in the path to the Stanford CoreNLP package.
+
+
 ## Download third_party
 ```
 $ bash scripts/download_third_party.sh 
 ```
 Secondly You have to download the pre-trained model file for AMR from the following path on CCC. 
-Then you have to unzip the file in `third_party` directory. 
+Then you have to unzip the file in `third_party` directory and set the values of AMR_MODEL_CHECKPOINT_PATH and THIRD_PARTY_PATH in the config file accordingly.
 - `/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip`
-
-
-## Create config file
-Note that we use YAML config file to set app specific parameters. To get started, create your own local config file using config_template.yaml file and customize values of difference fields if needed and save with name config.yaml.
 
 
 ## Start a server
