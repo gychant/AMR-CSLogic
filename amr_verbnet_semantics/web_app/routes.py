@@ -51,7 +51,7 @@ def amr_parsing():
 
     parse = parse_text(text)
     results = {
-        "result": parse[0]
+        "result": parse
     }
     app.logger.info("Finished parsing ...")
     return make_response(jsonify(results), status.HTTP_200_OK)

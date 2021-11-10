@@ -45,7 +45,7 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
             response = requests.get("http://{}:{}/amr_parsing".format(
                 config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
                 params={'text': sent})
-            amr = json.loads(response.text).get("result", None)
+            amr = json.loads(response.text).get("result", None)[0]
 
         if verbose:
             print("\namr:\n")
@@ -702,7 +702,8 @@ def build_graph_from_amr_penman(amr, verbose=False):
     return g_directed, g_undirected, amr_obj
 
 
-def build_semantic_graph(amr, grounded_stmt, semantic_calculus, verbose=False):
+def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
+                         verbose=False):
     """
     To represent the graph of semantics, we use event as pivot, then use event
     time point (e.g. start, end, or, during) as edge to connect a predicate

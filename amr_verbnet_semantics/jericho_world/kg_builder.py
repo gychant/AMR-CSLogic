@@ -4,6 +4,7 @@ import json
 import os
 import pickle
 import random
+import time
 from collections import Counter, defaultdict
 from itertools import combinations, permutations
 from pprint import pprint
@@ -221,6 +222,33 @@ def get_lowest_common_ancestor(g, nodes):
     return nodes[0]
 
 
+def query_node_pairs_by_path_pattern_set(graph, pattern_set):
+    """
+    Get all node pairs of the graph and search paths for each that match
+    elements in the pattern set.
+    :param graph: A undirected graph from AMR parse
+    :param pattern_set: a path pattern set, each in tuple
+    :return: A dictionary with pattern as key and set of node pair tuple as values
+    """
+    pattern2node_pairs = defaultdict(set)
+    pattern_lens = [len(p) for p in pattern_set]
+    min_cutoff = int((min(pattern_lens) - 1) / 2 + 1)
+    max_cutoff = int((max(pattern_lens) - 1) / 2 + 1)
+
+    nodes = graph.nodes()
+    for node_pair in list(combinations(nodes, 2)):
+        src, tgt = node_pair
+        for cutoff in range(min_cutoff, max_cutoff + 1):
+            node_pair_paths = all_simple_paths(graph, src, tgt, cutoff)
+            for path in node_pair_paths:
+                if len(path) < cutoff:
+                    continue
+                labeled_path = tuple(convert_to_labeled_path(graph, path))
+                if labeled_path in pattern_set:
+                    pattern2node_pairs[labeled_path].add(node_pair)
+    return pattern2node_pairs
+
+
 def query_paths(graph, cutoff):
     """
     Get all node pairs of the graph and search paths for each with the specified
@@ -329,37 +357,36 @@ def induce_kg_triples(text, pattern_dict, top_k_patterns,
     for i in range(len(sentence_parses)):
         # if verbose:
         #     print_enhanced_amr(sentence_parses[i])
-
-        list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
-            grounded_stmt=sentence_parses[i]["grounded_stmt"],
-            semantic_calc=sentence_parses[i]["sem_cal"])
-
-        for grounded_stmt, semantic_calc in zip(
-                list_grounded_stmt, list_semantic_calc):
-            graph, amr_obj = build_semantic_graph(
-                amr=sentence_parses[i]["amr"],
-                grounded_stmt=grounded_stmt,
-                semantic_calculus=semantic_calc)
-
+        if graph_type == "amr":
             triples = induce_kg_triples_from_grounding(
-                graph, sentence_parses[i]["amr"], grounded_stmt, semantic_calc,
-                pattern_dict, top_k_patterns, graph_type, verbose=verbose)
+                sentence_parses[i]["amr"], pattern_dict, top_k_patterns,
+                graph_type=graph_type, verbose=verbose)
             all_triples.update(list(triples))
+        else:
+            list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
+                grounded_stmt=sentence_parses[i]["grounded_stmt"],
+                semantic_calc=sentence_parses[i]["sem_cal"])
+
+            for grounded_stmt, semantic_calc in zip(
+                    list_grounded_stmt, list_semantic_calc):
+                triples = induce_kg_triples_from_grounding(
+                    sentence_parses[i]["amr"], pattern_dict, top_k_patterns,
+                    grounded_stmt, semantic_calc, graph_type, verbose=verbose)
+                all_triples.update(list(triples))
     return all_triples
 
 
-def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_calc,
-                                     pattern_dict, top_k_patterns, graph_type="amr",
-                                     verbose=False):
+def induce_kg_triples_from_grounding(amr, pattern_dict, top_k_patterns,
+                                     grounded_stmt=None, semantic_calc=None,
+                                     graph_type="amr", verbose=False):
     """
     Induce triples from text using given patterns
-    :param g_directed: the directed graph constructed from parse
     :param amr: the AMR parse
-    :param grounded_stmt: grounded statement
-    :param semantic_calc: semantic calculus
     :param pattern_dict: a dictionary storing path patterns for
         all prefined relations
     :param top_k_patterns: top k patterns to apply
+    :param grounded_stmt: grounded statement
+    :param semantic_calc: semantic calculus
     :param graph_type: the type of graph for KG triple induction
             with values ["amr", "amr_verbnet", "verbnet"]
     :param verbose:
@@ -376,7 +403,7 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
             amr, grounded_stmt, semantic_calc, verbose)
 
     g_undirected = g_directed.to_undirected()
-    path_cache = dict()
+    # path_cache = dict()
 
     for rel in pattern_dict:
         # print("\nrel:", rel)
@@ -386,77 +413,73 @@ def induce_kg_triples_from_grounding(g_directed, amr, grounded_stmt, semantic_ca
         # print(pattern_dict[rel].most_common(top_k_patterns))
         # input()
         patterns = pattern_dict[rel].most_common(top_k_patterns)
-        for pattern, freq in patterns:
-            if len(pattern) == 0:
-                continue
+        # print("\nNum of patterns:", len(patterns))
+        pattern_set = set([pattern for pattern, freq in patterns])
 
-            # print("pattern:", pattern)
-            # pattern = tuple([':ARG0', 'carry-01', ':ARG1', 'and', ':op2'])
-            # paths = query_paths(g_undirected, cutoff=len(pattern))
-            cutoff = int((len(pattern) - 1) / 2 + 1)
-            if cutoff in path_cache:
-                path2node_pairs = path_cache[cutoff]
+        # start_time = time.time()
+        pattern2node_pairs = query_node_pairs_by_path_pattern_set(
+            g_undirected, pattern_set)
+        # print("cost time:", time.time() - start_time)
+
+        for pattern in pattern2node_pairs:
+            """
+            if pattern in path_cache:
+                node_pairs = path_cache[pattern]
             else:
-                path2node_pairs = query_paths(g_undirected, cutoff)
-                path_cache[cutoff] = path2node_pairs
+                path_cache[pattern] = node_pairs
+            """
+            node_pairs = pattern2node_pairs[pattern]
+            # print("Num of node_pairs:", len(node_pairs))
+            for node_pair in node_pairs:
+                # print("node_pair:", node_pair)
+                subj_node, obj_node = node_pair
 
-            for path in path2node_pairs:
-                if path != pattern:
-                    continue
-                if len(path) <= 1:
-                    continue
+                if graph_type == "verbnet":
+                    subj_desc = [subj_node]
+                    obj_desc = [obj_node]
+                else:
+                    subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
+                    obj_desc = get_descendant_leaf_nodes(g_directed, obj_node)
 
-                node_pairs = path2node_pairs[path]
-                print("\npath:", path)
-                print("node_pairs:", node_pairs)
-                for node_pair in node_pairs:
-                    print("node_pair:", node_pair)
-                    subj_node, obj_node = node_pair
+                if len(subj_desc) == 0:
+                    subj = get_token_by_node(subj_node, amr_obj)
+                else:
+                    subj_tokens = set([get_token_by_node(n, amr_obj)
+                                       for n in subj_desc])
+                    subj_tokens = set([tok for tok in subj_tokens if tok is not None])
+                    subj = find_text_span(amr_tokens, subj_tokens)
 
-                    if graph_type == "verbnet":
-                        subj_desc = [subj_node]
-                        obj_desc = [obj_node]
-                    else:
-                        subj_desc = get_descendant_leaf_nodes(g_directed, subj_node)
-                        obj_desc = get_descendant_leaf_nodes(g_directed, obj_node)
+                if len(obj_desc) == 0:
+                    obj = get_token_by_node(obj_node, amr_obj)
+                else:
+                    obj_tokens = set([get_token_by_node(n, amr_obj)
+                                      for n in obj_desc])
+                    obj_tokens = set([tok for tok in obj_tokens if tok is not None])
+                    obj = find_text_span(amr_tokens, obj_tokens)
 
-                    if len(subj_desc) == 0:
-                        subj = get_token_by_node(subj_node, amr_obj)
-                    else:
-                        subj_tokens = set([get_token_by_node(n, amr_obj)
-                                           for n in subj_desc])
-                        subj_tokens = set([tok for tok in subj_tokens if tok is not None])
-                        subj = find_text_span(amr_tokens, subj_tokens)
+                # print("subj:", subj)
+                # print("obj:", obj)
+                # input()
+                if subj is not None and obj is not None:
+                    if False:
+                        visualize_semantic_graph(
+                            g_directed, graph_name="semantic_graph".format(),
+                            out_dir="./test-output/")
 
-                    if len(obj_desc) == 0:
-                        obj = get_token_by_node(obj_node, amr_obj)
-                    else:
-                        obj_tokens = set([get_token_by_node(n, amr_obj)
-                                          for n in obj_desc])
-                        obj_tokens = set([tok for tok in obj_tokens if tok is not None])
-                        obj = find_text_span(amr_tokens, obj_tokens)
+                        print("\namr:")
+                        print(amr)
+                        print("\npath:", path)
+                        print("\nnode_pair:", node_pair)
+                        print("subj_desc:", subj_desc)
+                        print("obj_desc:", obj_desc)
+                        print("subj:", subj)
+                        print("obj:", obj)
+                        input()
 
-                    print("subj:", subj)
-                    print("obj:", obj)
-                    # input()
-                    if subj is not None and obj is not None:
-                        if False:
-                            visualize_semantic_graph(
-                                g_directed, graph_name="semantic_graph".format(),
-                                out_dir="./test-output/")
-
-                            print("\namr:")
-                            print(amr)
-                            print("\npath:", path)
-                            print("\nnode_pair:", node_pair)
-                            print("subj_desc:", subj_desc)
-                            print("obj_desc:", obj_desc)
-                            print("subj:", subj)
-                            print("obj:", obj)
-                            input()
-
-                        print("\ntriple:", (subj, rel, obj))
-                        triples.add((subj, rel, obj))
+                    print("\ntriple:", (subj, rel, obj))
+                    print("pattern:", pattern)
+                    print("node_pairs:", node_pairs)
+                    triples.add((subj, rel, obj))
     return triples
 
 
@@ -496,12 +519,19 @@ def extract_pattern(text, triple, graph_type="amr", amr=None, verbose=False):
                 grounded_stmt=grounded_stmt,
                 semantic_calculus=semantic_calc)
 
-            def filter_edge_func(n1, n2):
+            def filter_amr_edges(n1, n2):
                 return graph[n1][n2]["source"] != "amr"
 
+            def filter_verbnet_edges(n1, n2):
+                return graph[n1][n2]["source"] != "verbnet"
+
             if graph_type == "verbnet":
-                # prune AMR edges
-                pruned_graph = nx.subgraph_view(graph, filter_edge=filter_edge_func)
+                # prune amr edges
+                pruned_graph = nx.subgraph_view(graph, filter_edge=filter_amr_edges)
+                pattern = extract_pattern_from_graph(pruned_graph, amr_obj, triple, verbose=verbose)
+            elif graph_type == "amr":
+                # prune verbnet edges
+                pruned_graph = nx.subgraph_view(graph, filter_edge=filter_verbnet_edges)
                 pattern = extract_pattern_from_graph(pruned_graph, amr_obj, triple, verbose=verbose)
             else:
                 pattern = extract_pattern_from_graph(graph, amr_obj, triple, verbose=verbose)
@@ -660,7 +690,7 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
         patterns = pattern_dict[rel]
         print("\nrel:", rel)
         print(patterns.most_common(10))
-    input()
+    # input()
 
     output_dir = os.path.dirname(output_file_path)
     if not os.path.exists(output_dir):
@@ -697,6 +727,13 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
                     amr = amr_cache[sample_idx][sent_idx]["amr"]
                 else:
                     amr = amr_client.get_amr(sent)
+
+                if False:
+                    graph, amr_obj = build_semantic_graph(amr=amr)
+                    visualize_semantic_graph(
+                        graph, graph_name="semantic_graph_triple_pred",
+                        out_dir="./test-output/")
+                    print("semantic_graph_triple_pred DONE ...")
 
                 triples = induce_kg_triples(sent, pattern_dict, top_k_patterns,
                                             graph_type, amr=amr, verbose=verbose)
@@ -770,14 +807,26 @@ def compute_metrics(samples, triple_file_path):
 
             pred_triples = set()
             for subj, rel, obj in data["pred"]:
-                triple = (subj.lower(), rel.lower(), obj.lower())
+                subj = subj.lower().strip()
+                rel = rel.lower().strip()
+                obj = obj.lower().strip()
+                if subj == obj:
+                    continue
+
+                triple = (subj, rel, obj)
                 pred_triples.add(triple)
                 metric.pred_triples_by_rel[rel].add(triple)
                 overall_metric.pred_triples_by_rel[rel].add(triple)
 
             true_triples = set()
             for subj, rel, obj in data["true"]:
-                triple = (subj.lower(), rel.lower(), obj.lower())
+                subj = subj.lower().strip()
+                rel = rel.lower().strip()
+                obj = obj.lower().strip()
+                if subj == obj:
+                    continue
+
+                triple = (subj, rel, obj)
                 true_triples.add(triple)
                 metric.rel_counter[rel.lower()] += 1
                 overall_metric.rel_counter[rel.lower()] += 1
@@ -787,7 +836,10 @@ def compute_metrics(samples, triple_file_path):
             # compute sample-wise scores
             true_pred_triples = pred_triples.intersection(true_triples)
             # compute precision
-            prec = len(true_pred_triples) / len(pred_triples)
+            if len(pred_triples) == 0:
+                prec = 0
+            else:
+                prec = len(true_pred_triples) / len(pred_triples)
             metric.sum_prec += prec
             overall_metric.sum_prec += prec
 
@@ -857,7 +909,7 @@ def check_samples(data, sample_size=10):
                 graph_idx = 0
                 for grounded_stmt, semantic_calc in zip(
                         list_grounded_stmt, list_semantic_calc):
-                    graph = build_semantic_graph(
+                    graph, amr_obj = build_semantic_graph(
                         amr=res["amr_parse"][i]["amr"],
                         grounded_stmt=grounded_stmt,
                         semantic_calculus=semantic_calc)
