@@ -69,7 +69,8 @@ pbIndex = []
 vnIndex = []
 wnIndex = []
 vnCodeToVerb = {}
-pbToMap_params = {} #roleset to mappings (LIST) name with params
+pb_to_params = {} #roleset to mappings (LIST) name with params
+vn_to_params = {}
 pbToMap = {} #roleset to mappings (LIST) w/o params
 semLinkFromPB = {}
 
@@ -79,7 +80,7 @@ vnClassToRDF = {}
 # keep the code and the lemma
 vnCodeToLemma = {}
 
-# class name to { name, uri}
+# class name to { name, [uri]}
 vnClassToVars = {}
 
 #class, { frame, { name, uri}
@@ -479,6 +480,7 @@ def query_propbank_roles(propbank_id):
 
 def process_propbank( _namespace : str) : 
     global outputFile, idCounter, provenance, outLog
+    global pb_to_params
     
     provenance = "Propbank NLTK"
     for rolesetData  in propbank.rolesets():  
@@ -500,12 +502,15 @@ def process_propbank( _namespace : str) :
             writeStmt_toObj(rRoleSet, "rdf:type", rdf_linClass)
             
             pbIndex.append(roleset)
+            pb_to_params[roleset] = {}
             
            
             for role in rolesetData.findall("roles/role"):
                 argID = "ARG" + role.attrib['n']
                 argDesc = role.attrib['descr']
                 name = "UL_PB:" + toRDFStr(roleset.upper()) + "_"  + argID
+                if name not in pb_to_params[roleset] : 
+                    pb_to_params[roleset][argID] = name
                 writeObj(name, rdf_semantic_role, argID, argID)
                 writeStmt_toObj(name, rdf_in_kb, PropBank)
                 writeStmt_toStr(name, rdf_description, clean_text(argDesc, True))
@@ -613,12 +618,19 @@ def process_vn_thematic_roles(_className: str, _rClassName:str) :
 def process_vn_frames(_className: str, _rClassName:str) :
     
     global idCounter, current_vn, framesToVars, vnClassToVars, provenance
+    global vn_to_params
     
     theClass = current_vn.vnclass(_className)
     vnframes = theClass.findall("FRAMES/FRAME")
+    
+    if _className not in vn_to_params : 
+        vn_to_params[_className] = {}
 
     if 'put' in _className : 
         print("DEBUG " + _className)
+        
+    # {Type(Class) : node}
+    classPreds = {} 
     for frame in vnframes :  
         #DESCRIPTIOPN
         descF = frame.find("DESCRIPTION")
@@ -681,7 +693,7 @@ def process_vn_frames(_className: str, _rClassName:str) :
         #PROCESS SEMANTICS         
         semList = current_vn._get_semantics_within_frame(frame)
         predCounter = 1
-        variables = []
+        #variables = []
         #Predicates per frame
         allRolesList = []
         for semPre in semList : 
@@ -700,12 +712,25 @@ def process_vn_frames(_className: str, _rClassName:str) :
             #else : 
             #    writeStmt_toBool(predName, rdf_not_operator , False)
             txt += predValue + "("
-            argOrder = 1
+
             for argument in arguments : 
                 argValue = argument["value"]
                 argType = argument["type"]
-                argName = rPredName + "_arg_" + str(argOrder)
-                argText = argType + "(" + argValue + ")"
+                argSimpleValue =  get_vn_varName(argValue)
+                argText = argType+ "(" + argValue + ")"
+                argCode = argType+ "(" + argSimpleValue + ")"
+                if argCode not in classPreds : 
+                    classPreds[argCode] = _rClassName + "_" + toRDFStr(argType) + "_" + toRDFStr(argSimpleValue)
+                    writeObj(classPreds[argCode], rdf_variable, 
+                             argType + "_" + argSimpleValue, 
+                             argType + "_" + argSimpleValue)
+                    writeStmt_toStr(classPreds[argCode], rdf_value, argSimpleValue)
+                    writeStmt_toStr(classPreds[argCode], rdf_type, argType)
+                    writeStmt_toStr(classPreds[argCode], rdf_varName, argCode)
+                    vn_to_params[_className][argType + "_" + argSimpleValue] = classPreds[argCode]
+                
+                argNode = classPreds[argCode]
+                
                 if argValue not in allRolesList : 
                     allRolesList.append(argValue)
                 if argType != 'Event' : 
@@ -713,30 +738,15 @@ def process_vn_frames(_className: str, _rClassName:str) :
                         roleList = argValue
                     else : 
                         roleList += "," + argValue
-                argNameNoExpression = get_vn_varName(argValue)
-                if argName not in variables : 
-                    writeObj(argName, rdf_variable, argType + "_" + argValue , argText)
-                    variables.append(argName)                   
-                    writeStmt_toStr(argName, rdf_value, argValue)
-                    writeStmt_toStr(argName, rdf_type, argType)
-                    writeStmt_toStr(argName, rdf_varName, argNameNoExpression)                
-                    if not _className in vnClassToVars : 
-                        vnClassToVars[_className] = {}
-                    thisClassToVars = vnClassToVars[_className]
-                    thisClassToVars[argNameNoExpression] = argName
-                writeStmt_toObj(rPredName, rdf_has_parameter , argName)    
+                        
+                writeStmt_toObj(rPredName, rdf_has_parameter , argNode)    
                 argText = argument["type"] + "(" + argument["value"] + ")"
-                
-                #writeStmt_toStr(rPredName, rdf_param_text, str(argOrder) + ", " + argText)
-                argOrder += 1
-  
                 txt += argText + ","
                 
             txt = txt.rstrip(txt[-1]) + ")"
             
             #The variable name must have the context of the frame so it can be 
-            #identified. The text form can also be used. 
-            
+            #identified. The text form can also be used.             
             #This is the whole text of the predicate
             writeStmt_toStr(rPredName, rdf_text_info, str(predCounter) + "   " + txt)
             writeStmt_toStr(rPredName, rdf_role_list, roleList)
@@ -847,9 +857,38 @@ def process_verbnet( _namespace : str, _provenance : str, _vn, _log: True) :
 
 ############################################################
 # UNIFIED MAPPING
-############################################################    
+############################################################ 
+
+def vn_to_node(_class: str, _arg: str) -> str : 
+    
+    global vn_to_params
+    args = vn_to_params[_class]
+    
+    for argKey in args : 
+        label= argKey
+        label = label.split("_", -1)[1]
+        if label.lower() == _arg.lower() :
+            return args[argKey]
+    return ""
+ 
+def pb_to_node(_roleset: str, _arg: str) -> str : 
+    
+    global pb_to_params
+    args = pb_to_params[_roleset]
+    
+    for argKey in args : 
+        label= argKey
+        
+        if label.lower() == _arg.lower() :
+            return args[argKey]
+    return ""
+ 
+   
+    
+    
 def process_um_v1(_input: str) : 
     global provenance, pbToMap_params, pbToMap, semLinkFromPB 
+    global vn_to_params, pb_to_params
     
     oldProvenance = provenance
     provenance = "Unified mapping "
@@ -868,20 +907,25 @@ def process_um_v1(_input: str) :
            print("----> " + mapping + "\n\n")
            mappingDict = json.loads(mapping)
            
+           pb_params = pb_to_params[roleset]
+           vn_params = vn_to_params[verbnetClass]
+           
            pbName = toRDFStr(roleset)
-           mappingName = "UL_KB:" + toRDFStr(roleset + "_" + verbnetClass)
+           mappingRawName = toRDFStr(roleset + "_" + verbnetClass)
+           mappingName = "UL_KB:" + mappingRawName
            vnName = toRDFStr(verbnetClass)
-           writeObj(mappingName, mappingClass , mappingName, mappingName)  
+           writeObj(mappingName, mappingClass , mappingRawName, mappingRawName)  
            writeStmt_toStr(mappingName, "rrp:provenance" , mappingSource + " " + verbnetVersion)                                         
            writeStmt_toObj("UL_VN:" +  vnName, rdf_has_mapping, mappingName)
            writeStmt_toObj("UL_PB:" + pbName, rdf_has_mapping, mappingName)
+           
+           
            for PBArg in mappingDict : 
                VNArg = mappingDict[PBArg]['vnArg']
-               pbNode = "UL_PB:" + toRDFStr(roleset.upper()) + "_"  + PBArg
-               vNetList = map_to_url(verbnetClass, VNArg)
-               for vnUrl in vNetList : 
-                    writeStmt_toObj(pbNode, rdf_maps_to ,vnUrl)
-                    writeStmt_toObj(vnUrl, rdf_maps_to ,pbNode)
+               vnNode = vn_to_node(verbnetClass, VNArg)
+               pbNode = pb_to_node(roleset, PBArg)               
+               writeStmt_toObj(pbNode, rdf_maps_to ,vnNode)
+               writeStmt_toObj(vnNode, rdf_maps_to ,pbNode)
     provenance = oldProvenance 
     
 
