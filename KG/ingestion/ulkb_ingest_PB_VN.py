@@ -77,6 +77,8 @@ semLinkFromPB = {}
 # From verbnet name to verbnet URL
 vnClassToRDF = {}
 
+vnClass_to_rolelist = {} 
+
 # keep the code and the lemma
 vnCodeToLemma = {}
 
@@ -298,13 +300,19 @@ def matchRDF(_item, _dict: {}) -> str :
 
 def getRoleStrFrom(_list : []) -> str : 
     resultStr = ""
+    tempList = []
     for item in _list : 
         if item.startswith("?") : 
             item = item[1:]
+        if item not in tempList : 
+            tempList.append(item)
+            
+    for item in tempList :
         if len(resultStr) == 0 : 
             resultStr += item
         else : 
             resultStr += ", " + item
+        
     return resultStr    
 ###########################################################
 # INITIALIZATION
@@ -613,7 +621,8 @@ def process_vn_thematic_roles(_className: str, _rClassName:str) :
             if hasLogic : 
                 logicPred += ")"
             writeStmt_toStr(rsrName, rdf_syn_expr, logicPred)
-    writeStmt_toStr(_rClassName, rdf_role_list, allRoles)
+    # We use the rolelist by computing it directly from the frames. This is more exact
+    # writeStmt_toStr(_rClassName, rdf_role_list, allRoles)
     
 def process_vn_frames(_className: str, _rClassName:str) :
     
@@ -626,11 +635,12 @@ def process_vn_frames(_className: str, _rClassName:str) :
     if _className not in vn_to_params : 
         vn_to_params[_className] = {}
 
-    if 'put' in _className : 
+    if 'acquiesce-95.1-1' in _className : 
         print("DEBUG " + _className)
         
     # {Type(Class) : node}
     classPreds = {} 
+    classRoleList = []
     for frame in vnframes :  
         #DESCRIPTIOPN
         descF = frame.find("DESCRIPTION")
@@ -731,9 +741,12 @@ def process_vn_frames(_className: str, _rClassName:str) :
                 
                 argNode = classPreds[argCode]
                 
-                if argValue not in allRolesList : 
-                    allRolesList.append(argValue)
+                
                 if argType != 'Event' : 
+                    if argValue not in allRolesList : 
+                        allRolesList.append(argValue)
+                    if argValue not in classRoleList : 
+                        classRoleList.append(argValue) 
                     if len(roleList) == 0 : 
                         roleList = argValue
                     else : 
@@ -752,7 +765,12 @@ def process_vn_frames(_className: str, _rClassName:str) :
             writeStmt_toStr(rPredName, rdf_role_list, roleList)
             predCounter += 1
             #print(_className + " --Sem--> " + txt + "\n\n")
-        writeStmt_toStr(rName, rdf_role_list, getRoleStrFrom(allRolesList)) 
+        roleListStr = getRoleStrFrom(allRolesList)
+        writeStmt_toStr(rName, rdf_role_list, roleListStr) 
+        
+    roleListStr = getRoleStrFrom(classRoleList)
+    writeStmt_toStr(_rClassName, rdf_role_list, roleListStr)         
+            
         #   writeStmt_toStr(name, vn_semantics, txt)
   
 def process_vn_lemmas(_className: str, _rClassName :str) : 
@@ -910,6 +928,9 @@ def process_um_v1(_input: str) :
            pb_params = pb_to_params[roleset]
            vn_params = vn_to_params[verbnetClass]
            
+           rolesetLemma = roleset.split(".", -1)[0]
+           vnLemma = verbnetClass.split("-", 1)[0]
+           
            pbName = toRDFStr(roleset)
            mappingRawName = toRDFStr(roleset + "_" + verbnetClass)
            mappingName = "UL_KB:" + mappingRawName
@@ -918,7 +939,8 @@ def process_um_v1(_input: str) :
            writeStmt_toStr(mappingName, "rrp:provenance" , mappingSource + " " + verbnetVersion)                                         
            writeStmt_toObj("UL_VN:" +  vnName, rdf_has_mapping, mappingName)
            writeStmt_toObj("UL_PB:" + pbName, rdf_has_mapping, mappingName)
-           
+           writeStmt_toStr(mappingName, rdf_lemma_txt, rolesetLemma)
+           writeStmt_toStr(mappingName, rdf_lemma_txt, vnLemma)
            
            for PBArg in mappingDict : 
                VNArg = mappingDict[PBArg]['vnArg']
