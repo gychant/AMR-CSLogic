@@ -40,12 +40,13 @@ sparql = SPARQLWrapper(config.SPARQL_ENDPOINT)
 # THIS IS A LOCAL VERSION (ROSARIO'S)
 # sparql = SPARQLWrapper("http://127.0.0.1:9999/blazegraph/namespace/UL_KB_V0")
 
-query_roles_for_pb_str = """SELECT DISTINCT ?verb ?pbSemRole ?pbSemRoleDesc ?vnVerbLabel ?vnVarType ?vnVarExpression WHERE {{
+query_roles_for_pb_str = """SELECT DISTINCT ?verb ?pbSemRole ?pbSemRoleDesc ?vnVerbLabel ?vnVarType ?vnVarName WHERE {{
   ?verb rdfs:label "{}" . 
   #?verb rrp:inKB rrp:PropBank .
   ?verb rrp:hasParameter ?pbParam .
   ?pbParam rrp:description ?pbSemRoleDesc .  
   ?pbParam rdfs:label ?pbSemRole . 
+  OPTIONAL {{
   ?vnVerb rrp:inKB rrp:VerbNet . 
   ?vnVerb rdfs:label ?vnVerbLabel . 
   ?vnVerb rrp:hasComponent ?vnFrame . 
@@ -53,11 +54,12 @@ query_roles_for_pb_str = """SELECT DISTINCT ?verb ?pbSemRole ?pbSemRoleDesc ?vnV
   ?semPred rrp:hasParameter ?vnParam . 
   ?pbParam rrp:mapsTo ?vnParam . 
   ?vnParam rrp:varType ?vnVarType . 
-  ?vnParam rrp:varExpression ?vnVarExpression . 
+  ?vnParam rrp:varName ?vnVarName . 
+  }}
   }}
 """
 
-query_roles_for_lemma_str = """SELECT DISTINCT ?pbSemRole ?vnVerbLabel ?pbVerbLabel ?vnVarType ?vnVarExpression WHERE {{  
+query_roles_for_lemma_str = """SELECT DISTINCT ?pbSemRole ?vnVerbLabel ?pbVerbLabel ?vnVarType ?vnVarName WHERE {{  
   ?entity rdfs:label "{}" . 
   ?entity a rrp:Lemma . 
   ?vnVerb rrp:hasComponent ?entity .
@@ -72,7 +74,7 @@ query_roles_for_lemma_str = """SELECT DISTINCT ?pbSemRole ?vnVerbLabel ?pbVerbLa
   ?semPred rrp:hasParameter ?vnParam . 
   ?pbParam rrp:mapsTo ?vnParam . 
   ?vnParam rrp:varType ?vnVarType . 
-  ?vnParam rrp:varExpression ?vnVarExpression . 
+  ?vnParam rrp:varName ?vnVarName . 
   }} """
 
 query_all_parents_str = """SELECT DISTINCT ?entity ?entityLabel {{  
@@ -97,7 +99,7 @@ query_map_classes = """SELECT DISTINCT  ?otherEntityLabel ?provenance ?KB  WHERE
                 }} ORDER BY ?otherEntity
                   """
 
-query_sem_predicates_node_str = """SELECT DISTINCT ?example ?roleList ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?value  WHERE {{
+query_sem_predicates_vn_str = """SELECT DISTINCT ?example ?roleList ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?value  WHERE {{
                   {} rrp:hasComponent ?frame . 
                   ?frame rrp:example ?example . 
                   OPTIONAL {{ ?frame rrp:roleList ?roleList }} . 
@@ -109,13 +111,12 @@ query_sem_predicates_node_str = """SELECT DISTINCT ?example ?roleList ?operator 
                     ?semanticPredicate rrp:logicOperatorName ?operator .  
                    }}
                   ?param rrp:varType ?type . 
-                  ?param rrp:varName ?value .
-                  ?semanticPredicate rrp:textInfo ?predicateText .  
+                  ?param rrp:varName ?value . 
                 }} ORDER BY ?semanticPredicate
                   """
 
 #If you want the more exact result, use   FILTER (?label = "{}")  instead of regex 
-query_sem_predicates_str = """SELECT DISTINCT ?example ?roleList ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?expression  WHERE {{
+query_sem_predicates_str = """SELECT DISTINCT ?example ?roleList ?operator ?semanticPredicate ?semanticPredicateLabel ?param ?type ?vnVarName  WHERE {{
                   ?entity rdfs:label ?label . 
                   FILTER regex(?label, "{}", "i") . 
                   ?entity rrp:hasComponent ?frame . 
@@ -129,9 +130,7 @@ query_sem_predicates_str = """SELECT DISTINCT ?example ?roleList ?operator ?sema
                     ?semanticPredicate rrp:logicOperatorName ?operator .  
                    }}
                   ?param rrp:varType ?type . 
-                  ?param rrp:varName ?value .
-                  ?param rrp:varExpression ?expression . 
-                  ?semanticPredicate rrp:textInfo ?predicateText .  
+                  ?param rrp:varName ?vnVarName .
                 }} ORDER BY ?param
                   """
 
@@ -165,7 +164,7 @@ query_vn_lemma_str = """SELECT DISTINCT ?verbnetVerb ?lemma  WHERE {
 query_lemma_for_pbverb_str = """SELECT DISTINCT ?lemma ?argument  WHERE {{
   ?propbankVerbNode rdfs:label "{}" . 
   ?propbankVerbNode rrp:lemmaText ?lemma . 
-   ?propbankVerbNode a rrp:LinguisticClass . 
+  ?propbankVerbNode a rrp:LinguisticClass . 
   ?propbankVerbNode rrp:inKB rrp:PropBank . 
   ?propbankVerbNode rrp:hasParameter ?param . 
   ?param rdfs:label ?argument . 
@@ -194,6 +193,24 @@ query_args_for_vnverb_str = """SELECT DISTINCT ?vnVerbLabel ?arg WHERE {{
   }} ORDER BY ?vnVerbLabel
 
 """
+
+query_pb_roles_by_lemma_str = """SELECT DISTINCT ?verb ?pbSemRole ?pbSemRoleDesc ?vnVerbLabel ?vnVarType ?vnVarName WHERE {{
+  ?verb a rrp:LinguisticClass . 
+  ?verb rrp:inKB rrp:PropBank . 
+  ?verb rrp:lemmaText "^{}$" .  
+  
+  ?verb rrp:hasParameter ?pbParam .
+  ?pbParam rrp:description ?pbSemRoleDesc .  
+  ?pbParam rdfs:label ?pbSemRole . 
+  ?vnVerb rrp:inKB rrp:VerbNet . 
+  ?vnVerb rdfs:label ?vnVerbLabel . 
+  ?vnVerb rrp:hasComponent ?vnFrame . 
+  ?vnFrame rrp:hasComponent ?semPred . 
+  ?semPred rrp:hasParameter ?vnParam . 
+  ?pbParam rrp:mapsTo ?vnParam . 
+  ?vnParam rrp:varType ?vnVarType . 
+  ?vnParam rrp:varName ?vnVarName . 
+  }}"""
 
 
 ###############################################################################
@@ -338,7 +355,7 @@ def analyze_pb_vn_lemmas(_outFile : str) :
 # Usage : from a propbank verb, it gives the mappings for it. Right 
 #         now it gets 
 #####################################################################
-def ulkb_pb_vn_mappings(_pbName: str, _lemmaMatching = True) -> {}:
+def ulkb_pb_vn_mappings(_pbName: str, _lemmaMatching = True, _oneLemma = False) -> {}:
     returnResults = []
     query_text = query_roles_for_pb_str.format(_pbName)
     sparql.setQuery(query_prefix + query_text)
@@ -349,87 +366,127 @@ def ulkb_pb_vn_mappings(_pbName: str, _lemmaMatching = True) -> {}:
     verbResults = {}
 
     returnResults["info"] = "semantic roles for " + _pbName
-    returnResults["provenance"] = "Semlink"
+    returnResults["provenance"] = "Unified Mapping"
     
+    vnMapsFound = False
+    
+    pbTRoles = {}
+    
+    # ?verb ?pbSemRole ?pbSemRoleDesc ?vnVerbLabel ?vnVarType ?vnVarName
     
     for result in results["results"]["bindings"]:
         pbSemRole = result["pbSemRole"]["value"]
-        vnVerbLabel = result["vnVerbLabel"]["value"]
-        vnVarType = result["vnVarType"]["value"]
-        vnVarExpression = result["vnVarExpression"]["value"]
-        if vnVerbLabel not in verbResults:
-            verbResults[vnVerbLabel] = {}
-        curVerb = verbResults[vnVerbLabel]
-        if pbSemRole not in curVerb:
-            curVerb[pbSemRole] = vnVarType + "(" + vnVarExpression + ")"
+        pbSemRoleDesc = result["pbSemRoleDesc"]["value"]
+        if pbSemRole not in pbTRoles : 
+            pbTRoles[pbSemRole] = pbSemRoleDesc
+        if "vnVerbLabel" in result :  
+            vnVerbLabel = result["vnVerbLabel"]["value"]
+            vnMapsFound = True
+            vnVarType = result["vnVarType"]["value"]
+            vnVarExpression = result["vnVarName"]["value"]
+            if vnVerbLabel not in verbResults:
+                verbResults[vnVerbLabel] = {}
+            curVerb = verbResults[vnVerbLabel]
+            if pbSemRole not in curVerb:
+                curVerb[pbSemRole] = vnVarType + "(" + vnVarExpression + ")"
         # print(pbSemRole + "\t(" + vnVerbLabel + ", " + vnParamLabel + ")")
 
     if  _lemmaMatching and len(verbResults) == 0 :
-        return ulkb_pb_lemma_vn_mappings(_pbName)
+        lemma = _pbName 
+        if "." in _pbName: 
+            lemma = _pbName.split(".", -1)[0]
+        return ulkb_lemma_mappings(lemma, pbTRoles, _pbName)
     returnResults[_pbName] = verbResults
     return returnResults
 
-#API
-def ulkb_pb_lemma_vn_mappings(_pbName : str) : 
+#####################################################################
+# API  -- ulkb_lemma_mappings("put")
+# Usage: from a lemma, get a list of mappings from pb to vn that 
+#           correspond to that lemma
+#####################################################################
 
-    #pb {'lemma', vn verbs}
-    lemmas = []
-    arguments = []
-    verbResults = {}
-    verbNets = {} #verbnet to arguments
-    returnResults = {}
-    
-    #OBTAIN THE LEMMAS AND ARGUMENTS
-    query_text = query_lemma_for_pbverb_str.format(_pbName)
+def ulkb_lemma_mappings(_lemma: str, _pbRoles = [],  _roleset = "") -> {}:
+    returnResults = []
+    query_text = query_roles_for_lemma_str.format(_lemma)
     sparql.setQuery(query_prefix + query_text)
     sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()    
-    for result in results["results"]["bindings"]:
-        lemma = result["lemma"]["value"]
-        if lemma not in lemmas : 
-            lemmas.append(lemma)
-        argument = result["argument"]["value"]    
-        arguments.append(argument) 
-        
-    #MAP THE LEMMAS TO VERBNET    
-    for lemma in lemmas : 
-        query_text = query_lemma_for_vnverb_str.format(lemma)
-        sparql.setQuery(query_prefix + query_text)
-        sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()
-        # ?verbnetNode ?verbnetVerb ?roleList
-        for result in results["results"]["bindings"]:            
-            vnVerbLabel = result["verbnetVerb"]["value"] 
-            if vnVerbLabel not in verbNets : 
-                verbNets[vnVerbLabel] = []
-                       
-    #OBTAIN THE ARGS FROM VERBNET
-    #query_args_for_vnverb_str = """SELECT DISTINCT ?vnVerbLabel ?arg
-    for vnVerbLabel in verbNets : 
-        query_text = query_args_for_vnverb_str.format(vnVerbLabel)
-        sparql.setQuery(query_prefix + query_text)
-        sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()    
-        for result in results["results"]["bindings"]:
-            verbNets[vnVerbLabel].append(result["arg"]["value"])
-            
-    #assemble results 
-    returnResults["info"] = "semantic roles for " + _pbName
-    returnResults["provenance"] = "Lemma mapping"
-    
-    for vnVerbLabel in verbNets: 
-        verbResults[vnVerbLabel] = {}
-        curVerb = verbResults[vnVerbLabel]
-        if len(verbNets[vnVerbLabel]) >= 1 : 
-            curVerb["ARG0"] = verbNets[vnVerbLabel][0]
-        if len(verbNets[vnVerbLabel]) >= 2:
-            curVerb["ARG1"] = verbNets[vnVerbLabel][1]
-        myTemp = {}
-        myTemp[vnVerbLabel] = curVerb
-        returnResults[_pbName] = myTemp
-            
-    return returnResults  
+    results = sparql.query().convert()
+    returnResults = {}
+    # pbVerb [?vnVerbLabel : pbVerbArg ?vnVarType ?vnVarExpression
+    verbResults = {}
 
+    for result in results["results"]["bindings"]:
+        pbSemRole = result["pbSemRole"]["value"]
+        vnVerbLabel = result["vnVerbLabel"]["value"]
+        pbVerbLabel = result["pbVerbLabel"]["value"]
+        vnVarType = result["vnVarType"]["value"]
+        vnVarName = result["vnVarName"]["value"]
+        # The vnVerb
+        if pbVerbLabel not in verbResults:
+            verbResults[pbVerbLabel] = {}
+        curpbVerb = verbResults[pbVerbLabel]
+        
+        if vnVerbLabel not in curpbVerb : 
+            curpbVerb[vnVerbLabel] = {}
+        curvnVerb = curpbVerb[vnVerbLabel]
+            
+        if pbSemRole not in curvnVerb:
+            curvnVerb[pbSemRole] = vnVarType + "(" + vnVarName + ")"
+        # print(pbSemRole + "\t(" + vnVerbLabel + ", " + vnParamLabel + ")")
+    if len(_roleset) > 0 : 
+        returnResults["info"] = "NO semantic mapping for " + _roleset + ", use lemma " + _lemma
+    else : 
+        returnResults["info"] = "semantic roles for lemma " + _lemma
+    returnResults[_lemma] = verbResults
+    
+    if len(_pbRoles) > 0 : 
+       return one_mappingResult(_lemma, _roleset, _pbRoles, verbResults) 
+        
+    return returnResults
+
+
+#INTERNAL, SELECTS ANY ONE MATCHING PAIR 
+def one_mappingResult(_lemma: str, _roleset: str, _pbRoles: {}, _returnResults : {}) :
+    
+    #iterated through the results and see (1) which results are more common: 
+        
+    tempResults = []
+    mostMatched = 0 
+    bestResult = {}
+    toDelete = []
+    for pbVerb in _returnResults: 
+        vnVerbDict = _returnResults[pbVerb]
+        for vnVerb in vnVerbDict : 
+            args = vnVerbDict[vnVerb]
+            matched = 0 
+            for role in _pbRoles : 
+                if role in  args : 
+                    matched +=1
+                else : 
+                   toDelete.append(role) 
+            if matched > mostMatched : 
+                mostMatched = matched
+                bestResult = vnVerbDict
+            else : 
+                toDelete = []
+    
+    if len(bestResult) == 0 :
+        return {"info": "NO semantic mappings for " + _roleset + ", or its lemma",
+    _lemma: {}}
+    
+    #Let's make sure all the mappings are right. 
+    for item in toDelete:  
+        for vnVerb in bestResult : 
+            args = vnVerbDict[vnVerb]
+            args.pop(item, None)
+            
+    returnResults = {}
+    returnResults[_roleset] = bestResult
+    returnResults["information"] = "Map lemma " + _lemma + ", as " + _roleset
+    returnResults["provenance"] = "Unified Mapping"
+                    
+    return returnResults                
+    
    
 #####################################################################
 # API  -- ulkb_sem_roles_for_pb_by_role("enter.01") to be deprecated
@@ -447,7 +504,7 @@ def ulkb_sem_roles_for_pb_by_role(_pbName: str) -> {}:
         pbSemRole = result["pbSemRole"]["value"]
         pbSemRoleDesc = result["pbSemRoleDesc"]["value"]
         vnVerbLabel = result["vnVerbLabel"]["value"]
-        vnVarExpression = result["vnVarExpression"]["value"]
+        vnVarExpression = result["vnVarName"]["value"]
         if pbSemRole not in verbResults:
             verbResults[pbSemRole] = []
         verbResults[pbSemRole].append({
@@ -457,44 +514,6 @@ def ulkb_sem_roles_for_pb_by_role(_pbName: str) -> {}:
         })
     return verbResults
 
-
-#####################################################################
-# API  -- ulkb_lemma_mappings("put")
-# Usage: from a lemma, get a list of mappings from pb to vn that 
-#           correspond to that lemma
-#####################################################################
-
-def ulkb_lemma_mappings(_lemma: str) -> {}:
-    returnResults = []
-    query_text = query_roles_for_lemma_str.format(_lemma)
-    sparql.setQuery(query_prefix + query_text)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-    returnResults = {}
-    # pbVerb [?vnVerbLabel : pbVerbArg ?vnVarType ?vnVarExpression
-    verbResults = {}
-
-    for result in results["results"]["bindings"]:
-        pbSemRole = result["pbSemRole"]["value"]
-        vnVerbLabel = result["vnVerbLabel"]["value"]
-        pbVerbLabel = result["pbVerbLabel"]["value"]
-        vnVarType = result["vnVarType"]["value"]
-        vnVarExpression = result["vnVarExpression"]["value"]
-        # The vnVerb
-        if pbVerbLabel not in verbResults:
-            verbResults[pbVerbLabel] = {}
-        curpbVerb = verbResults[pbVerbLabel]
-        
-        if vnVerbLabel in curpbVerb : 
-            curvnVerb = curpbVerb[vnVerbLabel]
-        else  : 
-            curpbVerb[vnVerbLabel] = {}
-        if pbSemRole not in curpbVerb:
-            curpbVerb[pbSemRole] = vnVarType + "(" + vnVarExpression + ")"
-        # print(pbSemRole + "\t(" + vnVerbLabel + ", " + vnParamLabel + ")")
-    returnResults["info"] = "semantic roles for lemma " + _lemma
-    returnResults[_lemma] = verbResults
-    return returnResults
 
 
 #####################################################################
@@ -551,7 +570,7 @@ def ulkb_sem_predicates_SHORT(_verb: str) -> []:
         if 'params' not in thisPredicate:
             thisPredicate['params'] = []
         params = thisPredicate['params']
-        params.append(result["type"]["value"] + "(" + result["expression"]["value"] + ")")
+        params.append(result["type"]["value"] + "(" + result["vnVarName"]["value"] + ")")
         # thisPredicate['type'] = result["type"]["value"]
         # thisPredicate['value'] = result["value"]["value"]
         # print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +
@@ -613,14 +632,12 @@ def ulkb_sem_predicates_LONG(_verb: str) -> []:
         if 'params' not in thisPredicate:
             thisPredicate['params'] = []
         params = thisPredicate['params']
-        params.append({'type': result["type"]["value"], 'value': result["expression"]["value"]})
+        params.append(result["type"]["value"] + "(" + result["vnVarName"]["value"] + ")")
         # thisPredicate['type'] = result["type"]["value"]
         # thisPredicate['value'] = result["value"]["value"]
         # print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +
         #      result["type"]["value"] + " " + result["value"]["value"] )
     return output
-
-
 
 
 def ulkb_sem_predicates_for_lemma_SHORT(_verb: str) -> []:
@@ -693,13 +710,14 @@ if __name__ == '__main__':
     # print(str(check_verb_name("MIMI")))
 
     # TEST MAPPING OF SEMANTIC ROLES
-     output = ulkb_pb_vn_mappings("lead.01")
-     print(str(output))
+     #output = ulkb_pb_vn_mappings("lead.01")
+     #output = ulkb_pb_vn_mappings("make_out.23")
+     #print(str(output))
      
-     output = ulkb_lemma_mappings("lead")
-     print(str(output))
-    #output = ulkb_pb_vn_mappings("make_out.23")
-    #print(str(output))
+#     output = ulkb_lemma_mappings("talk")
+     #print(str(output))
+    output = ulkb_pb_vn_mappings("make_out.23", True, True)
+    print(str(output))
     # TEST SEMANTIC PREDICATES
     # output = ulkb_sem_predicates_for("escape-51.1-1-1")
     # print(str(output))
