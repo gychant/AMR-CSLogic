@@ -49,7 +49,6 @@ $ bash scripts/download_stanford_nlp.sh ./
 
 ## Create config file
 Note that we use YAML config file to set app specific parameters. To get started, create your own local config file using config_template.yaml file and customize values of difference fields if needed and save with name config.yaml.
-Specifically, if you would like to use an existing Stanford CoreNLP parsing server, please set STANFORD_CORENLP_PATH to null and fill in the host name and port number, otherwise fill in the path to the Stanford CoreNLP package.
 
 
 ## Download third_party

@@ -24,11 +24,11 @@ KB_SOURCE: "rdf"
 # Configure Conda home
 CONDA_HOME: "~/anaconda3"
 
-# Configure local Stanford NLP parser
-STANFORD_CORENLP_PATH: "./stanford-corenlp-full-2018-10-05"
+# Configure local Stanford NLP parser (deprecated)
+# STANFORD_CORENLP_PATH: "./stanford-corenlp-full-2018-10-05"
 # STANFORD_CORENLP_PATH: null
-STANFORD_CORENLP_HOST: "http://localhost"
-STANFORD_CORENLP_PORT: 9000
+# STANFORD_CORENLP_HOST: "http://localhost"
+# STANFORD_CORENLP_PORT: 9000
 
 # Configure AMR parsing
 # AMR_PARSING_MODEL: "remote"
