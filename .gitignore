@@ -4,6 +4,7 @@ third_party
 data/
 stanford-corenlp-full-2018-10-05
 test-output
+test-debug
 path_output
 config.yaml
 *snapshot.pickle*

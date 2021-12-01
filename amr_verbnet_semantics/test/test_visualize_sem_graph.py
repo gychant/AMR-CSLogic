@@ -8,7 +8,8 @@ from amr_verbnet_semantics.core.amr_verbnet_enhance import (
 host = "0.0.0.0"
 port = 5000
 
-text = "For the fifth grade play , the chairs have been put into 27 rows with 16 chairs in each row . How many chairs have been put out for the play ?"
+# text = "For the fifth grade play , the chairs have been put into 27 rows with 16 chairs in each row . How many chairs have been put out for the play ?"
+text = "You are carrying : a bronze-hilted dagger, a clay ocarina, armor, and silks ( worn ) ."
 res = requests.get("http://{}:{}/amr_parsing".format(host, port), params={'text': text})
 res = json.loads(res.text)
 print(res)

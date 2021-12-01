@@ -6,7 +6,8 @@ grpcio-tools==1.37.1
 penman==1.2.0
 fuzzywuzzy==0.17.0
 networkx==2.4
-spacy<=2.0.16
+spacy==2.1.0
+neuralcoref==4.0
 gensim==3.8.1
 protobuf==3.17.3
 # cython
@@ -23,6 +24,7 @@ pyyaml
 notebook
 autoflake
 isort
+prettytable
 
 # third party dependencies
 torch==1.3

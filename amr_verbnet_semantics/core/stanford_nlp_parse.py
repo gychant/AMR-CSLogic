@@ -64,3 +64,12 @@ def full_parsing(text, do_coreference=False, do_word_tokenize=False,
 
             annotation["sentences"].append(sentence_parse)
     return annotation
+
+
+if __name__ == "__main__":
+    # text = 'My sister has a dog. She loves him .'
+    # text = 'Angela lives in Boston. She is quite happy in that city.'
+    text = 'Autonomous cars shift insurance liability toward manufacturers.'
+    print(full_parsing(text, do_coreference=True, do_dependency_parse=True,
+                       do_constituency_parse=True))
+

@@ -14,7 +14,7 @@ import requests
 from nltk import sent_tokenize
 
 from amr_verbnet_semantics.core.models import PredicateCalculus
-from amr_verbnet_semantics.core.stanford_nlp_parse import full_parsing
+from amr_verbnet_semantics.core.spacy_nlp_parse import full_parsing
 from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.service.verbnet import query_semantics
@@ -855,7 +855,8 @@ def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
     return g, amr_obj
 
 
-def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph", figure_format="png"):
+def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph",
+                             figure_format="png"):
     """
     Generate a figure that visualize the enhanced AMR graph with VerbNet semantics
     :param graph: a networkx graph instance

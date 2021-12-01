@@ -8,6 +8,7 @@ import time
 from collections import Counter, defaultdict
 from itertools import combinations, permutations
 from pprint import pprint
+from prettytable import PrettyTable
 
 import networkx as nx
 import requests
@@ -350,7 +351,7 @@ def induce_kg_triples(text, pattern_dict, top_k_patterns,
     :param verbose:
     :return:
     """
-    all_triples = set()
+    all_triples = defaultdict(set)
     parse = ground_text_to_verbnet(text, amr=amr, verbose=verbose)
     sentence_parses = parse["sentence_parses"]
 
@@ -361,7 +362,7 @@ def induce_kg_triples(text, pattern_dict, top_k_patterns,
             triples = induce_kg_triples_from_grounding(
                 sentence_parses[i]["amr"], pattern_dict, top_k_patterns,
                 graph_type=graph_type, verbose=verbose)
-            all_triples.update(list(triples))
+            all_triples.update(triples)
         else:
             list_grounded_stmt, list_semantic_calc = induce_unique_groundings(
                 grounded_stmt=sentence_parses[i]["grounded_stmt"],
@@ -372,7 +373,7 @@ def induce_kg_triples(text, pattern_dict, top_k_patterns,
                 triples = induce_kg_triples_from_grounding(
                     sentence_parses[i]["amr"], pattern_dict, top_k_patterns,
                     grounded_stmt, semantic_calc, graph_type, verbose=verbose)
-                all_triples.update(list(triples))
+                all_triples.update(triples)
     return all_triples
 
 
@@ -390,9 +391,10 @@ def induce_kg_triples_from_grounding(amr, pattern_dict, top_k_patterns,
     :param graph_type: the type of graph for KG triple induction
             with values ["amr", "amr_verbnet", "verbnet"]
     :param verbose:
-    :return:
+    :return: a dictionary with triples as keys and their corresponding
+            pattern as values
     """
-    triples = set()
+    triples = defaultdict(set)
     amr_tokens = read_tokenization(amr)
 
     # print("\namr:\n", amr)
@@ -460,7 +462,7 @@ def induce_kg_triples_from_grounding(amr, pattern_dict, top_k_patterns,
                 # print("subj:", subj)
                 # print("obj:", obj)
                 # input()
-                if subj is not None and obj is not None:
+                if subj is not None and obj is not None and subj != obj:
                     if False:
                         visualize_semantic_graph(
                             g_directed, graph_name="semantic_graph".format(),
@@ -479,7 +481,7 @@ def induce_kg_triples_from_grounding(amr, pattern_dict, top_k_patterns,
                     print("\ntriple:", (subj, rel, obj))
                     print("pattern:", pattern)
                     print("node_pairs:", node_pairs)
-                    triples.add((subj, rel, obj))
+                    triples[(subj, rel, obj)].add(pattern)
     return triples
 
 
@@ -671,7 +673,7 @@ def is_extractable(text, triple):
 
 def apply_path_patterns(data, pattern_file_path, output_file_path,
                         graph_type, top_k_patterns=5, amr_cache_path=None,
-                        start_idx=None, verbose=False):
+                        start_idx=None, debug=False, verbose=False):
     """
     Apply path patterns to induce KG triples from text.
     :param data: a list of raw samples
@@ -708,11 +710,19 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
                 continue
 
             print("sample_idx:", sample_idx)
+            if debug:
+                output_dir = "./test-debug/sample_{}".format(sample_idx)
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+
+                f_debug_info = open(os.path.join(output_dir, "sample_{}.txt".format(sample_idx)), "w")
+
+
             sample = data[sample_idx]
             if verbose:
                 print_sample(sample)
 
-            all_triples = set()
+            all_triples = defaultdict(set)
 
             if verbose:
                 print("\nsentences:")
@@ -728,12 +738,14 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
                 else:
                     amr = amr_client.get_amr(sent)
 
-                if False:
+                if debug:
                     graph, amr_obj = build_semantic_graph(amr=amr)
                     visualize_semantic_graph(
-                        graph, graph_name="semantic_graph_triple_pred",
-                        out_dir="./test-output/")
-                    print("semantic_graph_triple_pred DONE ...")
+                        graph, graph_name="semantic_graph_sent_{}".format(sent_idx),
+                        out_dir="./test-debug/sample_{}".format(sample_idx))
+                    f_debug_info.write("sent_{}: ".format(sent_idx))
+                    f_debug_info.write(sent.strip())
+                    f_debug_info.write("\n\n")
 
                 triples = induce_kg_triples(sent, pattern_dict, top_k_patterns,
                                             graph_type, amr=amr, verbose=verbose)
@@ -743,16 +755,28 @@ def apply_path_patterns(data, pattern_file_path, output_file_path,
             # input()
             result = {
                 "idx": sample_idx,
-                "pred": list(all_triples),
+                "pred": list(all_triples.keys()),
                 "true": sample["state"]["graph"]
             }
+            # print("result:")
+            # print(result)
             f_out.write(json.dumps(result))
             f_out.write("\n")
+            if debug:
+                f_debug_info.write("\n\n")
+                f_debug_info.write("pred:\n")
+                f_debug_info.write(str(all_triples))
+                f_debug_info.write("\n\ntrue:\n")
+                f_debug_info.write(str(result["true"]))
     except Exception as e:
         print("Exception:", e)
         f_out.close()
+        if debug:
+            f_debug_info.close()
         raise e
     f_out.close()
+    if debug:
+        f_debug_info.close()
     print("Triple induction DONE.")
 
 
@@ -875,6 +899,52 @@ def compute_metrics(samples, triple_file_path):
         print("avg_recall:", "{:.3f}".format(avg_recall * 100))
         print("avg_f1:", "{:.3f}".format(avg_f1 * 100))
         print()
+
+    write_results_to_file(game2metric, triple_file_path.replace(".jsonl", "_metrics.txt"))
+
+
+def write_results_to_file(game2metric, output_file_path):
+    base_dir = os.path.dirname(output_file_path)
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+
+    relations = sorted(list(list(game2metric.values())[0].rel_counter.keys()))
+    relations_prec_recall_f1 = []
+    for rel in relations:
+        relations_prec_recall_f1.append(rel + " (p)")
+        relations_prec_recall_f1.append(rel + " (r)")
+        relations_prec_recall_f1.append(rel + " (f)")
+
+    t = PrettyTable()
+    t.field_names = ["Game", "avg_prec", "avg_recall", "avg_f1"] + relations_prec_recall_f1
+
+    for game in game2metric:
+        metric = game2metric[game]
+        avg_prec = metric.sum_prec / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
+        avg_recall = metric.sum_recall / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
+        avg_f1 = metric.sum_f1 / (metric.cnt_samples - metric.cnt_samples_wo_true_triples)
+        relationwise_metric = metric.compute_relationwise_metric()
+
+        # use percentage points
+        row_values = [game,
+                      "{:.3f}".format(avg_prec * 100),
+                      "{:.3f}".format(avg_recall * 100),
+                      "{:.3f}".format(avg_f1 * 100)]
+        for rel in relations:
+            if rel in relationwise_metric:
+                score_dict = relationwise_metric[rel]
+                row_values.append("{:.3f}".format(score_dict["prec"]))
+                row_values.append("{:.3f}".format(score_dict["recall"]))
+                row_values.append("{:.3f}".format(score_dict["f1"]))
+            else:
+                row_values.append("")
+                row_values.append("")
+                row_values.append("")
+        t.add_row(row_values)
+
+    with open(output_file_path, "w") as f_obj:
+        f_obj.write(str(t))
+    print("Written to file {}".format(output_file_path))
 
 
 def check_samples(data, sample_size=10):
@@ -1214,6 +1284,7 @@ if __name__ == "__main__":
     parser.add_argument('--sample_start_idx', type=int, default=0, help="sample_start_idx")
     parser.add_argument('--split_type', type=str, choices=["train", "test"],
                         default="train", help="split_type")
+    parser.add_argument('--debug', action='store_true', help="debug")
     parser.add_argument('--verbose', action='store_true', help="verbose")
     args = parser.parse_args()
 
@@ -1249,7 +1320,8 @@ if __name__ == "__main__":
         apply_path_patterns(test_data, pattern_file_path=args.pattern_file_path,
                             output_file_path=args.output_file_path, graph_type=args.graph_type,
                             top_k_patterns=args.top_k_patterns, amr_cache_path=args.amr_cache_path,
-                            start_idx=args.sample_start_idx, verbose=args.verbose)
+                            start_idx=args.sample_start_idx, debug=args.debug,
+                            verbose=args.verbose)
     elif args.build_amr_parse_cache:
         if args.split_type == "train":
             build_amr_parse_cache(train_data, "./data/JerichoWorld/train_amr.json",
