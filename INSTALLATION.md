@@ -2,18 +2,18 @@
 
 ## Create virtual environment
 ```
-$ conda create -n amr-verbnet python=3.7
-$ conda activate amr-verbnet
-$ conda install -c anaconda graphviz
-$ bash scripts/install.sh
-$ 
-$ # Ubuntu and Debian
-$ sudo apt-get install graphviz graphviz-dev
-$ pip install pygraphviz
-$ 
-$ # macOS
-$ brew install graphviz
-$ pip install pygraphviz
+conda create -n amr-verbnet python=3.7
+conda activate amr-verbnet
+conda install -c anaconda graphviz
+bash scripts/install.sh
+
+# Ubuntu and Debian
+sudo apt-get install graphviz graphviz-dev
+pip install pygraphviz
+
+# macOS
+brew install graphviz
+pip install pygraphviz
 ```
 Note that the scripts/install.sh downloads some NLTK corpora like punkt, verbnet, and propbank. If you already have some existing corpora under ~/nltk-data, please do backup accordingly.
 
@@ -23,10 +23,10 @@ You can know how to install pygraphviz on other environments with
 
 ## Download linguistic resources
 ```
-$ bash scripts/download_verbnet.sh ~/nltk_data/corpora/
-$ bash scripts/download_propbank.sh ~/nltk_data/corpora/
-$ bash scripts/download_semlink.sh ./data
-$ bash scripts/download_stanford_nlp.sh ./
+bash scripts/download_verbnet.sh ~/nltk_data/corpora/
+bash scripts/download_propbank.sh ~/nltk_data/corpora/
+bash scripts/download_semlink.sh ./data
+bash scripts/download_stanford_nlp.sh ./
 ```
 
 
@@ -53,7 +53,7 @@ Note that we use YAML config file to set app specific parameters. To get started
 
 ## Download third_party
 ```
-$ bash scripts/download_third_party.sh 
+bash scripts/download_third_party.sh 
 ```
 Secondly You have to download the pre-trained model file for AMR from the following path on CCC. 
 Then you have to unzip the file in `third_party` directory and set the values of AMR_MODEL_CHECKPOINT_PATH and THIRD_PARTY_PATH in the config file accordingly.
@@ -63,24 +63,24 @@ Then you have to unzip the file in `third_party` directory and set the values of
 ## Start a Stanford CoreNLP server
 If you would like to set up an independent server, cd into the CoreNLP package and run the following:
 ```
-$ cd ./stanford-corenlp-full-2018-10-05/
-$ java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port 9000 -timeout 15000
+cd ./stanford-corenlp-full-2018-10-05/
+java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port 9000 -timeout 15000
 ```
 If it says java.net.BindException: Address already in use for this port, either use another one or run
 ```
-$ pkill java
+pkill java
 ```
 to stop any existing ones. Then set STANFORD_CORENLP_PATH to null and fill in the host name and port number to use this running server.
 
 
 ## Start the FLASK server
 ```
-$ export FLASK_APP=./amr_verbnet_semantics/web_app/__init__.py
-$ python -m flask run --host=0.0.0.0
+export FLASK_APP=./amr_verbnet_semantics/web_app/__init__.py
+python -m flask run --host=0.0.0.0
 ```
 The Flask logs indicate what URL the service is running on.
 
 To test the service, try a test example:
 ```
-$ python amr_verbnet_semantics/test/test_service.py
+python amr_verbnet_semantics/test/test_service.py
 ```
