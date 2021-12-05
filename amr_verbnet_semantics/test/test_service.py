@@ -10,12 +10,11 @@ import requests
 host = "0.0.0.0"
 port = 5000
 
-# text = "You enter a kitchen."
+text = "You enter a kitchen."
 # text = "You see a dishwasher and a fridge."
 # text = "Here 's a dining table ."
 # text = "You see a red apple and a dirty plate on the table ."
-
-text = "You've entered a kitchen. You see a dishwasher and a fridge. Here's a dining table. You see a dirty plate and a red apple on the table."
+# text = "You've entered a kitchen. You see a dishwasher and a fridge. Here's a dining table. You see a dirty plate and a red apple on the table."
 
 # res = requests.get("http://{}:{}/amr_parsing".format(host, port), params={'text': text})
 res = requests.get("http://{}:{}/verbnet_semantics".format(host, port), params={'text': text})

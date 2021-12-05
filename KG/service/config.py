@@ -13,6 +13,7 @@ thisDir = os.path.join(os.getcwd())
 
 try:
     from app_config import config
+    SPARQL_ENDPOINT = config.SPARQL_ENDPOINT
 except ImportError:
     try :     
       with open(thisDir + "/config_sparql.yaml", "r") as f:

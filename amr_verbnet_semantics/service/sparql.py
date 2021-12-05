@@ -7,8 +7,9 @@ from collections import defaultdict
 from SPARQLWrapper import JSON, SPARQLWrapper
 
 from app_config import config
-from KG.ulkb_access_V4 import ulkb_sem_predicates_LONG, \
-    ulkb_sem_roles_for_pb_by_role, ulkb_pb_vn_mappings
+from KG.service.ulkb_access_V5 import \
+    ulkb_sem_predicates_LONG, \
+    ulkb_pb_vn_mappings
 
 query_prefix = """
 prefix rrp: <http://www.ibm.com/RRP#>

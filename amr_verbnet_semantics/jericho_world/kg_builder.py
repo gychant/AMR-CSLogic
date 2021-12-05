@@ -30,7 +30,6 @@ from amr_verbnet_semantics.algorithm.path_pattern import \
 from amr_verbnet_semantics.algorithm.open_ie import \
     apply_open_ie, \
     analyze_relations
-from amr_verbnet_semantics.service.amr import amr_client
 from amr_verbnet_semantics.utils.eval_util import Metric
 from amr_verbnet_semantics.utils.amr_util import \
     build_amr_parse_cache
