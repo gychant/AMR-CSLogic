@@ -633,7 +633,7 @@ def ulkb_sem_predicates_LONG(_verb: str) -> []:
         if 'params' not in thisPredicate:
             thisPredicate['params'] = []
         params = thisPredicate['params']
-        params.append(result["type"]["value"] + "(" + result["vnVarName"]["value"] + ")")
+        params.append({'type': result["type"]["value"], 'value': result["vnVarName"]["value"]})
         # thisPredicate['type'] = result["type"]["value"]
         # thisPredicate['value'] = result["value"]["value"]
         # print(example + " " + " " +  thisPredicateID + " " +  predLabel + " " +
