@@ -1,12 +1,86 @@
 """
 Utility functions for AMR processing
 """
+import os
 import json
+from tqdm import tqdm, trange
+
+from amr_verbnet_semantics.service.amr import amr_client
+
+
+def build_amr_parse_cache(data, sample_generator, output_path, start_idx=0,
+                          extractable_only=True, verbose=False):
+    """
+    Build a cache of AMR parse for the training/test data.
+    :param data: the list of samples for AMR parsing
+    :param output_path: the output path of AMR parse cache
+    :param start_idx: the index of sample to start with
+    :param extractable_only: if a sentence to parse needs to be mapped
+        to at least one triple in the KG
+    :param verbose:
+    :return:
+    """
+    output_dir = os.path.dirname(output_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    f = open(output_path, "a")
+    for sample_idx, sentences in enumerate(tqdm(sample_generator(
+            data, extractable_only=extractable_only, verbose=verbose))):
+        if sample_idx < start_idx:
+            continue
+
+        sentence_parses = []
+        for text in sentences:
+            amr = amr_client.get_amr(text)
+            sentence_parses.append({
+                "sent": text,
+                "amr": amr
+            })
+            print("\nsample_idx:", sample_idx)
+            print("text:", text)
+            print("amr:\n", amr)
+        f.write(str(sample_idx))
+        f.write("\t")
+        f.write(json.dumps(sentence_parses))
+        f.write("\n")
+    f.close()
+    print("AMR cache DONE.")
+
+
+def load_amr_cache(path):
+    """
+    Load AMR cache from file.
+    :param path: the path to the cache file
+    :return:
+    """
+    amr_cache = dict()
+    with open(path, "r") as f:
+        for line in f:
+            sample_idx, amr_str = line.strip().split("\t")
+            sentences = json.loads(amr_str)
+            amr_cache[int(sample_idx)] = sentences
+    return amr_cache
 
 
 def double_quote(json_str):
     return json_str.replace(" ", "").replace("{", "{\"")\
         .replace(":", "\":").replace(",", ",\"").replace("'", "\"")
+
+
+def read_tokenization(amr):
+    """
+    Read word tokenization from the AMR parse
+    :param amr: AMR parse
+    :return: List of tokens
+    """
+    for line in amr.split("\n"):
+        if line.startswith("# ::tok"):
+            # tokenized text
+            text = line[len("# ::tok"):-len("<ROOT>")].strip()
+            tokens = text.split()
+            return tokens
+    return None
 
 
 def read_amr_annotation(amr):
