@@ -9,15 +9,25 @@ from amr_verbnet_semantics.corpus_readers.verbnet_reader import \
 from amr_verbnet_semantics.service.sparql import query_semantics_from_rdf
 from app_config import config
 
-vn_dict = {
-    "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),
-    "verbnet3.3": LazyCorpusLoader("verbnet3.3", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),
-    "verbnet3.4": LazyCorpusLoader("verbnet3.4", VerbnetCorpusReaderEx, r"(?!\.).*\.xml")
-}
+
+vn_dict = None
+
+
+def load_vn_dict():
+    global vn_dict
+    vn_dict = {
+        "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),
+        "verbnet3.3": LazyCorpusLoader("verbnet3.3", VerbnetCorpusReaderEx, r"(?!\.).*\.xml"),
+        "verbnet3.4": LazyCorpusLoader("verbnet3.4", VerbnetCorpusReaderEx, r"(?!\.).*\.xml")
+    }
 
 
 def query_semantics_from_corpus(verbnet_id, verbnet_version,
                                 include_example=False, verbose=False):
+    global vn_dict
+    if vn_dict is None:
+        load_vn_dict()
+
     semantics = defaultdict(list)
     frames = vn_dict[verbnet_version].frames(verbnet_id)
 

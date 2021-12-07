@@ -10,15 +10,21 @@ from amr_verbnet_semantics.service.sparql import \
     query_verbnet_semantic_roles_from_rdf
 from app_config import config
 
-propbank = LazyCorpusLoader(
-    "propbank-latest",
-    PropbankCorpusReaderEx,
-    "prop.txt",
-    r"frames/.*\.xml",
-    "verbs.txt",
-    lambda filename: re.sub(r"^wsj/\d\d/", "", filename),
-    treebank,
-)  # Must be defined *after* treebank corpus.
+
+propbank = None
+
+
+def load_propbank():
+    global propbank
+    propbank = LazyCorpusLoader(
+        "propbank-latest",
+        PropbankCorpusReaderEx,
+        "prop.txt",
+        r"frames/.*\.xml",
+        "verbs.txt",
+        lambda filename: re.sub(r"^wsj/\d\d/", "", filename),
+        treebank,
+    )  # Must be defined *after* treebank corpus.
 
 
 def query_verbnet_semantic_roles(propbank_id):
@@ -28,6 +34,10 @@ def query_verbnet_semantic_roles(propbank_id):
 
 
 def query_verbnet_semantic_roles_from_corpus(propbank_id, verbose=False):
+    global propbank
+    if propbank is None:
+        load_propbank()
+
     if verbose:
         print("\nquery_propbank_roles for propbank_id {}".format(propbank_id))
 
@@ -58,6 +68,10 @@ def query_verbnet_semantic_roles_from_corpus(propbank_id, verbose=False):
 
 
 def query_propbank_roleset_ids():
+    global propbank
+    if propbank is None:
+        load_propbank()
+
     roleset_ids = set()
     for roleset in propbank.rolesets():
         roleset_ids.add(roleset.attrib["id"])
