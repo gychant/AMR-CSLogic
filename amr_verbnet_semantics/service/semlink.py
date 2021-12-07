@@ -16,6 +16,13 @@ from amr_verbnet_semantics.service.sparql import query_pb_vn_mapping_from_rdf
 from app_config import config
 
 
+# global variables
+pb_vn_mappings = None
+vn_dict = None
+vn2class_id_dict = None
+matching_priorities = ["verbnet3.4", "verbnet3.3", "verbnet3.2"]
+
+
 class VerbnetCorpusReader(VerbnetCorpusReaderOrig):
     def vnclass(self, fileid_or_classid):
         """Returns VerbNet class ElementTree
@@ -51,26 +58,45 @@ class VerbnetCorpusReader(VerbnetCorpusReaderOrig):
             raise ValueError("Unknown identifier {}".format(fileid_or_classid))
 
 
-pb_vn_mappings = json.load(open("./data/semlink/instances/pb-vn2.json"))
-vn_fn_mappings = json.load(open("./data/semlink/instances/vn-fn2.json"))
+def load_vn_dict():
+    global vn_dict
+    vn_dict = {
+        "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReader, r"(?!\.).*\.xml"),
+        "verbnet3.3": LazyCorpusLoader("verbnet3.3", VerbnetCorpusReader, r"(?!\.).*\.xml"),
+        "verbnet3.4": LazyCorpusLoader("verbnet3.4", VerbnetCorpusReader, r"(?!\.).*\.xml")
+    }
 
-vn_dict = {
-    "verbnet3.2": LazyCorpusLoader("verbnet3.2", VerbnetCorpusReader, r"(?!\.).*\.xml"),
-    "verbnet3.3": LazyCorpusLoader("verbnet3.3", VerbnetCorpusReader, r"(?!\.).*\.xml"),
-    "verbnet3.4": LazyCorpusLoader("verbnet3.4", VerbnetCorpusReader, r"(?!\.).*\.xml")
-}
+
+def load_pb_vn_mappings():
+    global pb_vn_mappings
+    pb_vn_mappings = json.load(open("./data/semlink/instances/pb-vn2.json"))
+
+
+def load_vn2class_id_dict():
+    global vn2class_id_dict
+    vn2class_id_dict = {
+        "verbnet3.2": build_class_id_dict("verbnet3.2"),
+        "verbnet3.3": build_class_id_dict("verbnet3.3"),
+        "verbnet3.4": build_class_id_dict("verbnet3.4")
+    }
 
 
 def sanity_check(cls, all_classes, vn_version):
+    global vn_dict
+    if vn_dict is None:
+        load_vn_dict()
+
     for sub_cls in vn_dict[vn_version].subclasses(cls):
         if sub_cls not in all_classes:
-            print("invalid:", sub_cls)
-            input()
             continue
         sanity_check(sub_cls, all_classes, vn_version)
 
 
 def build_class_id_dict(vn_version):
+    global vn_dict
+    if vn_dict is None:
+        load_vn_dict()
+
     results = dict()
     all_classes = set(vn_dict[vn_version].classids())
     for cls in all_classes:
@@ -82,16 +108,15 @@ def build_class_id_dict(vn_version):
     return results
 
 
-vn2class_id_dict = {
-    "verbnet3.2": build_class_id_dict("verbnet3.2"),
-    "verbnet3.3": build_class_id_dict("verbnet3.3"),
-    "verbnet3.4": build_class_id_dict("verbnet3.4")
-}
-
-matching_priorities = ["verbnet3.4", "verbnet3.3", "verbnet3.2"]
-
-
 def check_mapping_completeness(output_dir):
+    global vn2class_id_dict
+    if vn2class_id_dict is None:
+        load_vn2class_id_dict()
+
+    global pb_vn_mappings
+    if pb_vn_mappings is None:
+        load_pb_vn_mappings()
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -156,6 +181,14 @@ def query_pb_vn_mapping(propbank_id):
 
 
 def query_pb_vn_mapping_from_semlink(propbank_id):
+    global vn2class_id_dict
+    if vn2class_id_dict is None:
+        load_vn2class_id_dict()
+
+    global pb_vn_mappings
+    if pb_vn_mappings is None:
+        load_pb_vn_mappings()
+
     if propbank_id not in pb_vn_mappings:
         return None
 

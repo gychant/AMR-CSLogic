@@ -21,14 +21,6 @@ You can know how to install pygraphviz on other environments with
 [the document](https://pygraphviz.github.io/documentation/stable/install.html).
 
 
-## Download linguistic resources
-```
-bash scripts/download_verbnet.sh ~/nltk_data/corpora/
-bash scripts/download_propbank.sh ~/nltk_data/corpora/
-bash scripts/download_semlink.sh ./data
-```
-
-
 ## Setup knowledge base
 (1) download the .ttl file from [KG](https://github.com/CognitiveHorizons/AMR-CSLogic/tree/master/KG) and unzip it. As of 5th Oct, we are using UL_KB_V3_PUB.ttl.zip.  
 
@@ -55,9 +47,13 @@ Note that we use YAML config file to set app specific parameters. To get started
 bash scripts/download_third_party.sh 
 ```
 Secondly You have to download the pre-trained model file for AMR from the following path on CCC. 
-Then you have to unzip the file in `third_party` directory and set the values of AMR_MODEL_CHECKPOINT_PATH and THIRD_PARTY_PATH in the config file accordingly.
+Then you have to unzip the file in `third_party` directory. If you use the default values of AMR_MODEL_CHECKPOINT_PATH and THIRD_PARTY_PATH from the config template, you are good to go. Otherwise, set them accordingly.
 - `/dccstor/ykt-parse/SHARED/MODELS/AMR/transition-amr-parser/amr2.0_v0.4.1_youngsuk_ensemble_destillation.zip`
 
+## Set up the PYTHONPATH environment variable
+```
+export PYTHONPATH=.
+```
 
 ## Start the FLASK server
 ```
