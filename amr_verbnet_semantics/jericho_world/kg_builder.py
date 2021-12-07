@@ -187,9 +187,6 @@ def get_observation_text_from_sample(sample):
     return text
 
 
-
-
-
 def compute_metrics(samples, triple_file_path):
     game2metric = dict()
     game2metric["overall"] = Metric()

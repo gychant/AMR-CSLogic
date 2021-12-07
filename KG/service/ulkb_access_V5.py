@@ -358,7 +358,6 @@ def analyze_pb_vn_lemmas(_outFile : str) :
 def ulkb_pb_vn_mappings(_pbName: str, _lemmaMatching = True, _oneLemma = False) -> {}:
     returnResults = []
     query_text = query_roles_for_pb_str.format(_pbName)
-    print(query_prefix + query_text)
     sparql.setQuery(query_prefix + query_text)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()

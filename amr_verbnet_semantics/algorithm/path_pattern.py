@@ -17,7 +17,8 @@ from nltk.stem.porter import PorterStemmer
 from amr_verbnet_semantics.core.amr_verbnet_enhance import \
     build_graph_from_amr, \
     build_semantic_graph, \
-    ground_text_to_verbnet
+    ground_text_to_verbnet, \
+    induce_unique_groundings
 from amr_verbnet_semantics.utils.amr_util import \
     load_amr_cache, \
     read_tokenization
@@ -541,9 +542,10 @@ def mine_path_patterns(data, sample_generator, output_file_path, graph_type="amr
                                                    amr=amr, verbose=verbose)
                     except Exception as e:
                         print("Exception:", e)
+
                         patterns = extract_pattern(sent, triple, graph_type=graph_type,
                                                    amr=amr, verbose=True)
-                        # raise e
+                        raise e
                         input()
                         continue
 

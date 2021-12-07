@@ -36,7 +36,7 @@ $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --output_file_path ./path_output/patterns_train_amr_verbnet.pkl 
 ```
 
-To mine path patterns from the training data using only VerbNet,
+To mine path patterns from the training data using VerbNet only,
 ```
 $ python amr_verbnet_semantics/jericho_world/kg_builder.py \
     --algorithm path_pattern \
