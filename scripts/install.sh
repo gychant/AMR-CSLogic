@@ -17,4 +17,6 @@ pip install neuralcoref
 pip install benepar --no-cache-dir
 python -c "import benepar; benepar.download('benepar_en3')"
 
+pip install torch==1.3
+
 wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.jar
