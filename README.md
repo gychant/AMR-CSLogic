@@ -3,9 +3,6 @@
 ## Install
 Please read [INSTALLATION.md](./INSTALLATION.md)
 
-## JerichoWorld Experiments
-Please read [JERICHO_WORLD.md](./JERICHO_WORLD.md)
-
 ## Note
 - how to clear a cache
   - This implementation uses a cache to speed up the AMR parser. A snapshot is stored on disk to store the cache permanently. The file name of the snapshot takes this format `snapshot.pickle_%Y-%m-%d_%H-%M-%S`. Here is an example of a file name; `snapshot.pickle_2021-10-06_14-52-41`

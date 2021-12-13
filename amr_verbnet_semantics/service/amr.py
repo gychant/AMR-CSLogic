@@ -24,9 +24,9 @@ class LocalAMRClient(object):
     def _get_parser(self, use_cuda=False):
         sys.path.append(os.path.abspath(config.THIRD_PARTY_PATH))
         from transition_amr_parser.parse import AMRParser
-
+        pkg_root_path = os.path.join(os.path.dirname(__file__), "../../")
         cwd = os.getcwd()
-        os.chdir(config.THIRD_PARTY_PATH)
+        os.chdir(os.path.join(pkg_root_path, config.THIRD_PARTY_PATH))
         print("Loading checkpoint ...")
         amr_parser = AMRParser.from_checkpoint(
             checkpoint=config.AMR_MODEL_CHECKPOINT_PATH,

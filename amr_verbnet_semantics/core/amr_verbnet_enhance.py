@@ -1,9 +1,10 @@
 """
 Core functions that enhance AMR with VerbNet semantics
 """
-import copy
-import json
 import os
+import json
+import argparse
+import copy
 from collections import Counter
 from pprint import pprint
 
@@ -891,11 +892,15 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph",
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--parse', type=str, default="You enter a kitchen.")
+    args = parser.parse_args()
+    
+    res = ground_text_to_verbnet(args.parse, verbose=True)
     # res = ground_text_to_verbnet("You enter a kitchen.", verbose=True)
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.", verbose=True)
     # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("You close the window .")
-    res = ground_text_to_verbnet("A wet hoodie .", verbose=True)
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("They put upon me a brilliant, red helm.", verbose=True)
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")
