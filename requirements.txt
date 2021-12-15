@@ -10,10 +10,9 @@ spacy==2.1.0
 neuralcoref==4.0
 gensim==3.8.1
 protobuf==3.17.3
-# cython
+
 numpy
 python-Levenshtein
-stanfordcorenlp
 flask
 matplotlib
 graphviz

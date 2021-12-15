@@ -7,7 +7,6 @@ import os
 import pickle
 import sys
 import threading
-import torch
 
 from nltk import sent_tokenize
 from nltk.tokenize import word_tokenize
@@ -155,7 +154,7 @@ def parse_text(text, verbose=False):
         print("parsing ...")
 
     sentence_parses = []
-    for idx, sent in enumerate(sentences):
+    for sent in sentences:
         sent_amr = amr_client.get_amr(sent)
         sentence_parses.append(sent_amr)
 

@@ -9,10 +9,10 @@ path_output
 config.yaml
 *snapshot.pickle*
 *blazegraph.jnl
-test_stanford_open_ie.py
 open-ie-output/
 test-debug-openie/
 train-debug-openie/
+transition-amr-parser-0.4.2/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

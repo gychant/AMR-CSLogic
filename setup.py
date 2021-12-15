@@ -40,9 +40,7 @@ setup(
         'amr_verbnet_semantics',
         'amr_verbnet_semantics.*',
         'KG.*']),
-    install_requires=reqs + [
-        'pip@https://github.com/IBM/transition-amr-parser/archive/refs/tags/v0.4.2.zip'
-    ],
+    install_requires=reqs,
     cmdclass={
         'develop': PostDevelopCommand,
         'install': PostInstallCommand,

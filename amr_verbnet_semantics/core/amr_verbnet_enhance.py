@@ -19,6 +19,7 @@ from amr_verbnet_semantics.core.spacy_nlp_parse import full_parsing
 from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.service.verbnet import query_semantics
+from amr_verbnet_semantics.service.amr import parse_text
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 from amr_verbnet_semantics.utils.format_util import to_json
 from amr_verbnet_semantics.utils.reification_util import reify_amr
@@ -39,14 +40,17 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
             print("\ncoreference:\n", parse["coreference"])
 
     sentence_parses = []
-    for idx, sent in enumerate(sentences):
+    for sent in sentences:
         sent_res = dict()
 
         if amr is None:
-            response = requests.get("http://{}:{}/amr_parsing".format(
-                config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
-                params={'text': sent})
-            amr = json.loads(response.text).get("result", None)[0]
+            if config.USE_FLASK:
+                response = requests.get("http://{}:{}/amr_parsing".format(
+                    config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
+                    params={'text': sent})
+                amr = json.loads(response.text).get("result", [None])[0]
+            else:
+                amr = parse_text(sent)[0]
 
         if verbose:
             print("\namr:\n")
