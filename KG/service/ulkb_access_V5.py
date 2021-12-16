@@ -5,7 +5,7 @@ Created on Tue Jun  1 21:07:04 2021
 
 @author: rosariouceda-sosa
 
-Access to the RDF/OWL UL_KB_V5 graph
+Access to the RDF/OWL UL_KB_V4 graph
 The differences with the previous version is that the 
 function ulkb_sem_predicates_LONG and ulkb_sem_predicates_SHORT now returns the rolesets
 """
@@ -131,7 +131,7 @@ query_sem_predicates_str = """SELECT DISTINCT ?example ?roleList ?operator ?sema
                    }}
                   ?param rrp:varType ?type . 
                   ?param rrp:varName ?vnVarName .
-                }} ORDER BY ?param
+                }} ORDER BY ?semanticPredicate
                   """
 
 query_check_verb_name_str = """SELECT DISTINCT ?entity ?provenance  WHERE {{
@@ -377,9 +377,9 @@ def ulkb_pb_vn_mappings(_pbName: str, _lemmaMatching = True, _oneLemma = False) 
     for result in results["results"]["bindings"]:
         pbSemRole = result["pbSemRole"]["value"]
         pbSemRoleDesc = result["pbSemRoleDesc"]["value"]
-        if pbSemRole not in pbTRoles :
+        if pbSemRole not in pbTRoles : 
             pbTRoles[pbSemRole] = pbSemRoleDesc
-        if "vnVerbLabel" in result :
+        if "vnVerbLabel" in result :  
             vnVerbLabel = result["vnVerbLabel"]["value"]
             vnMapsFound = True
             vnVarType = result["vnVarType"]["value"]
@@ -391,9 +391,9 @@ def ulkb_pb_vn_mappings(_pbName: str, _lemmaMatching = True, _oneLemma = False) 
                 curVerb[pbSemRole] = vnVarType + "(" + vnVarExpression + ")"
         # print(pbSemRole + "\t(" + vnVerbLabel + ", " + vnParamLabel + ")")
 
-    if _lemmaMatching and len(verbResults) == 0:
-        lemma = _pbName
-        if "." in _pbName:
+    if  _lemmaMatching and len(verbResults) == 0 :
+        lemma = _pbName 
+        if "." in _pbName: 
             lemma = _pbName.split(".", -1)[0]
         return ulkb_lemma_mappings(lemma, pbTRoles, _pbName)
     returnResults[_pbName] = verbResults
@@ -716,11 +716,13 @@ if __name__ == '__main__':
      
 #     output = ulkb_lemma_mappings("talk")
      #print(str(output))
-    output = ulkb_pb_vn_mappings("make_out.23", True, True)
-    print(str(output))
+    #output = ulkb_pb_vn_mappings("make_out.23", True, True)
+    
     # TEST SEMANTIC PREDICATES
-    # output = ulkb_sem_predicates_for("escape-51.1-1-1")
+    output = ulkb_sem_predicates_LONG("escape-51.1-1-1")
     # print(str(output))
+    
+    print(str(output))
 
     #print("\nulkb_sem_predicates_SHORT: escape-51.1")
     #output = ulkb_sem_predicates_SHORT("escape-51.1")
