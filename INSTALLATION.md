@@ -11,7 +11,7 @@ If we want to visualize the enhanced AMR graph, we need to install the pygraphvi
 ```
 # Using Conda
 conda install -c anaconda graphviz
-CONDA_HOME=/path/to/conda/home/dir pip install --global-option=build_ext --global-option="-I{$CONDA_HOME}/envs/amr-verbnet/include" --global-option="-L{$CONDA_HOME}/envs/amr-verbnet/lib" --global-option="-R{$CONDA_HOME}/envs/amr-verbnet/lib" pygraphviz
+CONDA_HOME=/path/to/conda/home/dir; pip install --global-option=build_ext --global-option="-I{$CONDA_HOME}/envs/amr-verbnet/include" --global-option="-L{$CONDA_HOME}/envs/amr-verbnet/lib" --global-option="-R{$CONDA_HOME}/envs/amr-verbnet/lib" pygraphviz
 
 # Ubuntu and Debian
 sudo apt-get install graphviz graphviz-dev
@@ -46,7 +46,7 @@ You can see the server through `http://127.0.0.1:9999/blazegraph/`.
 (3) On the ‘namespaces’ tab, create a new namespace with the name you want, e.g. UL_KB_V5_PUB. Make sure you tick ‘inference’ and ‘full text index’  
 <img src="./assets/blazegraph_install_1.jpg">
 
-(4) On the ‘update’ tab, drag and drop one .ttl file you want to use and click ‘update’. 
+(4) On the ‘update’ tab, drag and drop the .ttl file that you downloaded and unzipped in step (1), then click ‘update’.
 <img src="./assets/blazegraph_install_2.jpg">
 
 (5) On the ‘namespaces’ tab, confirm that the namespace you want to use is running. 
