@@ -11,7 +11,7 @@ If we want to visualize the enhanced AMR graph, we need to install the pygraphvi
 ```
 # Using Conda
 conda install -c anaconda graphviz
-CONDA_HOME=/path/to/conda/home/dir; pip install --global-option=build_ext --global-option="-I{$CONDA_HOME}/envs/amr-verbnet/include" --global-option="-L{$CONDA_HOME}/envs/amr-verbnet/lib" --global-option="-R{$CONDA_HOME}/envs/amr-verbnet/lib" pygraphviz
+CONDA_HOME=$(which conda); pip install --global-option=build_ext --global-option="-I{$CONDA_HOME}/envs/amr-verbnet/include" --global-option="-L{$CONDA_HOME}/envs/amr-verbnet/lib" --global-option="-R{$CONDA_HOME}/envs/amr-verbnet/lib" pygraphviz
 
 # Ubuntu and Debian
 sudo apt-get install graphviz graphviz-dev
