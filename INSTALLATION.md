@@ -72,7 +72,6 @@ If you would like to use FLASK to call the parsing as a web service with the adv
 ```
 USE_FLASK: true
 ```
-Otherwise set it to false to call the package directly. 
 To start FLASK server, run
 ```
 export FLASK_APP=./amr_verbnet_semantics/web_app/__init__.py
@@ -83,4 +82,12 @@ The Flask logs indicate what URL the service is running on.
 To test the service, try a test example:
 ```
 python amr_verbnet_semantics/test/test_service.py
+```
+Otherwise set it to false to call the package directly:
+```
+USE_FLASK: false
+```
+and then try a test example:
+```
+python amr_verbnet_semantics/test/test_local_amr_client.py
 ```
