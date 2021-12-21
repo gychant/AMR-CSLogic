@@ -7,7 +7,6 @@ import os
 import pickle
 import sys
 import threading
-import torch
 
 from nltk import sent_tokenize
 from nltk.tokenize import word_tokenize
@@ -24,9 +23,9 @@ class LocalAMRClient(object):
     def _get_parser(self, use_cuda=False):
         sys.path.append(os.path.abspath(config.THIRD_PARTY_PATH))
         from transition_amr_parser.parse import AMRParser
-
+        pkg_root_path = os.path.join(os.path.dirname(__file__), "../../")
         cwd = os.getcwd()
-        os.chdir(config.THIRD_PARTY_PATH)
+        os.chdir(os.path.join(pkg_root_path, config.THIRD_PARTY_PATH))
         print("Loading checkpoint ...")
         amr_parser = AMRParser.from_checkpoint(
             checkpoint=config.AMR_MODEL_CHECKPOINT_PATH,
@@ -155,7 +154,7 @@ def parse_text(text, verbose=False):
         print("parsing ...")
 
     sentence_parses = []
-    for idx, sent in enumerate(sentences):
+    for sent in sentences:
         sent_amr = amr_client.get_amr(sent)
         sentence_parses.append(sent_amr)
 

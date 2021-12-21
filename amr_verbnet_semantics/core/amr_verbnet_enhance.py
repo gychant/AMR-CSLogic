@@ -1,9 +1,10 @@
 """
 Core functions that enhance AMR with VerbNet semantics
 """
-import copy
-import json
 import os
+import json
+import argparse
+import copy
 from collections import Counter
 from pprint import pprint
 
@@ -18,6 +19,7 @@ from amr_verbnet_semantics.core.spacy_nlp_parse import full_parsing
 from amr_verbnet_semantics.service.propbank import query_verbnet_semantic_roles
 from amr_verbnet_semantics.service.semlink import query_pb_vn_mapping
 from amr_verbnet_semantics.service.verbnet import query_semantics
+from amr_verbnet_semantics.service.amr import parse_text
 from amr_verbnet_semantics.utils.amr_util import read_amr_annotation
 from amr_verbnet_semantics.utils.format_util import to_json
 from amr_verbnet_semantics.utils.reification_util import reify_amr
@@ -38,14 +40,17 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
             print("\ncoreference:\n", parse["coreference"])
 
     sentence_parses = []
-    for idx, sent in enumerate(sentences):
+    for sent in sentences:
         sent_res = dict()
 
         if amr is None:
-            response = requests.get("http://{}:{}/amr_parsing".format(
-                config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
-                params={'text': sent})
-            amr = json.loads(response.text).get("result", None)[0]
+            if config.USE_FLASK:
+                response = requests.get("http://{}:{}/amr_parsing".format(
+                    config.LOCAL_SERVICE_HOST, config.LOCAL_SERVICE_PORT),
+                    params={'text': sent})
+                amr = json.loads(response.text).get("result", [None])[0]
+            else:
+                amr = parse_text(sent)[0]
 
         if verbose:
             print("\namr:\n")
@@ -891,11 +896,15 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph",
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--parse', type=str, default="You enter a kitchen.")
+    args = parser.parse_args()
+    
+    res = ground_text_to_verbnet(args.parse, verbose=True)
     # res = ground_text_to_verbnet("You enter a kitchen.", verbose=True)
     # res = ground_text_to_verbnet("You see a dishwasher and a fridge.", verbose=True)
     # res = ground_text_to_verbnet("You put the wet hoodie on the patio chair.", verbose=True)
     # res = ground_text_to_verbnet("You close the window .")
-    res = ground_text_to_verbnet("A wet hoodie .", verbose=True)
     # res = ground_text_to_verbnet("Here 's a dining table .")
     # res = ground_text_to_verbnet("They put upon me a brilliant, red helm.", verbose=True)
     # res = ground_text_to_verbnet("You see a red apple and a dirty plate on the table .")

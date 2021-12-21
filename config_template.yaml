@@ -7,7 +7,7 @@ THIRD_PARTY_PATH: 'third_party'
 use_cuda: false
 
 # Configure RDF store
-SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V3_PUB"
+SPARQL_ENDPOINT: "http://localhost:9999/blazegraph/namespace/UL_KB_V5_PUB"
 
 # Configure VerbNet
 VERBNET_VERSION: "verbnet3.2"
@@ -41,3 +41,4 @@ REMOTE_AMR_PORT: 59990
 # Configure local FLASK service
 LOCAL_SERVICE_HOST: "0.0.0.0"
 LOCAL_SERVICE_PORT: 5000
+USE_FLASK: true
