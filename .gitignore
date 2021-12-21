@@ -13,6 +13,8 @@ test_stanford_open_ie.py
 open-ie-output/
 test-debug-openie/
 train-debug-openie/
+openie_output/
+*.props
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
