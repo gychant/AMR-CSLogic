@@ -20,6 +20,9 @@ pip install -e . # this calls setup.py
 echo "** Downloading spaCy corpus **"
 python -m spacy download en
 
+# Download NLTK corpora
+python -c "import nltk; nltk.download('punkt')"
+
 # For constituency parsing
 # pip install benepar --no-cache-dir
 # python -c "import benepar; benepar.download('benepar_en3')"

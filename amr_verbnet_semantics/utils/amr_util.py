@@ -44,6 +44,7 @@ def build_amr_parse_cache(data, sample_generator, output_path, start_idx=0,
         f.write("\t")
         f.write(json.dumps(sentence_parses))
         f.write("\n")
+        f.flush()
     f.close()
     print("AMR cache DONE.")
 

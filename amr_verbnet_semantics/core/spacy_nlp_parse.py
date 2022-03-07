@@ -2,7 +2,6 @@
 
 from nltk.tokenize import sent_tokenize
 import spacy
-import neuralcoref
 
 nlp = None
 
@@ -17,6 +16,7 @@ def full_parsing(text, do_coreference=False, do_word_tokenize=False,
     annotation = dict()
 
     if do_coreference:
+        import neuralcoref
         nlp = spacy.load('en')
         neuralcoref.add_to_pipe(nlp)
         doc = nlp(text)
