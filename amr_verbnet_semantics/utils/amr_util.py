@@ -13,6 +13,7 @@ def build_amr_parse_cache(data, sample_generator, output_path, start_idx=0,
     """
     Build a cache of AMR parse for the training/test data.
     :param data: the list of samples for AMR parsing
+    :param sample_generator: a generator that supplies samples
     :param output_path: the output path of AMR parse cache
     :param start_idx: the index of sample to start with
     :param extractable_only: if a sentence to parse needs to be mapped
@@ -32,7 +33,10 @@ def build_amr_parse_cache(data, sample_generator, output_path, start_idx=0,
 
         sentence_parses = []
         for text in sentences:
-            amr = amr_client.get_amr(text)
+            try:
+                amr = amr_client.get_amr(text)
+            except:
+                amr = None
             sentence_parses.append({
                 "sent": text,
                 "amr": amr
