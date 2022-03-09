@@ -20,7 +20,7 @@ pip install -e . # this calls setup.py
 echo "** Downloading spaCy corpus **"
 python -m spacy download en
 
-# Download NLTK corpora
+echo "** Downloading NLTK corpora **"
 python -c "import nltk; nltk.download('punkt')"
 
 # For constituency parsing
