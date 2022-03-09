@@ -25,7 +25,11 @@ def build_amr_parse_cache(data, sample_generator, output_path, start_idx=0,
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    f = open(output_path, "a")
+    if start_idx > 0:
+        f = open(output_path, "a")
+    else:
+        f = open(output_path, "w")
+        
     for sample_idx, sentences in enumerate(tqdm(sample_generator(
             data, extractable_only=extractable_only, verbose=verbose))):
         if sample_idx < start_idx:
