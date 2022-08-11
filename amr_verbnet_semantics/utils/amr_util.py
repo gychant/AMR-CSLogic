@@ -158,12 +158,12 @@ def read_amr_annotation(amr):
             node_idx2node_id = json.loads(double_quote(line[len("# ::short"):].strip()))
             node_id2node_idx = {v: k for k, v in node_idx2node_id.items()}
 
-    for token in token2node_idx:
-        token2node_id[token] = node_idx2node_id[token2node_idx[token]]
-
     try:
         for node_id in node_id2node_idx:
             node_id2token[node_id] = node_idx2token[node_id2node_idx[node_id]]
+            # Avoid pointing token to node_id starting with "x"
+            if not node_id.startswith("x"):
+                token2node_id[node_id2token[node_id]] = node_id
     except Exception as e:
         print(amr)
         print(e)

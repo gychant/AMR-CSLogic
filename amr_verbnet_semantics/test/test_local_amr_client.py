@@ -1,8 +1,31 @@
+import argparse
+import json
 from amr_verbnet_semantics.service.amr import LocalAMRClient
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--interactive', '-i', action='store_true',
+                        help="Whether to run the interactive mode")
+    args = parser.parse_args()
 
     amr_client = LocalAMRClient()
+    
+    if args.interactive:
+        while True:
+            text = input(">> Input text to parse: \n")
+            print()
+            amr = amr_client.get_amr(text)
+            print("\n\n")
+            print(amr)
+            print()
+            print(text)
+            print()
+            """
+            print(json.dumps({
+                "sent": text,
+                "amr": amr
+            }))
+            """
 
     list_text = [
         "I loved him writing novels.",
