@@ -56,6 +56,9 @@ def ground_text_to_verbnet(text, amr=None, use_coreference=True, verbose=False):
             print("\namr:\n")
             print(amr)
 
+        # TEMP FIX
+        # amr = amr.replace("finish-01", "finish-03")
+        
         g_res = ground_amr(amr, verbose=verbose)
         sent_res["text"] = sent
         sent_res["amr"] = amr
@@ -134,12 +137,14 @@ def build_role_set_from_mappings(node_name, verbnet_id, arg_map, role_mappings, 
     return role_set
 
 
-def ground_amr(amr, reify=True, verbose=False):
+def ground_amr(amr, reify=True, unique_groundings=False, verbose=False):
     if verbose:
         print("\nOriginal amr:")
         print(amr)
 
     if reify:
+        print("\n\n\namr:")
+        print(amr)
         amr = reify_amr(amr)
         if verbose:
             print("\nReified amr:")
@@ -200,9 +205,15 @@ def ground_amr(amr, reify=True, verbose=False):
 
     amr_cal = process_and_operator(raw_amr_cal)
     sem_cal = construct_calculus_from_semantics(semantics)
+
     grounded_stmt = ground_semantics(arg_map, sem_cal, role_mappings,
                                      filter_invalid_statements=config.FILTER_INVALID_STATEMENTS)
-    unique_grounded_stmt, unique_sem_cal = induce_unique_groundings(grounded_stmt, sem_cal)
+
+    if unique_groundings:
+        unique_grounded_stmt, unique_sem_cal = induce_unique_groundings(
+            grounded_stmt, sem_cal)
+    else:
+        unique_grounded_stmt, unique_sem_cal = dict(), dict()
 
     if verbose:
         print("\namr_cal:", amr_cal)
@@ -212,6 +223,7 @@ def ground_amr(amr, reify=True, verbose=False):
     results = {
         "pb_vn_mappings": pb_vn_mappings,
         "role_mappings": to_json(role_mappings),
+        "arg_map": to_json(arg_map),
         "amr_cal": to_json(amr_cal),
         "sem_cal": to_json(sem_cal),
         "unique_sem_cal": to_json(unique_sem_cal),
@@ -515,9 +527,15 @@ def get_event_from_argument(argument):
 
 def build_statement_dict(statements):
     statement_dict = dict()
-    for stmt in statements:
-        key = get_statement_dict_key(stmt)
-        statement_dict[key] = stmt
+    if isinstance(statements, dict):
+        for vn_cls in statements:
+            for stmt in statements[vn_cls]:
+                key = get_statement_dict_key(stmt)
+                statement_dict[key] = stmt
+    else:
+        for stmt in statements:
+            key = get_statement_dict_key(stmt)
+            statement_dict[key] = stmt
     return statement_dict
 
 
@@ -534,20 +552,42 @@ def replace_path_statement(semantic_calculus):
     new_semantic_calculus = dict()
 
     for pb_id in semantic_calculus:
-        if pb_id not in new_semantic_calculus:
-            new_semantic_calculus[pb_id] = []
+        if isinstance(semantic_calculus[pb_id], list):
+            if pb_id not in new_semantic_calculus:
+                new_semantic_calculus[pb_id] = list()
 
-        for stmt in semantic_calculus[pb_id]:
-            # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
-            if stmt["predicate"] == "PATH":
-                # LOCATION(start(E), Theme, ?Initial_Location)
-                # and LOCATION(end(E), Theme, Destination)
-                theme = stmt["arguments"][1]
-                dest = stmt["arguments"][4]
-                new_semantic_calculus[pb_id].append(to_json(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"])))
-                new_semantic_calculus[pb_id].append(to_json(PredicateCalculus("LOCATION", ["end(E)", theme, dest])))
-            else:
-                new_semantic_calculus[pb_id].append(stmt)
+            for stmt in semantic_calculus[pb_id]:
+                # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
+                if stmt["predicate"] == "PATH":
+                    # LOCATION(start(E), Theme, ?Initial_Location)
+                    # and LOCATION(end(E), Theme, Destination)
+                    theme = stmt["arguments"][1]
+                    dest = stmt["arguments"][4]
+                    new_semantic_calculus[pb_id].append(
+                        to_json(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"])))
+                    new_semantic_calculus[pb_id].append(
+                        to_json(PredicateCalculus("LOCATION", ["end(E)", theme, dest])))
+                else:
+                    new_semantic_calculus[pb_id].append(stmt)
+        elif isinstance(semantic_calculus[pb_id], dict):
+            if pb_id not in new_semantic_calculus:
+                new_semantic_calculus[pb_id] = dict()
+
+            for vn_cls in semantic_calculus[pb_id]:
+                if vn_cls not in new_semantic_calculus[pb_id]:
+                    new_semantic_calculus[pb_id][vn_cls] = []
+
+                for stmt in semantic_calculus[pb_id][vn_cls]:
+                    # PATH(during(E), Theme, ?Initial_Location, ?Trajectory, Destination)
+                    if stmt["predicate"] == "PATH":
+                        # LOCATION(start(E), Theme, ?Initial_Location)
+                        # and LOCATION(end(E), Theme, Destination)
+                        theme = stmt["arguments"][1]
+                        dest = stmt["arguments"][4]
+                        new_semantic_calculus[pb_id][vn_cls].append(to_json(PredicateCalculus("LOCATION", ["start(E)", theme, "?Initial_Location"])))
+                        new_semantic_calculus[pb_id][vn_cls].append(to_json(PredicateCalculus("LOCATION", ["end(E)", theme, dest])))
+                    else:
+                        new_semantic_calculus[pb_id][vn_cls].append(stmt)
     return new_semantic_calculus
 
 
@@ -582,6 +622,8 @@ def induce_unique_groundings(grounded_stmt, semantic_calc, verbose=False):
                 else:
                     unique_calcs[pb_id] = []
                 new_calc_pools.append(copy.deepcopy(unique_calcs))
+            # TEMP FIX
+            # break
         stmt_pools = new_stmt_pools
         calc_pools = new_calc_pools
 
@@ -708,7 +750,7 @@ def build_graph_from_amr_penman(amr, verbose=False):
 
 
 def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
-                         verbose=False):
+                         target_propbank_ids=None, verbose=False):
     """
     To represent the graph of semantics, we use event as pivot, then use event
     time point (e.g. start, end, or, during) as edge to connect a predicate
@@ -719,6 +761,7 @@ def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
     :param amr: amr parse in string. Set to None if not used.
     :param grounded_stmt: grounded statements returned by the AMR-VerbNet service. Set to None if not used.
     :param semantic_calculus: semantic calculus returned by the AMR-VerbNet service
+    :param target_propbank_ids: show portion of graph related to the set of ids only
     :param verbose: if printing intermediate results
     :return: a networkx graph instance representing the enhanced AMR graph
 
@@ -760,14 +803,35 @@ def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
     if grounded_stmt is None:
         return g, amr_obj
 
-    semantic_calculus = replace_path_statement(semantic_calculus)
+    # TEMP COMMENT OUT
+    # semantic_calculus = replace_path_statement(semantic_calculus)
+
+    # print("\nnew_semantic_calculus:", semantic_calculus)
+    # print("\ngrounded_stmt:", grounded_stmt)
+    # print("\nnode_id2token:", amr_obj["node_id2token"])
+
+    def group_generator(g_stmt):
+        if isinstance(g_stmt, dict):
+            for vn_cls in g_stmt:
+                for _group in g_stmt[vn_cls]:
+                    yield _group
+        elif isinstance(g_stmt, list):
+            for _group in g_stmt:
+                yield _group
 
     # graph from grounded statements
     for pb_id in grounded_stmt:
-        semantic_calculus_dict = build_statement_dict(semantic_calculus[pb_id])
+        # print("\npb_id:", pb_id)
+        if target_propbank_ids is not None and pb_id not in target_propbank_ids:
+            continue
 
-        for g_idx, group in enumerate(grounded_stmt[pb_id]):
-            # statements a group share the same group of events
+        semantic_calculus_dict = build_statement_dict(semantic_calculus[pb_id])
+        # print("\npb_id in target_propbank_ids:", pb_id)
+        # print("\nsemantic_calculus_dict:", semantic_calculus_dict)
+        # print("\ngrounded_stmt[pb_id]:", grounded_stmt[pb_id])
+
+        for g_idx, group in enumerate(group_generator(grounded_stmt[pb_id])):
+            # statements in a group share the same group of events
             event2id = dict()
 
             # increment for id generation
@@ -833,10 +897,17 @@ def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
                         key = get_statement_dict_key(stmt)
                         if key not in semantic_calculus_dict:
                             continue
-                            
-                        label = semantic_calculus_dict[key]["arguments"][arg_idx]
 
-                        if label == arg:
+                        if arg in amr_obj["node_id2token"]:
+                            node_label = amr_obj["node_id2token"][arg]
+                        else:
+                            node_label = semantic_calculus_dict[key]["arguments"][arg_idx]
+                            if node_label[0].isupper():
+                                node_label = "?" + node_label
+
+                        edge_label = semantic_calculus_dict[key]["arguments"][arg_idx]
+
+                        if edge_label == arg:
                             # indicate it is unknown
                             if not arg.startswith("?"):
                                 arg_name = "?" + arg
@@ -849,11 +920,19 @@ def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
                         else:
                             arg_id = arg
 
-                        g.add_node(arg_id, label=label, source="verbnet")
+                        # print("\narg:", arg)
+                        # print("arg_id:", arg_id)
+                        # print("node_label:", node_label)
+                        if arg_id in amr_obj["node_id2token"]:
+                            g.add_node(arg_id, label=node_label, source="amr")
+                        else:
+                            g.add_node(arg_id, label=node_label, source="verbnet")
+
                         # remove "?" for edge labels
-                        if label.startswith("?"):
-                            label = label[1:]
-                        g.add_edge(predicate_id, arg_id, label=":" + label, source="verbnet")
+                        if edge_label.startswith("?"):
+                            edge_label = edge_label[1:]
+                        # print("edge_label:", edge_label)
+                        g.add_edge(predicate_id, arg_id, label=":" + edge_label, source="verbnet")
 
     # print("\nNodes of enhanced AMR graph:\n", g.nodes())
     # print("\nEdges of enhanced AMR graph:\n", g.edges())
@@ -861,7 +940,7 @@ def build_semantic_graph(amr, grounded_stmt=None, semantic_calculus=None,
 
 
 def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph",
-                             figure_format="png"):
+                             figure_format="svg"):
     """
     Generate a figure that visualize the enhanced AMR graph with VerbNet semantics
     :param graph: a networkx graph instance
@@ -870,7 +949,9 @@ def visualize_semantic_graph(graph, out_dir, graph_name="semantic_graph",
     :param figure_format: format/extension of the output figure file
     :return:
     """
-    engine = "dot"  # ["neato", "circo"]
+    engine = "dot"
+    # engine = "neato"
+    # engine = "circo"
     dot = graphviz.Digraph(name=graph_name, format=figure_format, engine=engine)
 
     color_map = {

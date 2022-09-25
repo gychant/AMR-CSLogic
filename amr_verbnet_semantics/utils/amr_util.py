@@ -3,6 +3,7 @@ Utility functions for AMR processing
 """
 import os
 import json
+from collections import defaultdict
 from tqdm import tqdm, trange
 
 from amr_verbnet_semantics.service.amr import amr_client
@@ -97,6 +98,8 @@ def read_amr_annotation(amr):
     node_idx2token = dict()
     token2node_id = dict()
     node_id2token = dict()
+    token_range2node_indexes = defaultdict(set)
+    token_range2node_ids = defaultdict(set)
     nodes = []
     edges = []
 
@@ -115,17 +118,24 @@ def read_amr_annotation(amr):
             if len(columns) == 2:
                 node_idx, node_label = columns
                 token = node_label
+                token_start_idx = -1
+                token_end_idx = -1
             else:
                 node_idx, node_label, token_range = columns
                 start_tok_idx, end_tok_idx = token_range.split("-")
                 token = " ".join(tokens[int(start_tok_idx):int(end_tok_idx)]).lower()
+                token_start_idx = int(start_tok_idx)
+                token_end_idx = int(end_tok_idx)
+                token_range2node_indexes[(token_start_idx, token_end_idx)].add(node_idx)
 
             token2node_idx[token] = node_idx
             node_idx2token[node_idx] = token
             nodes.append({
                 "node_idx": node_idx,
                 "node_label": node_label,
-                "token": token
+                "token": token,
+                "token_start_idx": token_start_idx,
+                "token_end_idx": token_end_idx
             })
 
         elif line.startswith("# ::edge"):
@@ -157,6 +167,16 @@ def read_amr_annotation(amr):
         elif line.startswith("# ::short"):
             node_idx2node_id = json.loads(double_quote(line[len("# ::short"):].strip()))
             node_id2node_idx = {v: k for k, v in node_idx2node_id.items()}
+            for tok_range in token_range2node_indexes:
+                node_indexes = token_range2node_indexes[tok_range]
+                for node_idx in node_indexes:
+                    if node_idx in node_idx2node_id:
+                        node_id = node_idx2node_id[node_idx]
+                        token_range2node_ids[tok_range].add(node_id)
+                        # Also add mapping for individual tokens
+                        tok_start_idx, tok_end_idx = tok_range
+                        for k in range(tok_start_idx, tok_end_idx):
+                            token_range2node_ids[(k, k + 1)].add(node_id)
 
     try:
         for node_id in node_id2node_idx:
@@ -170,6 +190,7 @@ def read_amr_annotation(amr):
         input()
 
     amr_data = {
+        "tokens": tokens,
         "nodes": nodes,
         "edges": edges,
         "token2node_idx": token2node_idx,
@@ -177,7 +198,8 @@ def read_amr_annotation(amr):
         "token2node_id": token2node_id,
         "node_id2token": node_id2token,
         "node_idx2node_id": node_idx2node_id,
-        "node_id2node_idx": node_id2node_idx
+        "node_id2node_idx": node_id2node_idx,
+        "token_range2node_ids": token_range2node_ids
     }
 
     return amr_data

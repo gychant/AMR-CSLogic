@@ -69,7 +69,9 @@ def load_vn_dict():
 
 def load_pb_vn_mappings():
     global pb_vn_mappings
-    pb_vn_mappings = json.load(open("./data/semlink/instances/pb-vn2.json"))
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+           "../../data/semlink/instances/pb-vn2.json")
+    pb_vn_mappings = json.load(open(path))
 
 
 def load_vn2class_id_dict():
