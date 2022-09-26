@@ -87,7 +87,10 @@ def match_semantics_by_role_set(semantics, amr_role_set, verbose=False):
         print("\nraw_vn_role_sets:", raw_vn_role_sets)
         print("\nraw_amr_role_set:", raw_amr_role_set)
 
-    if len(raw_vn_role_sets) > 1:
+    if len(raw_vn_role_sets) == 0:
+        return None, None
+
+    elif len(raw_vn_role_sets) > 1:
         # remove common roles first
         common_roles = set(raw_vn_role_sets[0]).intersection(*[set(s) for s in raw_vn_role_sets[1:]])
         vn_role_sets = [set(s).difference(common_roles) for s in raw_vn_role_sets]
@@ -102,6 +105,8 @@ def match_semantics_by_role_set(semantics, amr_role_set, verbose=False):
         set_diff_sizes = [(idx, len(set(vn_role_set).symmetric_difference(raw_amr_role_set)))
                           for idx, vn_role_set in enumerate(raw_vn_role_sets)]
 
+    if verbose:
+        print("\nset_diff_sizes:", set_diff_sizes)
     min_diff_idx = sorted(set_diff_sizes, key=lambda x: x[1])[0][0]
 
     if verbose:
@@ -143,8 +148,6 @@ def ground_amr(amr, reify=True, unique_groundings=False, verbose=False):
         print(amr)
 
     if reify:
-        print("\n\n\namr:")
-        print(amr)
         amr = reify_amr(amr)
         if verbose:
             print("\nReified amr:")
@@ -162,6 +165,9 @@ def ground_amr(amr, reify=True, unique_groundings=False, verbose=False):
         print("\narg_map:", arg_map)
 
     for inst in g.instances():
+        if inst.target is None:
+            continue
+
         node_name = inst.source
 
         # if it is a propbank frame
@@ -190,6 +196,9 @@ def ground_amr(amr, reify=True, unique_groundings=False, verbose=False):
                     semantics_by_role_set = query_semantics(verbnet_id, verbnet_version)
                     matched_role_set, matched_semantics = match_semantics_by_role_set(
                         semantics_by_role_set, amr_role_set, verbose)
+                    if matched_role_set is None:
+                        continue
+
                     if verbose:
                         print("\nsemantics_by_role_set:", semantics_by_role_set)
                         print("\nmatched_role_set:", matched_role_set)
@@ -451,6 +460,9 @@ def process_and_operator(amr_calc):
     op2args = dict()
     not_and_calc = []
     for calc in amr_calc:
+        if calc.predicate is None:
+            continue
+
         if calc.predicate.startswith("and."):
             if calc.arguments[0] not in op2args:
                 op2args[calc.arguments[0]] = []

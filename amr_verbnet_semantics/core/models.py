@@ -10,7 +10,8 @@ class PredicateCalculus(object):
         self.is_negative = is_negative
 
     def __repr__(self):
-        stmt = self.predicate + "(" + ", ".join(self.arguments) + ")"
+        predicate_str = "None" if self.predicate is None else self.predicate
+        stmt = predicate_str + "(" + ", ".join(self.arguments) + ")"
         if self.is_negative:
             stmt = "NOT({})".format(stmt)
         return stmt
