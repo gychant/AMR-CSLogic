@@ -11,7 +11,6 @@ import threading
 from nltk import sent_tokenize
 from nltk.tokenize import word_tokenize
 
-from amr_verbnet_semantics.grpc_clients.clients import AMRClientTransformer
 from app_config import config
 
 
@@ -47,8 +46,9 @@ class LocalAMRClient(object):
             # Lazy loading
             self.parser = self._get_parser(use_cuda=self.use_cuda)
 
-        res = self.parser.parse_sentences([word_tokenize(text)])
-        return res[0][0]
+        annotations, decoding_data = self.parser.parse_sentences([word_tokenize(text)])
+        amr_obj = decoding_data[0]['machine'].get_amr()
+        return amr_obj.to_penman(jamr=True, isi=False)
 
 
 class RemoteAMRClient(object):
@@ -60,6 +60,7 @@ class RemoteAMRClient(object):
     def get_amr(self, text):
         if self.parser is None:
             # Lazy loading
+            from amr_verbnet_semantics.grpc_clients.clients import AMRClientTransformer
             self.parser = AMRClientTransformer(f"{self.amr_host}:{self.amr_port}")
         return self.parser.get_amr(text)
 

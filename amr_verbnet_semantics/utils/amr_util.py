@@ -75,7 +75,8 @@ def load_amr_cache(path):
 
 def double_quote(json_str):
     return json_str.replace(" ", "").replace("{", "{\"")\
-        .replace(":", "\":").replace(",", ",\"").replace("'", "\"")
+        .replace(":", "\":").replace(",", ",\"").replace("'", "\"")\
+        .replace("{\"}", "{}")
 
 
 def read_tokenization(amr):
@@ -93,7 +94,7 @@ def read_tokenization(amr):
     return None
 
 
-def read_amr_annotation(amr):
+def read_amr_annotation_0_4_2(amr):
     token2node_idx = dict()
     node_idx2token = dict()
     token2node_id = dict()
@@ -204,3 +205,79 @@ def read_amr_annotation(amr):
 
     return amr_data
 
+
+def read_amr_annotation(amr):
+    node_id2token = dict()
+    token_range2node_ids = defaultdict(set)
+    nodes = []
+    edges = []
+
+    for line in amr.split("\n"):
+        if line.startswith("# ::tok"):
+            # tokenized text
+            text = line[len("# ::tok"):-len("<ROOT>")].strip()
+            tokens = text.split()
+
+        elif line.startswith("# ::node"):
+            node_info = line[len("# ::node"):].strip()
+            columns = node_info.split()
+            if len(columns) < 2:
+                continue
+
+            if len(columns) == 2:
+                node_id, node_label = columns
+                token = node_label
+                token_start_idx = -1
+                token_end_idx = -1
+            else:
+                node_id, node_label, token_range = columns
+                start_tok_idx, end_tok_idx = token_range.split("-")
+                token = " ".join(tokens[int(start_tok_idx):int(end_tok_idx)]).lower()
+                token_start_idx = int(start_tok_idx)
+                token_end_idx = int(end_tok_idx)
+                token_range2node_ids[(token_start_idx, token_end_idx)].add(node_id)
+
+            node_id2token[node_id] = token
+            nodes.append({
+                "node_idx": node_idx,
+                "node_label": node_label,
+                "token": token,
+                "token_start_idx": token_start_idx,
+                "token_end_idx": token_end_idx
+            })
+
+        elif line.startswith("# ::edge"):
+            edge_info = line[len("# ::edge"):].strip()
+            columns = edge_info.split()
+            if len(columns) < 5:
+                continue
+
+            src_node_label, edge_label, tgt_node_label, \
+                src_node_idx, tgt_node_idx = columns
+
+            if edge_label.endswith("-of") and edge_label.lower() != "consist-of":
+                edges.append({
+                    "src_node_label": tgt_node_label,
+                    "edge_label": edge_label[:-len("-of")],
+                    "tgt_node_label": src_node_label,
+                    "src_node_idx": tgt_node_idx,
+                    "tgt_node_idx": src_node_idx
+                })
+            else:
+                edges.append({
+                    "src_node_label": src_node_label,
+                    "edge_label": edge_label,
+                    "tgt_node_label": tgt_node_label,
+                    "src_node_idx": src_node_idx,
+                    "tgt_node_idx": tgt_node_idx
+                })
+
+    amr_data = {
+        "tokens": tokens,
+        "nodes": nodes,
+        "edges": edges,
+        "node_id2token": node_id2token,
+        "token_range2node_ids": token_range2node_ids
+    }
+
+    return amr_data

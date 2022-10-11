@@ -12,20 +12,17 @@ if __name__ == "__main__":
     
     if args.interactive:
         while True:
-            text = input(">> Input text to parse: \n")
-            print()
-            amr = amr_client.get_amr(text)
-            print("\n\n")
-            print(amr)
-            print()
-            print(text)
-            print()
-            """
-            print(json.dumps({
-                "sent": text,
-                "amr": amr
-            }))
-            """
+            try:
+                text = input(">> Input text to parse: \n")
+                print()
+                amr = amr_client.get_amr(text)
+                print("\n\n")
+                print(amr)
+                print()
+                print(text)
+                print()
+            except KeyboardInterrupt:
+                raise 
 
     list_text = [
         "I loved him writing novels.",
