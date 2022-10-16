@@ -11,7 +11,7 @@ neuralcoref
 gensim
 protobuf
 tqdm
-yaml
+pyyaml
 
 numpy
 python-Levenshtein

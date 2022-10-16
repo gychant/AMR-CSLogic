@@ -16,14 +16,14 @@ class PostDevelopCommand(develop):
     """Post-installation for development mode."""
     def run(self):
         develop.run(self)
-        run_script("scripts/download_third_party.sh")
+        # run_script("scripts/download_third_party.sh")
 
 
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
     def run(self):
         install.run(self)
-        run_script("scripts/download_third_party.sh")
+        # run_script("scripts/download_third_party.sh")
 
 
 install_reqs = parse_requirements('requirements.txt', session='install')

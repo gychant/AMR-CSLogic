@@ -25,10 +25,10 @@ class LocalAMRClient(object):
         pkg_root_path = os.path.join(os.path.dirname(__file__), "../../")
         cwd = os.getcwd()
         os.chdir(os.path.join(pkg_root_path, config.THIRD_PARTY_PATH))
-        print("Loading checkpoint ...")
+        print("Loading checkpoint from {}...".format(config.AMR_MODEL_CHECKPOINT_PATH))
         amr_parser = AMRParser.from_checkpoint(
-            checkpoint=config.AMR_MODEL_CHECKPOINT_PATH,
-            roberta_cache_path=config.ROBERTA_CACHE_PATH)
+            checkpoint=config.AMR_MODEL_CHECKPOINT_PATH)
+            # roberta_cache_path=config.ROBERTA_CACHE_PATH)
         print("Loaded checkpoint ...")
         # for loading resources, parse a test sentence
         amr_parser.parse_sentences([['test']])
