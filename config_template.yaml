@@ -7,6 +7,7 @@ AMR_MODEL_CHECKPOINT_PATH: "DATA/AMR2.0/models/exp_cofill_o8.3_act-states_RoBERT
 ROBERTA_CACHE_PATH: "roberta.large"
 # Use the local model file:
 # ROBERTA_CACHE_PATH: "./roberta.large.tar.gz"
+BART_CACHE_PATH: "bart.large"
 THIRD_PARTY_PATH: 'third_party'
 use_cuda: false
 

@@ -66,10 +66,16 @@ def load_amr_cache(path):
     """
     amr_cache = dict()
     with open(path, "r") as f:
+        sample_idx = 0
         for line in f:
-            sample_idx, amr_str = line.strip().split("\t")
+            line = line.strip()
+            if len(line) == 0:
+                continue
+
+            _sample_idx, amr_str = line.strip().split("\t")
             sentences = json.loads(amr_str)
             amr_cache[int(sample_idx)] = sentences
+            sample_idx += 1
     return amr_cache
 
 
@@ -239,7 +245,7 @@ def read_amr_annotation(amr):
 
             node_id2token[node_id] = token
             nodes.append({
-                "node_idx": node_idx,
+                "node_id": node_id,
                 "node_label": node_label,
                 "token": token,
                 "token_start_idx": token_start_idx,

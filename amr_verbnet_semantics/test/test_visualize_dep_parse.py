@@ -12,6 +12,15 @@ import spacy
 from spacy import displacy
 from pathlib import Path
 
+
+"""
+import spacy
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("displaCy uses JavaScript, SVG and CSS.")
+spacy.displacy.serve(doc, style="dep")
+print(hello)
+"""
+
 nlp = spacy.load("en_core_web_sm")
 sentences = ["For the fifth grade play , the chairs have been put into 27 rows with 16 chairs in each row .",
              "How many chairs have been put out for the play ?"]

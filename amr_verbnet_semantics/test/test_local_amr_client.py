@@ -6,6 +6,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--interactive', '-i', action='store_true',
                         help="Whether to run the interactive mode")
+    parser.add_argument('--output_json', '-j', action='store_true',
+                        help="Whether to output as JSON string")
+
     args = parser.parse_args()
 
     amr_client = LocalAMRClient()
@@ -21,6 +24,12 @@ if __name__ == "__main__":
                 print()
                 print(text)
                 print()
+                if args.output_json:
+                    data = [{
+                        "sent": text,
+                        "amr": amr
+                    }]
+                    print(json.dumps(data))
             except KeyboardInterrupt:
                 raise 
 

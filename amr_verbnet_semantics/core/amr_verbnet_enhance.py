@@ -655,52 +655,39 @@ def build_graph_from_amr(amr, verbose=False):
     :param verbose:
     :return:
     """
-    amr_graph = penman.decode(amr)
+    # print("\n\namr:")
+    # print(amr)
+    # amr_graph = penman.decode(amr)
 
     g_directed = nx.DiGraph()
     node_dict = dict()
 
     # read AMR annotation
     amr_obj = read_amr_annotation(amr)
+    # print(amr_obj)
     if verbose:
         print("\nnodes:", amr_obj["nodes"])
         print("\nedges:", amr_obj["edges"])
-        print("\ntoken2node_id:", amr_obj["token2node_id"])
-        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
-        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
 
     # construct graph from AMRs
     for node in amr_obj["nodes"]:
         if verbose:
             print("node:", node)
 
-        node_id = amr_obj["node_idx2node_id"][node["node_idx"]]
+        node_id = node["node_id"]
         g_directed.add_node(node_id, label=node["node_label"], source="amr")
         node_dict[node_id] = node["node_label"]
-
-        for attr in amr_graph.attributes(node_id):
-            if verbose:
-                print("attr:", attr)
-
-            if attr.target.startswith("\"") and attr.target.endswith("\""):
-                attr_constant = attr.target[1:-1]
-            else:
-                attr_constant = attr.target
-
-            # use the parent node of attributes for pattern mining
-            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
 
     for edge in amr_obj["edges"]:
         if verbose:
             print("edge:", edge)
 
-        src_node_id = amr_obj["node_idx2node_id"][edge["src_node_idx"]]
-        tgt_node_id = amr_obj["node_idx2node_id"][edge["tgt_node_idx"]]
+        src_node_id = edge["src_node_idx"]
+        tgt_node_id = edge["tgt_node_idx"]
         g_directed.add_edge(src_node_id, tgt_node_id, label=":" + edge["edge_label"], source="amr")
 
     if verbose:
         print("\nnode_dict:", node_dict)
-        print("\ntoken2node_id post:", amr_obj["token2node_id"])
     return g_directed, amr_obj
 
 
@@ -723,9 +710,6 @@ def build_graph_from_amr_penman(amr, verbose=False):
     if verbose:
         print("\nnodes:", amr_obj["nodes"])
         print("\nedges:", amr_obj["edges"])
-        print("\ntoken2node_id:", amr_obj["token2node_id"])
-        print("\nnode_idx2node_id:", amr_obj["node_idx2node_id"])
-        print("\nnode_id2node_idx:", amr_obj["node_id2node_idx"])
 
     # construct graph from AMRs
     for inst in amr_graph.instances():
@@ -736,18 +720,6 @@ def build_graph_from_amr_penman(amr, verbose=False):
         g_undirected.add_node(inst.source, label=inst.target, source="amr")
         node_dict[inst.source] = inst.target
 
-        for attr in amr_graph.attributes(inst.source):
-            if verbose:
-                print("attr:", attr)
-
-            if attr.target.startswith("\"") and attr.target.endswith("\""):
-                attr_constant = attr.target[1:-1]
-            else:
-                attr_constant = attr.target
-
-            # use the parent node of attributes for pattern mining
-            amr_obj["token2node_id"][attr_constant.lower()] = attr.source
-
     for edge in amr_graph.edges():
         if verbose:
             print("edge:", edge)
@@ -757,7 +729,6 @@ def build_graph_from_amr_penman(amr, verbose=False):
 
     if verbose:
         print("\nnode_dict:", node_dict)
-        print("\ntoken2node_id post:", amr_obj["token2node_id"])
     return g_directed, g_undirected, amr_obj
 
 
